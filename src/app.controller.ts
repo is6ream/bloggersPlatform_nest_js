@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { identity } from 'rxjs';
 
 @Controller('users')
 export class UsersController {
@@ -14,7 +15,10 @@ export class UsersController {
       childrenCount: inputModel.childrenCount,
     };
   }
-  
+  @Get(':id')
+  getUser(@Param('id') userId: string) {
+    return [{ id: 1 }, { id: 2 }].find((u) => u.id === +userId);
+  }
 }
 
 type CreateUserInputModelType = {
