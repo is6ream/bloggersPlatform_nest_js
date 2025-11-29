@@ -1,12 +1,13 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
 
-@Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
-
+@Controller('users')
+export class UsersController {
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getAll() {
+    return 'This action return all users';
+  }
+  @Get('default-category')
+  getMyBooks() {
+    return 'This action returns users by default category';
   }
 }
