@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
@@ -21,6 +29,10 @@ export class UsersController {
   @Get(':id')
   getUser(@Param('id') userId: string) {
     return [{ id: 1 }, { id: 2 }].find((u) => u.id === +userId);
+  }
+  @Delete(':id')
+  deleteUser(@Param('id') userId: string) {
+    return;
   }
 }
 
