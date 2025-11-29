@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
+import { UsersController } from './app.controller';
 import { AppService } from './app.service';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
 
 @Module({
+  //Модуль является composition root
   imports: [UserAccountsModule],
-  controllers: [AppController],
+  controllers: [UsersController],
   providers: [AppService],
 })
 export class AppModule {}
