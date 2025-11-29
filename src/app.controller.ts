@@ -1,11 +1,14 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { identity } from 'rxjs';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
   @Get()
-  getUsers() {
-    return [{ id: 1 }, { id: 2 }];
+  getUsers(@Query('term') term: string) {
+    return [
+      { id: 1, name: 'Dan' },
+      { id: 2, name: 'Jam' },
+      { id: 3, name: 'Ari' },
+    ].filter((u) => !term || u.name.indexOf(term) > -1);
   }
   @Post()
   createUsers(@Body() inputModel: CreateUserInputModelType) {
