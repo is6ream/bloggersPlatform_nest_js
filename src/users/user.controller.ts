@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  Put,
 } from '@nestjs/common';
 
 @Controller('users')
@@ -33,6 +34,16 @@ export class UsersController {
   @Delete(':id')
   deleteUser(@Param('id') userId: string) {
     return;
+  }
+  @Put(':id')
+  updateUser(
+    @Param('id') userId: string,
+    @Body() model: CreateUserInputModelType,
+  ) {
+    return {
+      id: userId,
+      model: model,
+    };
   }
 }
 
