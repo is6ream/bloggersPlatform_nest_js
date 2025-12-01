@@ -4,9 +4,9 @@ import { UserDB } from '../entities/userDbEntity';
 import { UserDocument } from '../entities/userMongoose';
 import { Injectable } from '@nestjs/common';
 import { UserModel } from '../entities/userMongoose';
-import { UserOutput } from '../types/userOutputType';
+import { UserOutput } from '../types/output/userOutputType';
 import { HydratedDocument } from 'mongoose';
-import { UserViewModel } from '../types/userViewModel';
+import { UserViewModel } from '../types/output/userViewModel';
 
 //остановился  на настройке импортов в этом слое, продолжить рефакторинг
 

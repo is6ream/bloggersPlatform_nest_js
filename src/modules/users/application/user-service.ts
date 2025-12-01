@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../infrastructure/usersRepository';
 
 @Injectable()
-export class UserService {
+export class UsersService {
   constructor(private usersRepository: UsersRepository) {}
 
   async create(dto: UserInputModel): Promise<Result<string>> {
