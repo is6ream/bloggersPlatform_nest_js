@@ -1,10 +1,9 @@
-import { UserQueryInput } from '../input/user-query.input';
-import { CurrentUser, UserViewModel } from '../types/user-types';
-import { ObjectId } from 'mongodb';
-import { injectable } from 'inversify';
-import { UserModel } from '../types/usersMongoose';
-
-@injectable()
+import { UserQueryInput } from 'src/common/pagination/user/userQueryInput';
+import { Injectable } from '@nestjs/common';
+import { ObjectId } from 'mongoose';
+import { UserModel } from '../entities/userMongoose';
+import { UserViewModel } from '../types/output/userViewModel';
+@Injectable()
 export class UsersQueryRepository {
   async findAll(
     queryDto: UserQueryInput,
@@ -19,7 +18,7 @@ export class UsersQueryRepository {
     } = queryDto;
 
     const skip = (pageNumber - 1) * pageSize;
-    const filter: any = {};
+    const filter: { $or?: Array<Record<string, any>> } = {};
 
     if (searchLoginTerm || searchEmailTerm) {
       filter.$or = [];
@@ -52,7 +51,7 @@ export class UsersQueryRepository {
     return { items, totalCount };
   }
 
-  async findById(id: string): Promise<CurrentUser | null> {
+  async findById(id: string): Promise<UserViewModel | null> {
     const user = await UserModel.findOne({ _id: new ObjectId(id) });
     if (!user) {
       return null;
