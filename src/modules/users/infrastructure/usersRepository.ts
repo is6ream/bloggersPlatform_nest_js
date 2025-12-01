@@ -1,15 +1,19 @@
-import { UserDbDto, UserViewModel } from '../types/user-types';
+import { UserDbDto } from './../dto/userDbDto';
 import { ObjectId, WithId } from 'mongodb';
-import { User } from '../constructors/user.entity';
-import { UserOutput } from '../types/user.output';
-import { injectable } from 'inversify';
 import { UserDB } from '../entities/userDbEntity';
 import { UserDocument } from '../entities/userMongoose';
+import { Injectable } from '@nestjs/common';
+import { UserModel } from '../entities/userMongoose';
+import { UserOutput } from '../types/userOutputType';
+import { HydratedDocument } from 'mongoose';
+import { UserViewModel } from '../types/userViewModel';
 
-@injectable()
+//остановился  на настройке импортов в этом слое, продолжить рефакторинг
+
+@Injectable()
 export class UsersRepository {
   async create(newUser: UserDocument): Promise<string> {
-    await newUser.save();
+    await newUser.save(); //почему он возвращает undefined?
     return newUser.id;
   }
 
@@ -33,7 +37,7 @@ export class UsersRepository {
   async isUserExistByEmailOrLogin(
     loginOrEmail: string,
   ): Promise<UserOutput | null> {
-    const user: WithId<User> | null = await UserModel.findOne({
+    const user: HydratedDocument<UserDB> | null = await UserModel.findOne({
       //
       $or: [{ email: loginOrEmail }, { login: loginOrEmail }],
     });
@@ -44,7 +48,7 @@ export class UsersRepository {
       id: user._id.toString(),
       login: user.login,
       email: user.email,
-      passwordHash: user!.passwordHash,
+      passwordHash: user.passwordHash,
       createdAt: user.createdAt,
       emailConfirmation: {
         confirmationCode: user.emailConfirmation.confirmationCode!,
@@ -76,7 +80,7 @@ export class UsersRepository {
   }
 
   async findUserByConfirmationCode(code: string): Promise<UserDbDto | null> {
-    const user: WithId<User> | null = await UserModel.findOne({
+    const user: HydratedDocument<UserDB> | null = await UserModel.findOne({
       'emailConfirmation.confirmationCode': code,
     });
     if (!user) {
@@ -84,7 +88,7 @@ export class UsersRepository {
     }
 
     if (
-      !user.emailConfirmation?.confirmationCode || //если у объекта user нет confirmationCode или expirationDate
+      !user.emailConfirmation?.confirmationCode ||
       !user.emailConfirmation?.expirationDate
     ) {
       return null;
@@ -99,7 +103,7 @@ export class UsersRepository {
         confirmationCode: user.emailConfirmation.confirmationCode,
         expirationDate: user.emailConfirmation.expirationDate,
         isConfirmed: user.emailConfirmation.isConfirmed,
-      }, //сделал валидацию на уровне метода
+      },
     };
   }
 
