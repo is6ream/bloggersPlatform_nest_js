@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../infrastructure/usersRepository';
+import { bcrypt } from 'bcrypt';
+
 @Injectable()
 export class UserService {
-  constructor(
-    @inject(UsersRepository) private usersRepository: UsersRepository,
-  ) {}
+  constructor(private usersRepository: UsersRepository) {}
 
   async create(dto: UserInputModel): Promise<Result<string>> {
     const isEmailExist = await this.usersRepository.isUserExistByEmailOrLogin(
