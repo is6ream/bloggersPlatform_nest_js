@@ -3,8 +3,8 @@ import { ObjectId, WithId } from 'mongodb';
 import { User } from '../constructors/user.entity';
 import { UserOutput } from '../types/user.output';
 import { injectable } from 'inversify';
-import { UserDocument, UserModel } from '../types/usersMongoose';
-import { UserDB } from '../types/user-types';
+import { UserDB } from '../entities/userDbEntity';
+import { UserDocument } from '../entities/userMongoose';
 
 @injectable()
 export class UsersRepository {
