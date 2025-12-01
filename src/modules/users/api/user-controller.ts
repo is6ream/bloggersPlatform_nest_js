@@ -10,8 +10,10 @@ export class UserController {
     private usersService: UsersService, //todo как расположить сервисы и репозитории
   ) {}
 
-  @Get()
-  async getAll(@Query() query: UserQueryInput): Promise<UserViewModel[]> {
-    return await this.usersQueryRepository.getAll(query);
+  @Get('users')
+  async getAll(@Query() query: UserQueryInput): Promise<UserViewModel> {
+    const res = await this.usersQueryRepository.findAll(query);
+    console.log(res);
+    return;
   }
 }
