@@ -20,18 +20,16 @@ export class UserController {
     private usersQueryRepository: UsersQueryRepository,
     private usersService: UsersService,
   ) {}
-
+  //todo провести рефакторинг, подключить модули. Сегодня протестировать через постман
   @Get()
   @HttpCode(HttpStatus.OK)
   async getAll(@Query() query: UserQueryInput): Promise<UserViewModel[]> {
-    const res = await this.usersQueryRepository.findAll(query);
-    console.log(res, 'Привет');
-    return res;
+    return await this.usersQueryRepository.findAll(query);
   }
 
   @Post()
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewModel> {
-    const userId = await this.usersService.create(body);
+    const userId: string = await this.usersService.create(body);
 
     return this.usersQueryRepository.findById(userId);
   }
