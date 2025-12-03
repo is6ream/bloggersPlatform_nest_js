@@ -4,6 +4,9 @@ import {
   EmailConfirmationSchema,
   EmailConfirmation,
 } from './emailConfirmationSchema';
+import { HydratedDocument } from 'mongoose';
+import { CreateUserDomainDto } from '../dto/createUserInputDto';
+export type UserDocument = HydratedDocument<User>;
 
 @Schema({
   timestamps: {
@@ -11,6 +14,7 @@ import {
     updatedAt: false,
   },
 })
+//как создать тип UserDocument?
 export class User {
   @Prop({ type: String, required: true })
   login: string;
@@ -26,4 +30,14 @@ export class User {
 
   @Prop({ type: PasswordRecoverySchema })
   passwordRecovery: PasswordRecovery;
+
+  static createInstance(dto: CreateUserDomainDto): UserDocument {
+    const user = new this();
+    user.email = dto.email;
+    user.passwordHash = dto.passwordHash;
+    user.login = dto.login;
+    user.emailConfirmation.isConfirmed = false;
+
+    return user as UserDocument;
+  }
 }

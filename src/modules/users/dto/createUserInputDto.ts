@@ -1,5 +1,5 @@
-export type CreateUserInputDto = {
-  login: string;
+export type CreateUserDomainDto = {
   email: string;
-  password: string;
+  passwordHash: string;
+  login: string;
 };
