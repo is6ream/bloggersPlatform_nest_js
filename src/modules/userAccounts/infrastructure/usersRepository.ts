@@ -1,4 +1,4 @@
-import { UserDbDto } from './../dto/userDbDto';
+import { UserDbDto } from '../dto/userDbDto';
 import { ObjectId, WithId } from 'mongodb';
 import { UserDB } from '../entities/userDbEntity';
 import { UserDocument } from '../entities/userMongoose';

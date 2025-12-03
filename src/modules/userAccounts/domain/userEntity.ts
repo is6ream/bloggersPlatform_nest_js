@@ -1,4 +1,4 @@
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { PasswordRecoverySchema, PasswordRecovery } from './passRecoverySchema';
 import {
   EmailConfirmationSchema,
@@ -6,8 +6,7 @@ import {
 } from './emailConfirmationSchema';
 import { HydratedDocument } from 'mongoose';
 import { CreateUserDomainDto } from '../dto/createUserInputDto';
-export type UserDocument = HydratedDocument<User>;
-
+import { Model } from 'mongoose';
 @Schema({
   timestamps: {
     createdAt: 'createdAt',
@@ -50,3 +49,14 @@ export class User {
     this.deleteAt = new Date();
   }
 }
+//Создаем схему на основе класса
+export const UserSchema = SchemaFactory.createForClass(User);
+
+//регистрируем методы сущности в схеме монгус
+UserSchema.loadClass(User);
+
+//типизируем документ
+export type UserDocument = HydratedDocument<User>;
+
+//Типизация модели + статические и инстанс методы
+export type UserModelType = Model<UserDocument> & typeof User;

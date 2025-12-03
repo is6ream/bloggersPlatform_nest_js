@@ -9,7 +9,7 @@ import { UsersService } from './application/user-service';
   providers: [UsersQueryRepository, UsersService],
   exports: [],
 })
-export class UserModule {} //не приходит гет запрос за всеми юзерами в постмане
+export class UserAccountsModule {} //не приходит гет запрос за всеми юзерами в постмане
 
 
 //Нужно описать доменную модель и ее методы. Методы покрыть тестами
