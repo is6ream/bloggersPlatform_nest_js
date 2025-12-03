@@ -11,3 +11,6 @@ import { UsersService } from './application/user-service';
 })
 export class UserModule {} //не приходит гет запрос за всеми юзерами в постмане
 
+
+//Нужно описать доменную модель и ее методы. Методы покрыть тестами
+//UserAccountModule 
