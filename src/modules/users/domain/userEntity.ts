@@ -14,7 +14,6 @@ export type UserDocument = HydratedDocument<User>;
     updatedAt: false,
   },
 })
-//как создать тип UserDocument?
 export class User {
   @Prop({ type: String, required: true })
   login: string;
@@ -31,6 +30,9 @@ export class User {
   @Prop({ type: PasswordRecoverySchema })
   passwordRecovery: PasswordRecovery;
 
+  @Prop({ type: Date, nullable: true })
+  deleteAt: Date | null;
+
   static createInstance(dto: CreateUserDomainDto): UserDocument {
     const user = new this();
     user.email = dto.email;
@@ -39,5 +41,12 @@ export class User {
     user.emailConfirmation.isConfirmed = false;
 
     return user as UserDocument;
+  }
+
+  makeDeleted() {
+    if (this.deleteAt !== null) {
+      throw new Error('Entity already deleted');
+    }
+    this.deleteAt = new Date();
   }
 }
