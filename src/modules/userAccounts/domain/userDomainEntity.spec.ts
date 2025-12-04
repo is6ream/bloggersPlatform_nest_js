@@ -1,6 +1,6 @@
-import { User } from 'src/modules/userAccounts/domain/userEntity';
+import { User } from './userEntity';
 
-describe('Userentity methods tests', () => {
+describe('User entity methods tests', () => {
   //хочу посмотреть name
   it('should create new user', () => {
     const user = User.createInstance({
@@ -8,6 +8,7 @@ describe('Userentity methods tests', () => {
       passwordHash: '321321321fsdfds',
       login: 'testLogin',
     });
+    
 
     console.log(User.name, 'username check');
 

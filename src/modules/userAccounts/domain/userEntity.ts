@@ -7,6 +7,7 @@ import {
 import { HydratedDocument } from 'mongoose';
 import { CreateUserDomainDto } from '../dto/createUserInputDto';
 import { Model } from 'mongoose';
+import { randomUUID } from 'crypto';
 @Schema({
   timestamps: {
     createdAt: 'createdAt',
@@ -37,7 +38,12 @@ export class User {
     user.email = dto.email;
     user.passwordHash = dto.passwordHash;
     user.login = dto.login;
-    user.emailConfirmation.isConfirmed = false;
+
+    user.emailConfirmation = {
+      confirmationCode: randomUUID(),
+      expirationDate: new Date(Date.now() + 3 * 60 * 1000),
+      isConfirmed: false,
+    };
 
     return user as UserDocument;
   }
