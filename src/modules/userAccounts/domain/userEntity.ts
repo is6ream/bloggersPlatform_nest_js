@@ -5,7 +5,7 @@ import {
   EmailConfirmation,
 } from './emailConfirmationSchema';
 import { HydratedDocument } from 'mongoose';
-import { CreateUserDomainDto } from '../dto/createUserInputDto';
+import { CreateUserDto } from '../dto/createUserInputDto';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
 @Schema({
@@ -33,7 +33,7 @@ export class User {
   @Prop({ type: Date, nullable: true })
   deleteAt: Date | null;
 
-  static createInstance(dto: CreateUserDomainDto): UserDocument {
+  static createInstance(dto: CreateUserDto): UserDocument {
     const user = new this();
     user.email = dto.email;
     user.passwordHash = dto.passwordHash;
