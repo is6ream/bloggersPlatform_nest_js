@@ -6,6 +6,7 @@ import { User } from '../domain/userEntity';
 import { UserModelType } from '../domain/userEntity';
 import { UserDocument } from '../domain/userEntity';
 import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
+import { BcryptService } from './bcrypt-service';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,7 @@ export class UsersService {
     @InjectModel(User.name)
     private UserModel: UserModelType,
     private usersRepository: UsersRepository,
+    private bcryptService: BcryptService,
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<string> {
