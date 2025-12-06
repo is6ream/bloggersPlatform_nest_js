@@ -21,4 +21,10 @@ export class UsersQueryRepository {
 
     return UserViewDto.mapToView(user);
   }
+
+  async getAll(): Promise<UserViewDto[]> {
+    const result = await this.UserModel.find().exec();
+    //todo добавить пагинацию
+    return result.map((user) => UserViewDto.mapToView(user));
+  }
 }
