@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/mongoose';
 import { UsersRepository } from '../infrastructure/usersRepository';
 import { User } from '../domain/userEntity';
@@ -18,8 +17,7 @@ export class UsersService {
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<string> {
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(dto.password, saltRounds);
+    const passwordHash = await this.bcryptService.generateHash(dto.password);
 
     const user: UserDocument = this.UserModel.createInstance({
       email: dto.email,

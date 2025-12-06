@@ -30,6 +30,9 @@ export class User {
   @Prop({ type: PasswordRecoverySchema })
   passwordRecovery: PasswordRecovery;
 
+  createdAt: Date;
+  updatedAt: Date;
+
   @Prop({ type: Date, nullable: true })
   deleteAt: Date | null;
 
