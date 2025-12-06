@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserModelType } from '../domain/userEntity';
-import { UserDocument } from '../entities/userMongoose';
-//остановился  на настройке импортов в этом слое, продолжить рефакторинг
+import { UserDocument } from '../domain/userEntity';
 
 @Injectable()
 export class UsersRepository {

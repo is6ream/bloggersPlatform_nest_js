@@ -5,7 +5,7 @@ import {
   EmailConfirmation,
 } from './emailConfirmationSchema';
 import { HydratedDocument } from 'mongoose';
-import { CreateUserDto } from '../dto/createUserInputDto';
+import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
 @Schema({
@@ -36,7 +36,7 @@ export class User {
   static createInstance(dto: CreateUserDto): UserDocument {
     const user = new this();
     user.email = dto.email;
-    user.passwordHash = dto.passwordHash;
+    user.passwordHash = dto.password;
     user.login = dto.login;
 
     user.emailConfirmation = {
@@ -53,6 +53,14 @@ export class User {
       throw new Error('Entity already deleted');
     }
     this.deleteAt = new Date();
+  }
+
+  update(dto: UpdateUserDto) {
+    //остановился здесь
+    if (dto.email !== this.email) {
+      this.emailConfirmation.isConfirmed = false;
+    }
+    this.email = dto.email;
   }
 }
 //Создаем схему на основе класса

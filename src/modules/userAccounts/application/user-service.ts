@@ -4,8 +4,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { UsersRepository } from '../infrastructure/usersRepository';
 import { User } from '../domain/userEntity';
 import { UserModelType } from '../domain/userEntity';
-import { CreateUserDto } from '../dto/createUserInputDto';
 import { UserDocument } from '../domain/userEntity';
+import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -16,16 +17,34 @@ export class UsersService {
 
   async createUser(dto: CreateUserDto): Promise<string> {
     const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(dto.passwordHash, saltRounds);
+    const passwordHash = await bcrypt.hash(dto.password, saltRounds);
 
     const user: UserDocument = this.UserModel.createInstance({
       email: dto.email,
       login: dto.login,
-      passwordHash: passwordHash,
+      password: passwordHash,
     });
 
     await this.usersRepository.save(user);
 
     return user._id.toString();
+  }
+
+  async updateUser(id: string, dto: UpdateUserDto): Promise<string> {
+    const user = await this.usersRepository.findOrNotFoundFail(id);
+
+    user.update(dto);
+
+    await this.usersRepository.save(user);
+
+    return user._id.toString();
+  }
+
+  async deleteUser(id: string) {
+    const user = await this.usersRepository.findOrNotFoundFail(id);
+
+    user.makeDeleted();
+
+    await this.usersRepository.save(user);
   }
 }

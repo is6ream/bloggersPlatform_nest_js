@@ -13,7 +13,7 @@ import { UsersQueryRepository } from '../infrastructure/usersQueryRepository';
 import { UsersService } from '../application/user-service';
 import { UserViewModel } from '../types/output/userViewModel';
 import type { UserQueryInput } from 'src/common/pagination/user/userQueryInput';
-import type { CreateUserInputDto } from '../dto/createUserInputDto';
+import type { CreateUserInputDto } from '../dto/UserInputDto';
 @Controller('users')
 export class UserController {
   constructor(
