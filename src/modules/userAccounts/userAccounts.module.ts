@@ -13,4 +13,4 @@ import { User, UserSchema } from './domain/userEntity';
   providers: [UsersQueryRepository, UsersService],
   exports: [],
 })
-export class UserAccountsModule {} //не приходит гет запрос за всеми юзерами в постмане
+export class UserAccountsModule {} 
