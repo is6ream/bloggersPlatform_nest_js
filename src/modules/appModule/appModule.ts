@@ -6,8 +6,8 @@ import { AppService } from './appService';
 
 @Module({
   imports: [
-    UserAccountsModule,
     MongooseModule.forRoot('mongodb://localhost:27017/'),
+    UserAccountsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,8 +1,9 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument, UserModelType } from '../domain/userEntity';
 import { UserViewDto } from '../api/user.view-dto';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, Injectable } from '@nestjs/common';
 
+@Injectable()
 export class UsersQueryRepository {
   constructor(
     @InjectModel(User.name)
