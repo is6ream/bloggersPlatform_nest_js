@@ -27,6 +27,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "bcryptjs": "^3.0.3",
     "blogger-platform": "link:",
+    "class-transformer": "^0.5.1",
     "mongoose": "^9.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
