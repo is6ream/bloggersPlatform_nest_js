@@ -8,7 +8,9 @@ import {
 будут заданными при GET запросе за всеми пользователями
  */
 export class GetUsersQueryParams extends BaseQueryParams {
-  sortBy: SortBy.CreatedAt;
+  sortBy: SortBy = SortBy.CreatedAt;
   searchLoginTerm: string | null = null;
   searchEmailTerm: string | null = null;
+  pageNumber: number;
+  pageSize: number;
 }
