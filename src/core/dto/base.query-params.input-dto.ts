@@ -17,3 +17,9 @@ export enum SortDirection {
   Asc = 'asc',
   Desc = 'desc',
 }
+
+export enum SortBy {
+  CreatedAt = 'createdAt',
+  Login = 'login',
+  Email = 'email',
+}

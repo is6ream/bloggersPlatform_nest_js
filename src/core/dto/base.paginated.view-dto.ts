@@ -6,7 +6,7 @@
  * view models блогов и постов
  */
 export abstract class PaginatedViewDto<T> {
-  abstract items: T;
+  abstract items: T[];
   totalCount: number;
   pagesCount: number;
   page: number;
@@ -14,7 +14,7 @@ export abstract class PaginatedViewDto<T> {
 
   //статический метод-утилита для маппинга
   public static mapToView<T>(data: {
-    items: T;
+    items: T[];
     page: number;
     size: number;
     totalCount: number;

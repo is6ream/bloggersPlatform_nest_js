@@ -8,11 +8,9 @@ describe('User entity methods tests', () => {
       passwordHash: '321321321fsdfds',
       login: 'testLogin',
     });
-    
 
     console.log(User.name, 'username check');
 
     expect(user.email).toBe('test@email.com');
   });
 });
-
