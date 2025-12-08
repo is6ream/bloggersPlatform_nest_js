@@ -3,6 +3,8 @@ import { User, UserDocument, UserModelType } from '../domain/userEntity';
 import { UserViewDto } from '../api/user.view-dto';
 import { NotFoundException, Injectable } from '@nestjs/common';
 import { GetUsersQueryParams } from '../api/get-users-query-params.input.dto';
+import { UserPaginatedViewDto } from '../api/paginatied.user.view-dto';
+import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 
 @Injectable()
 export class UsersQueryRepository {
@@ -24,7 +26,9 @@ export class UsersQueryRepository {
     return UserViewDto.mapToView(user);
   }
 
-  async getAll(query: GetUsersQueryParams): Promise<UserViewDto[]> {
+  async getAll(
+    query: GetUsersQueryParams,
+  ): Promise<PaginatedViewDto<UserViewDto>> {
     const skip = query.calculateSkip();
 
     const filter: Record<string, any> = {};
@@ -38,7 +42,6 @@ export class UsersQueryRepository {
     }
 
     const [users, totalCount] = await Promise.all([
-      //возвращаются users по заданным критериям и общее количество документов
       this.UserModel.find(filter)
         .skip(skip)
         .limit(query.pageSize)
@@ -47,6 +50,13 @@ export class UsersQueryRepository {
       this.UserModel.countDocuments(filter),
     ]);
 
-    return users.map((u) => UserViewDto.mapToView(u));
+    const result = UserPaginatedViewDto.mapToView({
+      items: users.map((u) => UserViewDto.mapToView(u)),
+      page: query.pageNumber,
+      size: query.pageSize,
+      totalCount: totalCount,
+    });
+
+    return result;
   }
 }

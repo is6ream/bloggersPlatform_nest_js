@@ -5,7 +5,6 @@ export class UserViewDto {
   login: string;
   email: string;
   createdAt: Date;
-  totalCount: number;
 
   static mapToView(user: UserDocument): UserViewDto {
     const dto = new UserViewDto();
