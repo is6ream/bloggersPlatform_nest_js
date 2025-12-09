@@ -58,7 +58,7 @@ describe('UsersQueyRepository', () => {
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(10);
     expect(mockUserModel.find).toHaveBeenCalled();
-    expect(mockUserModel.countDocuments).toHaveBeenCalled(); 
+    expect(mockUserModel.countDocuments).toHaveBeenCalled();
   });
 
   it('should filter users by search term', async () => {
