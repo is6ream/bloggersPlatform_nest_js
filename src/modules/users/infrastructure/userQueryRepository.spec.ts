@@ -58,6 +58,21 @@ describe('UsersQueyRepository', () => {
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(10);
     expect(mockUserModel.find).toHaveBeenCalled();
-    expect(mockUserModel.countDocuments).toHaveBeenCalled();
+    expect(mockUserModel.countDocuments).toHaveBeenCalled(); //репозиторий работает, нужно протестить еще searchLoginTerm
+  });
+
+  it('should filter users by search term', async () => {
+    const query = new GetUsersQueryParams();
+    query.pageNumber = 1;
+    query.pageSize = 10;
+    query.searchLoginTerm = 'user';
+
+    await repository.getAll(query);
+
+    expect(mockUserModel.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: expect.objectContaining({ $regex: 'user' }),
+      }),
+    );
   });
 });
