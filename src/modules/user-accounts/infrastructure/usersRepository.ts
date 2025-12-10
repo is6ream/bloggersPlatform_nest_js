@@ -5,7 +5,7 @@ import { UserDocument } from '../domain/userEntity';
 
 @Injectable()
 export class UsersRepository {
-  constructor(@InjectModel(User.name) private UserModel: UserModelType) {}
+  constructor(@InjectModel(User.name) private UserModel: UserModelType) {} //вот с этим свойством UserModel возникает ошибка
   //Данная модель нам понадобится для использования в репо
 
   async findById(id: string): Promise<UserDocument | null> {

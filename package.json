@@ -25,6 +25,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "github:nestjs/swagger",
     "bcryptjs": "^3.0.3",
     "blogger-platform": "link:",
     "class-transformer": "^0.5.1",
