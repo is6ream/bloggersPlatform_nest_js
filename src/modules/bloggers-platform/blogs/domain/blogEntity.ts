@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { CreateBlogDto } from '../dto/createBlogDto';
 import { HydratedDocument, Model } from 'mongoose';
+import { UpdateBlogDto } from '../dto/updateBlogDto';
 
 @Schema({
   timestamps: {
@@ -28,6 +29,12 @@ export class Blog {
     blog.websiteUrl = dto.websiteUrl;
 
     return blog as BlogDocument;
+  }
+
+  updateBlog(dto: UpdateBlogDto): void {
+    this.name = dto.name;
+    this.description = dto.description;
+    this.websiteUrl = dto.websiteUrl;
   }
 
   makeDeleted() {
