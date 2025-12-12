@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { TestingModule, Test } from '@nestjs/testing';
-import { AppModule } from 'src/modules/appModule/appModule';
+import { AppModule } from 'src/modules/app-module/appModule';
 import { appSetup } from 'src/setup/app.setup';
 import { App } from 'supertest/types';
 import request from 'supertest';
@@ -29,8 +29,10 @@ describe('User CRUD (e2e)', () => {
 
   it('/users, GET', async () => {
     await createFourUsers(usersEntities, usersService);
-    return request(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .get('/hometask_13/api/users')
       .expect(200);
+
+    console.log(res); //какую-то шляпу вернул
   });
 });
