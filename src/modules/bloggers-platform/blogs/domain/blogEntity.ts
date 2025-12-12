@@ -51,4 +51,4 @@ BlogSchema.loadClass(Blog);
 
 export type BlogDocument = HydratedDocument<Blog>;
 
-export type BlogModuleType = Model<BlogDocument> & typeof Blog;
+export type BlogModelType = Model<BlogDocument> & typeof Blog;
