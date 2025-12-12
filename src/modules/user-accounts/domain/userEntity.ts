@@ -33,7 +33,7 @@ export class User {
   createdAt: Date;
   updatedAt: Date;
 
-  @Prop({ type: Date, nullable: true })
+  @Prop({ type: Date, nullable: true, default: null })
   deleteAt: Date | null;
 
   static createInstance(dto: CreateUserDto): UserDocument {
