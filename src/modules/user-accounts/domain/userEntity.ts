@@ -4,9 +4,8 @@ import {
   EmailConfirmationSchema,
   EmailConfirmation,
 } from './emailConfirmationSchema';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Model } from 'mongoose';
 import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
-import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
 @Schema({
   timestamps: {
