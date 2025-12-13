@@ -9,4 +9,12 @@ export class BlogsRepository {
   async save(blog: BlogDocument) {
     await blog.save();
   }
+
+  async findById(id: string): Promise<BlogDocument | null> {
+    const blog: BlogDocument | null = await this.BlogModel.findById(id);
+    if (!blog) {
+      return null;
+    }
+    return blog;
+  }
 }

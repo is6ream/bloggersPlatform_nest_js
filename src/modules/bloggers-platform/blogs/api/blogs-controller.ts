@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { BlogsService } from '../application/blogs-service';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
@@ -6,6 +16,7 @@ import { BlogsQueryRepository } from '../infrastructure/blogsQueryRepository';
 import { GetBlogsQueryParams } from './query/get-blogs-query-params';
 
 import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
+import { UpdateBlogDto } from '../dto/input/updateBlogDto';
 @Controller('blogs')
 export class BlogsController {
   constructor(
@@ -30,5 +41,14 @@ export class BlogsController {
   @Get(':id')
   async getById(@Param('id') id: string): Promise<BlogViewModel> {
     return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateBlog(
+    @Param('id') id: string,
+    @Body() body: UpdateBlogDto,
+  ): Promise<void> {
+    return this.blogsService.updateBlog(id, body);
   }
 }
