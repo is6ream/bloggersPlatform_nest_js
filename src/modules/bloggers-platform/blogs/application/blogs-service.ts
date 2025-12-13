@@ -26,7 +26,7 @@ export class BlogsService {
   }
 
   async updateBlog(id: string, dto: UpdateBlogDto): Promise<void> {
-    const blog: BlogDocument = this.blogsRepository.findById(id);
+    const blog: BlogDocument | null = await this.blogsRepository.findById(id);
 
     blog.updateBlog(dto);
 
