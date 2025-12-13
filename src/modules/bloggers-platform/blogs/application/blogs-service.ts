@@ -26,10 +26,12 @@ export class BlogsService {
   }
 
   async updateBlog(id: string, dto: UpdateBlogDto): Promise<void> {
-    const blog: BlogDocument | null =
+    const blog: BlogDocument =
       await this.blogsRepository.findOrNotFoundFail(id);
 
-    blog?.updateBlog(dto);
+    blog.updateBlog(dto);
+
+    await this.blogsRepository.save(blog);
 
     return;
   }
