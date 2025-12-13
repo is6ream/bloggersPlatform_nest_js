@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { CreateBlogDto } from '../dto/createBlogDto';
+import { CreateBlogDto } from '../dto/input/createBlogDto';
 import { HydratedDocument, Model } from 'mongoose';
-import { UpdateBlogDto } from '../dto/updateBlogDto';
+import { UpdateBlogDto } from '../dto/input/updateBlogDto';
 
 @Schema({
   timestamps: {
