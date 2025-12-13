@@ -1,8 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { BlogsService } from '../application/blogs-service';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
-import { BlogsQueryRepository } from '../infrastructure/blgosQueryRepository';
+import { BlogsQueryRepository } from '../infrastructure/blogsQueryRepository';
 
 @Controller('blogs')
 export class BlogsController {
@@ -10,6 +10,11 @@ export class BlogsController {
     private blogsService: BlogsService,
     private blogsQueryRepository: BlogsQueryRepository,
   ) {}
+
+  @Get()
+  async getAll(
+    @Query() query: 
+  )
 
   @Post()
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
