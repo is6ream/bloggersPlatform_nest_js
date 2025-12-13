@@ -17,5 +17,7 @@ export class BlogViewDto {
     dto.websiteUrl = blog.websiteUrl;
     dto.createdAt = blog.createdAt;
     dto.isMembership = blog.isMembership;
+
+    return dto;
   }
 }
