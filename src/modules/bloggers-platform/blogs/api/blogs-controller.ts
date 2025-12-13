@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { BlogsService } from '../application/blogs-service';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
@@ -24,6 +24,11 @@ export class BlogsController {
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
     const blogId = await this.blogsService.createBlog(body);
 
-    return this.blogsQueryRepository.getByIdOrNotFoundFail(blogId); //прописать blogsQueryRepo для возврата Вьюшки
+    return this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
+  }
+
+  @Get(':id')
+  async getById(@Param('id') id: string): Promise<BlogViewModel> {
+    return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
   }
 }
