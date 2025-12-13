@@ -22,6 +22,10 @@ export class Blog {
   @Prop({ type: Date, nullable: true, default: null })
   deleteAt: Date | null;
 
+  createdAt: Date;
+  updatedAt: Date;
+
+  @Prop({ type: Boolean, required: true, default: true })
   static createInstance(dto: CreateBlogDto) {
     const blog = new this();
     blog.name = dto.name;
