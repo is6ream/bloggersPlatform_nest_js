@@ -3,7 +3,7 @@ import {
   SortBy,
 } from 'src/core/dto/base.query-params.input-dto';
 
-export class getBlogsQueryParams extends BaseQueryParams {
+export class GetBlogsQueryParams extends BaseQueryParams {
   sortBy: SortBy = SortBy.CreatedAt;
   searchNameTerm: string | null = null;
   pageNumber: number;

@@ -3,7 +3,9 @@ import { BlogsService } from '../application/blogs-service';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
 import { BlogsQueryRepository } from '../infrastructure/blogsQueryRepository';
+import { GetBlogsQueryParams } from './query/get-blogs-query-params';
 
+import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
 @Controller('blogs')
 export class BlogsController {
   constructor(
@@ -13,8 +15,10 @@ export class BlogsController {
 
   @Get()
   async getAll(
-    @Query() query: 
-  )
+    @Query() query: GetBlogsQueryParams,
+  ): Promise<BlogPaginatedViewDto> {
+    return this.blogsQueryRepository.getAll(query);
+  }
 
   @Post()
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
