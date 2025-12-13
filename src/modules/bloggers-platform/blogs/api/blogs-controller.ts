@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -50,5 +51,11 @@ export class BlogsController {
     @Body() body: UpdateBlogDto,
   ): Promise<void> {
     return this.blogsService.updateBlog(id, body);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteBlog(@Param('id') id: string): Promise<void>{
+    return this.blogsService
   }
 }
