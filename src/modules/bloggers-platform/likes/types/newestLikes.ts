@@ -1,4 +1,4 @@
-export class NewestLikes {
+export interface NewestLikes {
   addedAt: Date;
   userId: string;
   login: string;

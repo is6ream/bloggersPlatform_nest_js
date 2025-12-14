@@ -4,10 +4,14 @@ import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
 
 @Controller('posts')
 export class PostsController {
-  constructor(){}
+  constructor(
+    private postQueryRepository: 
+  ){}
 
   @Get()
   async getAll(
     @Query() query: GetPostsQueryParams,
-  ): Promise<PostPaginatedViewDto>
+  ): Promise<PostPaginatedViewDto> {
+    return this.
+  }
 }
