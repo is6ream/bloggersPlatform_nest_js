@@ -55,7 +55,7 @@ export class BlogsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteBlog(@Param('id') id: string): Promise<void>{
-    return this.blogsService
+  async deleteBlog(@Param('id') id: string): Promise<void> {
+    return this.blogsService.deleteBlog(id);
   }
 }
