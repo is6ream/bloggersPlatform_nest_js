@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Post, Query } from '@nestjs/common';
 import { GetPostsQueryParams } from './query/get-posts-query-params';
 import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
 
@@ -14,4 +14,7 @@ export class PostsController {
   ): Promise<PostPaginatedViewDto> {
     return this.postQueryRepository.getAll(query)
   }
+
+  @Post()
+  async createPost(@Body() body: )
 }
