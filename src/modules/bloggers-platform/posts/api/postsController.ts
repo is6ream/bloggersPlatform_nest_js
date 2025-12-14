@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
 import { GetPostsQueryParams } from './query/get-posts-query-params';
 import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
+import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 
 @Controller('posts')
 export class PostsController {
@@ -16,5 +17,5 @@ export class PostsController {
   }
 
   @Post()
-  async createPost(@Body() body: )
+  async createPost(@Body() body: CreatePostInputDto): Promise<>
 }
