@@ -2,11 +2,14 @@ import { Controller, Get, Post, Query } from '@nestjs/common';
 import { GetPostsQueryParams } from './query/get-posts-query-params';
 import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
+import { PostViewModel } from './model/postViewModel';
+import { PostQueryRepository } from '../infrastructure/postQueryRepository';
 
 @Controller('posts')
 export class PostsController {
   constructor(
-    private postQueryRepository: 
+    private postQueryRepository: PostQueryRepository,
+    private postsService: 
   ){}
 
   @Get()
@@ -17,5 +20,7 @@ export class PostsController {
   }
 
   @Post()
-  async createPost(@Body() body: CreatePostInputDto): Promise<>
+  async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
+    const postId = await this postsService
+  }
 }
