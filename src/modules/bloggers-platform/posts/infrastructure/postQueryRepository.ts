@@ -31,7 +31,12 @@ export class PostQueryRepository {
     ]);
 
     const result = PostPaginatedViewDto.mapToView({
-        items: posts.map((p) => PostViewDto)
-    })
+      items: posts.map((p) => PostViewDto.mapToView(p)),
+      page: query.pageNumber,
+      size: query.pageSize,
+      totalCount: totalCount,
+    });
+
+    return result;
   }
 }

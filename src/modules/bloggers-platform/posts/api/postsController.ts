@@ -12,6 +12,6 @@ export class PostsController {
   async getAll(
     @Query() query: GetPostsQueryParams,
   ): Promise<PostPaginatedViewDto> {
-    return this.
+    return this.postQueryRepository.getAll(query)
   }
 }
