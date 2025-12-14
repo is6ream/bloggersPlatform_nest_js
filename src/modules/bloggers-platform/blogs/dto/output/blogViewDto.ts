@@ -6,7 +6,7 @@ export class BlogViewDto {
   description: string;
   websiteUrl: string;
   createdAt: Date;
-  isMembership: boolean; //узнать для чего нужно это поле
+  isMembership: boolean;
 
   static mapToView(blog: BlogDocument): BlogViewDto {
     const dto = new this();
