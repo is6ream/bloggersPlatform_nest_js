@@ -54,7 +54,9 @@ export class BlogsController {
     @Param('id') id: string,
     @Body() body: CreatePostInputDto,
   ): Promise<PostViewModel> {
-    return this.postsService.
+    const postId = await this.postsService.createPostForSpecificBlog(id, body);
+
+    return await this.postsQueryRepository.getByIdOrNotFoundFail(postId);
   }
 
   @Post()
