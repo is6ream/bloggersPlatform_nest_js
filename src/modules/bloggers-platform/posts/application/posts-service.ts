@@ -34,6 +34,13 @@ export class PostsService {
     return post._id.toString();
   }
 
+  async createPostForSpecificBlog(
+    id: string,
+    dto: CreatePostInputDto,
+  ): Promise<string> {
+
+  }
+
   async updatePost(id: string, dto: UpdatePostDto): Promise<void> {
     const post: PostDocument = await this.postRepository.findOrNotFoundFail(id);
     await this.blogsRepository.checkBlogExist(dto.blogId);
