@@ -1,5 +1,5 @@
-import { NewestLikes } from '../../likes/types/newestLikes';
-import { PostDocument } from '../domain/postEntity';
+import { NewestLikes } from 'src/modules/bloggers-platform/likes/types/newestLikes';
+import { PostDocument } from '../../domain/postEntity';
 
 export class PostViewDto {
   id: string;

@@ -3,7 +3,7 @@ import { NewestLikes } from 'src/modules/bloggers-platform/likes/types/newestLik
 export class PostViewModel {
   id: string;
   title: string;
-  shortDescriprion: string;
+  shortDescription: string;
   content: string;
   blogId: string;
   blogName: string;

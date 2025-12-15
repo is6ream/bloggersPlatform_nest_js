@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post } from '@nestjs/common';
-import { PostModelType } from '../domain/postEntity';
+import { PostDocument, PostModelType } from '../domain/postEntity';
 import { GetPostsQueryParams } from '../api/query/get-posts-query-params';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
-import { PostViewDto } from '../dto/postViewDto';
 import { PostPaginatedViewDto } from '../api/paginated/paginated.post.view-dto';
+import { PostViewDto } from '../dto/output/postViewDto';
 
 @Injectable()
 export class PostQueryRepository {
@@ -13,6 +13,19 @@ export class PostQueryRepository {
     @InjectModel(Post.name)
     private PostModel: PostModelType,
   ) {}
+
+  async getByIdOrNotFoundFail(id: string): Promise<PostViewDto> {
+    const post: PostDocument | null = await this.PostModel.findOne({
+      _id: id,
+      deleteAt: null,
+    });
+
+    if (!post) {
+      throw new NotFoundException('post not found');
+    }
+
+    return PostViewDto.mapToView(post);
+  }
 
   async getAll(
     query: GetPostsQueryParams,
