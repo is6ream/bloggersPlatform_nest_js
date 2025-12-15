@@ -3,6 +3,7 @@ import { CreatePostDto } from './dto/createPostDto';
 import { HydratedDocument } from 'mongoose';
 import { Model } from 'mongoose';
 import { UpdatePostDto } from './dto/updatePostDto';
+
 @Schema({
   timestamps: {
     createdAt: 'createdAt',

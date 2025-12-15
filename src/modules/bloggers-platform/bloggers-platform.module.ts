@@ -9,12 +9,16 @@ import { BlogsService } from './blogs/application/blogs-service';
 import { PostQueryRepository } from './posts/infrastructure/postQueryRepository';
 import { PostRepository } from './posts/infrastructure/postRepository';
 import { PostsService } from './posts/application/posts-service';
+import { PostsController } from './posts/api/postsController';
+import { PostSchema } from './posts/domain/postEntity';
+import { Post } from './posts/domain/postEntity';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
+    MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
   ],
-  controllers: [BlogsController],
+  controllers: [BlogsController, PostsController],
   providers: [
     BlogsQueryRepository,
     BlogsRepository,
