@@ -7,6 +7,7 @@ import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
 import { PostRepository } from '../infrastructure/postRepository';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 import { UpdatePostDto } from '../domain/dto/updatePostDto';
+import { CreatePostForBlogInputDto } from '../../blogs/dto/input/createPostForBlogInputDto';
 
 @Injectable()
 export class PostsService {
@@ -35,10 +36,23 @@ export class PostsService {
   }
 
   async createPostForSpecificBlog(
-    id: string,
-    dto: CreatePostInputDto,
+    blogId: string,
+    dto: CreatePostForBlogInputDto,
   ): Promise<string> {
+    const blog: BlogDocument =
+      await this.blogsRepository.findOrNotFoundFail(blogId);
 
+    const post: PostDocument = this.PostModel.createInstance({
+      title: dto.title,
+      shortDescription: dto.shortDescription,
+      content: dto.content,
+      blogId: blogId,
+      blogName: blog.name,
+    });
+
+    await this.postRepository.save(post);
+
+    return post._id.toString();
   }
 
   async updatePost(id: string, dto: UpdatePostDto): Promise<void> {
