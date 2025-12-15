@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Body } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Param } from '@nestjs/common';
 import { GetPostsQueryParams } from './query/get-posts-query-params';
 import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
@@ -25,5 +25,10 @@ export class PostsController {
     const postId = await this.postsService.createPost(body);
 
     return this.postQueryRepository.getByIdOrNotFoundFail(postId); //прописать метод findById
+  }
+
+  @Get(':id')
+  async getById(@Param('id') id: string): Promise<PostViewModel> {
+    return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
 }
