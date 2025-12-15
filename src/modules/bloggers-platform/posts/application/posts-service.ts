@@ -6,6 +6,8 @@ import { BlogDocument } from '../../blogs/domain/blogEntity';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
 import { PostRepository } from '../infrastructure/postRepository';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
+import { UpdatePostDto } from '../domain/dto/updatePostDto';
+
 @Injectable()
 export class PostsService {
   constructor(
@@ -30,5 +32,15 @@ export class PostsService {
     await this.postRepository.save(post);
 
     return post._id.toString();
+  }
+
+  async updatePost(id: string, dto: UpdatePostDto): Promise<void> {
+    const post: PostDocument = await this.postRepository.findOrNotFoundFail(id);
+    await this.blogsRepository.checkBlogExist(dto.blogId);
+
+    post.updatePost(dto);
+
+    await this.postRepository.save(post);
+    return;
   }
 }

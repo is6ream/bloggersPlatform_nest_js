@@ -24,4 +24,11 @@ export class BlogsRepository {
     }
     return blog;
   }
+
+  async checkBlogExist(id: string): Promise<void> {
+    const blog = await this.findById(id);
+    if (!blog) {
+      throw new NotFoundException(`blog with id: ${id} not found`);
+    }
+  }
 }
