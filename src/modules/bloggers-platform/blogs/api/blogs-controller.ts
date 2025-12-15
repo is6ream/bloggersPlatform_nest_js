@@ -18,11 +18,16 @@ import { GetBlogsQueryParams } from './query/get-blogs-query-params';
 
 import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
+import { PostPaginatedViewDto } from '../../posts/api/paginated/paginated.post.view-dto';
+import { PostQueryRepository } from '../../posts/infrastructure/postQueryRepository';
+import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
+
 @Controller('blogs')
 export class BlogsController {
   constructor(
     private blogsService: BlogsService,
     private blogsQueryRepository: BlogsQueryRepository,
+    private postsQueryRepository: PostQueryRepository,
   ) {}
 
   @Get()
@@ -30,6 +35,14 @@ export class BlogsController {
     @Query() query: GetBlogsQueryParams,
   ): Promise<BlogPaginatedViewDto> {
     return this.blogsQueryRepository.getAll(query);
+  }
+
+  @Get(':id/posts')
+  async getAllPostsForBlog(
+    @Param('id') id: string,
+    @Query() query: GetPostsQueryParams,
+  ): Promise<PostPaginatedViewDto> {
+    return this.postsQueryRepository. //прописать метод getAllPosts
   }
 
   @Post()

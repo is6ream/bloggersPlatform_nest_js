@@ -6,12 +6,14 @@ import { GetPostsQueryParams } from '../api/query/get-posts-query-params';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { PostPaginatedViewDto } from '../api/paginated/paginated.post.view-dto';
 import { PostViewDto } from '../dto/output/postViewDto';
+import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
 
 @Injectable()
 export class PostQueryRepository {
   constructor(
     @InjectModel(Post.name)
     private PostModel: PostModelType,
+    private blogsRepository: BlogsRepository,
   ) {}
 
   async getByIdOrNotFoundFail(id: string): Promise<PostViewDto> {
@@ -33,6 +35,37 @@ export class PostQueryRepository {
     const skip = query.calculateSkip();
 
     const filter: Record<string, any> = {};
+
+    const [posts, totalCount] = await Promise.all([
+      this.PostModel.find(filter)
+        .skip(skip)
+        .limit(query.pageSize)
+        .sort({ createdAt: query.sortDirection }),
+
+      this.PostModel.countDocuments(filter),
+    ]);
+
+    const result = PostPaginatedViewDto.mapToView({
+      items: posts.map((p) => PostViewDto.mapToView(p)),
+      page: query.pageNumber,
+      size: query.pageSize,
+      totalCount: totalCount,
+    });
+
+    return result;
+  }
+
+  async getAllPostsForBlog(
+    id: string,
+    query: GetPostsQueryParams,
+  ): Promise<PaginatedViewDto<PostViewDto>> {
+    const skip = query.calculateSkip();
+
+    await this.blogsRepository.checkBlogExist(id);
+
+    const filter: Record<string, string> = {
+      blogId: id,
+    };
 
     const [posts, totalCount] = await Promise.all([
       this.PostModel.find(filter)

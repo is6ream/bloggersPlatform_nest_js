@@ -36,7 +36,7 @@ export class PostsController {
   async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
     const postId = await this.postsService.createPost(body);
 
-    return this.postQueryRepository.getByIdOrNotFoundFail(postId); //прописать метод findById
+    return this.postQueryRepository.getByIdOrNotFoundFail(postId);
   }
 
   @Get(':id')
@@ -56,6 +56,6 @@ export class PostsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(@Param('id') id: string): Promise<void> {
-    return this.postsService.
+    return this.postsService.deletePost(id);
   }
 }
