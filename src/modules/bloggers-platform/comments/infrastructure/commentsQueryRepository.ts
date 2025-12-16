@@ -5,6 +5,7 @@ import { GetCommentsQueryParams } from '../../posts/api/query/qet-comments-query
 import { CommentViewDto } from '../dto/commentViewDto';
 import { PostRepository } from '../../posts/infrastructure/postRepository';
 import { CommentPaginatedViewDto } from '../../posts/api/paginated/paginated.comment.view-dto';
+import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 
 @Injectable()
 export class CommentsQueryRepository {
@@ -17,7 +18,7 @@ export class CommentsQueryRepository {
   async getCommentByPostId(
     postId: string,
     query: GetCommentsQueryParams,
-  ): Promise<CommentViewDto> {
+  ): Promise<PaginatedViewDto<CommentViewDto>> {  //посмотреть что здесь будет возвращаться 
     const skip = query.calculateSkip();
 
     await this.postsRepository.checkPostExist(postId);
@@ -33,13 +34,14 @@ export class CommentsQueryRepository {
       this.CommentModel.countDocuments(filter),
     ]);
 
-    const result = CommentPaginatedViewDto.mapToView({
-      items: comments.map((c) => CommentViewDto.mapToView(c)),
-      page: query.pageNumber,
-      size: query.pageSize,
-      totalCount: totalCount,
-    });
+    const result: PaginatedViewDto<CommentViewDto> =
+      CommentPaginatedViewDto.mapToView({
+        items: comments.map((c) => CommentViewDto.mapToView(c)),
+        page: query.pageNumber,
+        size: query.pageSize,
+        totalCount: totalCount,
+      });
 
-    return result;
+    return result; //вот с этим багом нужно разобраться
   }
 }
