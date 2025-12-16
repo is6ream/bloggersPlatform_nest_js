@@ -4,6 +4,7 @@ import { Comment, CommentModelType } from '../domain/commentEntity';
 import { GetCommentsQueryParams } from '../../posts/api/query/qet-comments-query-params';
 import { CommentViewDto } from '../dto/commentViewDto';
 import { PostRepository } from '../../posts/infrastructure/postRepository';
+import { CommentPaginatedViewDto } from '../../posts/api/paginated/paginated.comment.view-dto';
 
 @Injectable()
 export class CommentsQueryRepository {
@@ -32,7 +33,13 @@ export class CommentsQueryRepository {
       this.CommentModel.countDocuments(filter),
     ]);
 
-    const result = CommentP
+    const result = CommentPaginatedViewDto.mapToView({
+      items: comments.map((c) => CommentViewDto.mapToView(c)),
+      page: query.pageNumber,
+      size: query.pageSize,
+      totalCount: totalCount,
+    });
+
+    return result;
   }
 }
-ё;
