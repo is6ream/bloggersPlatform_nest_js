@@ -1,5 +1,6 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 import { CommentatorInfo } from './schemas/commentatorInfoSchema';
+import { LikesInfo } from './schemas/likesInfoSchema';
 
 @Schema({
   timestamps: {
@@ -7,7 +8,6 @@ import { CommentatorInfo } from './schemas/commentatorInfoSchema';
     updatedAt: false,
   },
 })
-//начал описывать доменную модель комментария
 export class Comment {
   @Prop({ type: String, required: true })
   content: string;
@@ -16,7 +16,10 @@ export class Comment {
   commentatorInfo: CommentatorInfo;
 
   @Prop({ type: Date, nullable: true, default: null })
+  deleteAt: Date;
+
   createdAt: Date;
 
-  @Prop
+  @Prop({ type: LikesInfo, required: true })
+  likesInfo: LikesInfo;
 }

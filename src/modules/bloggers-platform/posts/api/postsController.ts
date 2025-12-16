@@ -25,6 +25,13 @@ export class PostsController {
     private postsService: PostsService,
   ) {}
 
+  @Get(':id')
+  async getCommentByPostId(
+    @Param('id') postId: string,
+  ): Promise<CommentViewModel> {
+    
+  }
+
   @Get()
   async getAll(
     @Query() query: GetPostsQueryParams,
