@@ -18,7 +18,7 @@ export class CommentsQueryRepository {
   async getCommentByPostId(
     postId: string,
     query: GetCommentsQueryParams,
-  ): Promise<PaginatedViewDto<CommentViewDto>> {  //посмотреть что здесь будет возвращаться 
+  ): Promise<PaginatedViewDto<CommentViewDto>> {
     const skip = query.calculateSkip();
 
     await this.postsRepository.checkPostExist(postId);
@@ -42,6 +42,6 @@ export class CommentsQueryRepository {
         totalCount: totalCount,
       });
 
-    return result; //вот с этим багом нужно разобраться
+    return result;
   }
 }

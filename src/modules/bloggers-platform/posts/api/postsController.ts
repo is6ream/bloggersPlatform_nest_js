@@ -1,3 +1,4 @@
+import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import {
   Controller,
   Get,
@@ -18,19 +19,23 @@ import { PostQueryRepository } from '../infrastructure/postQueryRepository';
 import { PostsService } from '../application/posts-service';
 import { UpdatePostInputDto } from '../dto/input/updatePostInputDto';
 import { CommentViewModel } from './model/commentViewModel';
+import { CommentsQueryRepository } from '../../comments/infrastructure/commentsQueryRepository';
+import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 
 @Controller('posts')
 export class PostsController {
   constructor(
     private postQueryRepository: PostQueryRepository,
+    private commentsQueryRepository: CommentsQueryRepository,
     private postsService: PostsService,
   ) {}
 
   @Get(':id')
   async getCommentByPostId(
     @Param('id') postId: string,
-  ): Promise<CommentViewModel> {
-    
+    @Query() query: GetCommentsQueryParams,
+  ): Promise<PaginatedViewDto<CommentViewModel>> {
+    return this.commentsQueryRepository.getCommentByPostId(postId, query);
   }
 
   @Get()
