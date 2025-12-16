@@ -15,6 +15,8 @@ export class CommentsQueryRepository {
     postId: string,
     query: GetCommentsQueryParams,
   ): Promise<CommentViewDto>{
-    
+    const skip = query.calculateSkip();
+
+    await this
   };
 }

@@ -24,4 +24,11 @@ export class PostRepository {
     }
     return post;
   }
+
+  async checkPostExist(id: string): Promise<void> {
+    const post = await this.findById(id);
+    if (!post) {
+      throw new NotFoundException(`post with id: ${id} not found `);
+    }
+  }
 }
