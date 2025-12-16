@@ -17,6 +17,7 @@ import { PostViewModel } from './model/postViewModel';
 import { PostQueryRepository } from '../infrastructure/postQueryRepository';
 import { PostsService } from '../application/posts-service';
 import { UpdatePostInputDto } from '../dto/input/updatePostInputDto';
+import { CommentViewModel } from './model/commentViewModel';
 
 @Controller('posts')
 export class PostsController {

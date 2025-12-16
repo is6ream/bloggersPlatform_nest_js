@@ -1,6 +1,7 @@
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { CommentatorInfo } from './schemas/commentatorInfoSchema';
 import { LikesInfo } from './schemas/likesInfoSchema';
+import { HydratedDocument, Model } from 'mongoose';
 
 @Schema({
   timestamps: {
@@ -22,4 +23,13 @@ export class Comment {
 
   @Prop({ type: LikesInfo, required: true })
   likesInfo: LikesInfo;
+
 }
+
+export const CommentsSchema = SchemaFactory.createForClass(Comment);\
+
+CommentsSchema.loadClass(Comment);
+
+export type CommentDocument = HydratedDocument<Comment>;
+
+export type CommentModelType = Model<CommentDocument> & typeof Comment
