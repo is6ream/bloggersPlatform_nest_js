@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Comment, CommentModelType } from '../domain/commentEntity';
+import {
+  Comment,
+  CommentDocument,
+  CommentModelType,
+} from '../domain/commentEntity';
 import { GetCommentsQueryParams } from '../../posts/api/query/qet-comments-query-params';
 import { CommentViewDto } from '../dto/commentViewDto';
 import { PostRepository } from '../../posts/infrastructure/postRepository';
@@ -14,6 +18,18 @@ export class CommentsQueryRepository {
     private CommentModel: CommentModelType,
     private postsRepository: PostRepository,
   ) {}
+
+  async getByIdOrNotFoundFail(id: string): Promise<CommentViewDto> {
+    const comment: CommentDocument | null = await this.CommentModel.findOne({
+      _id: id,
+      deleteAt: null,
+    });
+
+    if (!comment) {
+      throw new NotFoundException('comment not found');
+    }
+    return CommentViewDto.mapToView(comment);
+  }
 
   async getCommentByPostId(
     postId: string,
