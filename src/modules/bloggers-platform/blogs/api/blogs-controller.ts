@@ -15,7 +15,6 @@ import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
 import { BlogsQueryRepository } from '../infrastructure/blogsQueryRepository';
 import { GetBlogsQueryParams } from './query/get-blogs-query-params';
-
 import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
 import { PostPaginatedViewDto } from '../../posts/api/paginated/paginated.post.view-dto';
@@ -66,7 +65,7 @@ export class BlogsController {
     return this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
   }
 
-  @Get(':id')
+  @Get(':id') //декоратор API-response
   async getById(@Param('id') id: string): Promise<BlogViewModel> {
     return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
   }

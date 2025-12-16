@@ -30,7 +30,7 @@ export class PostsController {
     private postsService: PostsService,
   ) {}
 
-  @Get(':id')
+  @Get(':id/comments')
   async getCommentByPostId(
     @Param('id') postId: string,
     @Query() query: GetCommentsQueryParams,
@@ -54,6 +54,7 @@ export class PostsController {
 
   @Get(':id')
   async getById(@Param('id') id: string): Promise<PostViewModel> {
+    console.log('req check');
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
 

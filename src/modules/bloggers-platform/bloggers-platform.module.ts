@@ -14,6 +14,7 @@ import { PostSchema } from './posts/domain/postEntity';
 import { Post } from './posts/domain/postEntity';
 import { CommentsQueryRepository } from './comments/infrastructure/commentsQueryRepository';
 import { Comment, CommentsSchema } from './comments/domain/commentEntity';
+import { CommentsController } from './comments/api/commentsController';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { Comment, CommentsSchema } from './comments/domain/commentEntity';
     MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentsSchema }]),
   ],
-  controllers: [BlogsController, PostsController],
+  controllers: [BlogsController, PostsController, CommentsController],
   providers: [
     BlogsQueryRepository,
     BlogsRepository,
