@@ -42,7 +42,7 @@ export class PostQueryRepository {
       this.PostModel.find(filter)
         .skip(skip)
         .limit(query.pageSize)
-        .sort({ createdAt: query.sortDirection }),
+        .sort({ [query.sortBy]: query.sortDirection }),
 
       this.PostModel.countDocuments(filter),
     ]);
