@@ -19,9 +19,10 @@ export class UsersRepository {
   }
 
   async findOrNotFoundFail(id: string): Promise<UserDocument> {
+    console.log(id, 'id check');
     const user = await this.findById(id);
     if (!user) {
-      throw new NotFoundException('blog not found');
+      throw new NotFoundException('user not found');
     }
     return user;
   }

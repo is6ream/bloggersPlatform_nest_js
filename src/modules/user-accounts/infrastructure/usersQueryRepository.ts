@@ -31,7 +31,11 @@ export class UsersQueryRepository {
   ): Promise<PaginatedViewDto<UserViewDto>> {
     const skip = query.calculateSkip();
 
-    const filter: Record<string, any> = {};
+    const filter: Record<string, any> = {
+      deleteAt: null,
+    };
+
+    console.log(filter);
 
     if (query.searchEmailTerm) {
       filter['login'] = { $regex: query.searchEmailTerm, $options: 'i' };
@@ -40,12 +44,11 @@ export class UsersQueryRepository {
     if (query.searchLoginTerm) {
       filter['email'] = { $regex: query.searchLoginTerm, $options: 'i' };
     }
-
     const [users, totalCount] = await Promise.all([
       this.UserModel.find(filter)
         .skip(skip)
         .limit(query.pageSize)
-        .sort({ createdAt: query.sortDirection }),
+        .sort({ [query.sortBy]: query.sortDirection }),
 
       this.UserModel.countDocuments(filter),
     ]);

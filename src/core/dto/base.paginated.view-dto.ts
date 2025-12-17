@@ -3,11 +3,11 @@
  * можем передавать любые типы данных (items блогов или постов)
  */
 export abstract class PaginatedViewDto<T> {
-  abstract items: T[];
-  totalCount: number;
   pagesCount: number;
   page: number;
   pageSize: number;
+  totalCount: number;
+  abstract items: T[];
 
   //статический метод-утилита для маппинга
   public static mapToView<T>(data: {
