@@ -41,8 +41,7 @@ export class BlogsQueryRepository {
       this.BlogModel.find(filter)
         .skip(skip)
         .limit(query.pageSize)
-        .sort({ createdAt: query.sortDirection })
-        .collation({ locale: 'en', strength: 2 }),
+        .sort({ [query.sortBy]: query.sortDirection }),
 
       this.BlogModel.countDocuments(filter),
     ]);

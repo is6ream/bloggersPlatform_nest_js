@@ -35,15 +35,26 @@ export class UsersQueryRepository {
       deleteAt: null,
     };
 
-    console.log(filter);
+    const orConditions = [];
 
     if (query.searchEmailTerm) {
-      filter['login'] = { $regex: query.searchEmailTerm, $options: 'i' };
+      orConditions.push({
+        email: { $regex: query.searchEmailTerm, $options: 'i' },
+      });
     }
 
     if (query.searchLoginTerm) {
-      filter['email'] = { $regex: query.searchLoginTerm, $options: 'i' };
+      orConditions.push({
+        login: { $regex: query.searchLoginTerm, $options: 'i' },
+      });
     }
+
+    if (orConditions.length > 0) {
+      filter.$or = orConditions;
+    }
+
+    console.log(filter, 'users filter check');
+
     const [users, totalCount] = await Promise.all([
       this.UserModel.find(filter)
         .skip(skip)
