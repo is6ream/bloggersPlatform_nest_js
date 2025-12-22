@@ -53,8 +53,6 @@ export class UsersQueryRepository {
       filter.$or = orConditions;
     }
 
-    console.log(filter, 'users filter check');
-
     const [users, totalCount] = await Promise.all([
       this.UserModel.find(filter)
         .skip(skip)
