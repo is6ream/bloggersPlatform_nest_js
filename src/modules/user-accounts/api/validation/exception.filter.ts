@@ -21,9 +21,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const responseBody: any = exception.getResponse();
 
       //@ts-ignore
-      responseBody.message.forEach((m) =>
-        errorResponse.errorMessages.push({ message: m, field: 'x' }),
-      );
+      responseBody.message.forEach((m) => {
+        errorResponse.errorMessages.push(m);
+      });
 
       response.status(status).json(errorResponse);
     } else {
