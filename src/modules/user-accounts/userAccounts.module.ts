@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './api/user-controller';
-import { UsersQueryRepository } from './infrastructure/usersQueryRepository';
+import { UsersQueryRepository } from './infrastructure/users/usersQueryRepository';
 import { UsersService } from './application/user-service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './domain/userEntity';
-import { UsersRepository } from './infrastructure/usersRepository';
+import { UsersRepository } from './infrastructure/users/usersRepository';
 import { BcryptService } from './application/bcrypt-service';
 
 @Module({

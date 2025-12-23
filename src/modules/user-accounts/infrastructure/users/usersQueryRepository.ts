@@ -1,9 +1,9 @@
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument, UserModelType } from '../domain/userEntity';
+import { User, UserDocument, UserModelType } from '../../domain/userEntity';
 import { UserViewDto } from '../api/user.view-dto';
 import { NotFoundException, Injectable } from '@nestjs/common';
-import { GetUsersQueryParams } from '../api/dto/get-users-query-params.input.dto';
-import { UserPaginatedViewDto } from '../api/dto/paginatied.user.view-dto';
+import { GetUsersQueryParams } from '../../api/dto/get-users-query-params.input.dto';
+import { UserPaginatedViewDto } from '../../api/dto/paginatied.user.view-dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 
 @Injectable()

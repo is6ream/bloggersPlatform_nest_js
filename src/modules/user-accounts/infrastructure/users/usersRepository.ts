@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserModelType } from '../domain/userEntity';
-import { UserDocument } from '../domain/userEntity';
+import { User, UserModelType } from '../../domain/userEntity';
+import { UserDocument } from '../../domain/userEntity';
 
 @Injectable()
 export class UsersRepository {

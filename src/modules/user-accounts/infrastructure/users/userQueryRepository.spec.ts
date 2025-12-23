@@ -1,7 +1,7 @@
 import { TestingModule, Test } from '@nestjs/testing';
-import { UsersQueryRepository } from './usersQueryRepository';
+import { UsersQueryRepository } from '../usersQueryRepository';
 import { getModelToken } from '@nestjs/mongoose';
-import { User } from '../domain/userEntity';
+import { User } from '../../domain/userEntity';
 import { GetUsersQueryParams } from '../api/get-users-query-params.input.dto';
 
 describe('UsersQueyRepository', () => {

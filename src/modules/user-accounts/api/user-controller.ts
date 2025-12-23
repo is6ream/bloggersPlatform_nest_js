@@ -9,7 +9,7 @@ import {
   Body,
   Query,
 } from '@nestjs/common';
-import { UsersQueryRepository } from '../infrastructure/usersQueryRepository';
+import { UsersQueryRepository } from '../infrastructure/users/usersQueryRepository';
 import { UsersService } from '../application/user-service';
 import { UserViewModel } from '../types/output/userViewModel';
 import { CreateUserInputDto } from './validation/createUserInputDto';
