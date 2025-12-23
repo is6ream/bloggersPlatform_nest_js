@@ -23,7 +23,6 @@ export class Comment {
 
   @Prop({ type: LikesInfo, required: true })
   likesInfo: LikesInfo;
-
 }
 
 export const CommentsSchema = SchemaFactory.createForClass(Comment);
