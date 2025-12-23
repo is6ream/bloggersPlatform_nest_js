@@ -47,4 +47,12 @@ export class UsersService {
 
     await this.usersRepository.save(user);
   }
+
+  async registerUser(dto: CreateUserDto) {
+    const createdUserId = await this.createUser(dto);
+
+    const user = await this.usersRepository.findOrNotFoundFail(createdUserId);
+
+    user.set;
+  }
 }

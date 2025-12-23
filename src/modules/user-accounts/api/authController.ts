@@ -1,7 +1,8 @@
 import { UsersService } from '../application/user-service';
 import { AuthService } from '../application/auth-service';
 import { AuthQueryRepository } from '../infrastructure/auth/authQueryRepository';
-import { Controller } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
+import { CreateUserInputDto } from './validation/createUserInputDto';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -9,4 +10,9 @@ export class AuthController {
     private authService: AuthService,
     private authQueryRepository: AuthQueryRepository,
   ) {}
+
+  @Post('registration')
+  registration(@Body() body: CreateUserInputDto): Promise<void> {
+    return this.usersService.registerUser(body);
+  }
 }

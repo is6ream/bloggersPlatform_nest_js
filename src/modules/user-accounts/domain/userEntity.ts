@@ -50,6 +50,7 @@ export class User {
     return user as UserDocument;
   }
 
+  createInstanceBySuperAdmin;
   makeDeleted() {
     if (this.deleteAt !== null) {
       throw new Error('Entity already deleted');
@@ -63,6 +64,10 @@ export class User {
       this.emailConfirmation.isConfirmed = false;
     }
     this.email = dto.email;
+  }
+
+  setConfirmCode() {
+    this.emailConfirmation;
   }
 }
 //Создаем схему на основе класса
