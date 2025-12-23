@@ -13,10 +13,9 @@ import { UsersQueryRepository } from '../infrastructure/usersQueryRepository';
 import { UsersService } from '../application/user-service';
 import { UserViewModel } from '../types/output/userViewModel';
 import { CreateUserInputDto } from './validation/createUserInputDto';
-import { GetUsersQueryParams } from './get-users-query-params.input.dto';
+import { GetUsersQueryParams } from './dto/get-users-query-params.input.dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
-import { UserViewDto } from './user.view-dto';
-
+import { UserViewDto } from './dto/user.view-dto';
 @Controller('users')
 export class UserController {
   constructor(
