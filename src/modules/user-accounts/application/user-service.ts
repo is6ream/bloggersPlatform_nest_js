@@ -17,6 +17,11 @@ export class UsersService {
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<string> {
+    const userWithSameLogin = await this.usersRepository.findByLogin(dto.login);
+
+    if (!!userWithSamoLogin) {
+    }
+
     const passwordHash = await this.bcryptService.generateHash(dto.password);
 
     const user: UserDocument = this.UserModel.createInstance({

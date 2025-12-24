@@ -26,4 +26,11 @@ export class UsersRepository {
     }
     return user;
   }
+
+  async findByLogin(login: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      login,
+      deleteAt: null,
+    });
+  }
 }
