@@ -6,6 +6,8 @@ import { UserModelType } from '../domain/userEntity';
 import { UserDocument } from '../domain/userEntity';
 import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
 import { BcryptService } from './bcrypt-service';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
 @Injectable()
 export class UsersService {
@@ -19,7 +21,11 @@ export class UsersService {
   async createUser(dto: CreateUserDto): Promise<string> {
     const userWithSameLogin = await this.usersRepository.findByLogin(dto.login);
 
-    if (!!userWithSamoLogin) {
+    if (userWithSameLogin) {
+      throw new DomainException({
+        code: DomainExceptionCode.BadRequest,
+        message: 'user with such login already exists',
+      });
     }
 
     const passwordHash = await this.bcryptService.generateHash(dto.password);
