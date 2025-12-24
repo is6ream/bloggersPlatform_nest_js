@@ -3,6 +3,7 @@ import { AuthService } from '../application/auth-service';
 import { AuthQueryRepository } from '../infrastructure/auth/authQueryRepository';
 import { Controller, Post } from '@nestjs/common';
 import { CreateUserInputDto } from './validation/createUserInputDto';
+import { Body } from '@nestjs/common';
 @Controller('auth')
 export class AuthController {
   constructor(

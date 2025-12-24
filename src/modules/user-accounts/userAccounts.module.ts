@@ -6,12 +6,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './domain/userEntity';
 import { UsersRepository } from './infrastructure/users/usersRepository';
 import { BcryptService } from './application/bcrypt-service';
+import { AuthController } from './api/authController';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]), //forFeature позволяет ижектировать UserModel в провайдеры
   ],
-  controllers: [UserController],
+  controllers: [UserController, AuthController],
   providers: [
     UsersQueryRepository,
     UsersRepository,

@@ -1,5 +1,4 @@
-import { UserDocument } from '../domain/userEntity';
-
+import { UserDocument } from 'src/modules/user-accounts/domain/userEntity';
 export class UserViewDto {
   id: string;
   login: string;

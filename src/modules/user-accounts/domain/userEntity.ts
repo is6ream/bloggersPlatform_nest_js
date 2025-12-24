@@ -50,7 +50,6 @@ export class User {
     return user as UserDocument;
   }
 
-  createInstanceBySuperAdmin;
   makeDeleted() {
     if (this.deleteAt !== null) {
       throw new Error('Entity already deleted');
