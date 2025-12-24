@@ -8,6 +8,7 @@ import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
 import { BcryptService } from './bcrypt-service';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
+import { EmailService } from 'src/modules/notifications/email-service';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +17,7 @@ export class UsersService {
     private UserModel: UserModelType,
     private usersRepository: UsersRepository,
     private bcryptService: BcryptService,
+    private emailService: EmailService,
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<string> {
@@ -64,6 +66,13 @@ export class UsersService {
 
     const user = await this.usersRepository.findOrNotFoundFail(createdUserId);
 
-    user.set;
+    await this.usersRepository.save(user);
+
+    await this.emailService
+      .sendConfirmationEmail(
+        user.email,
+        user.emailConfirmation.confirmationCode,
+      )
+      .catch(console.error);
   }
 }
