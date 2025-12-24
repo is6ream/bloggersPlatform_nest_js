@@ -13,6 +13,9 @@ import { Module } from '@nestjs/common';
           pass: process.env.GMAIL_PASSWORD,
         },
       },
+      defaults: {
+        from: process.env.GMAIL_LOGIN,
+      },
     }),
   ],
   exports: [],
