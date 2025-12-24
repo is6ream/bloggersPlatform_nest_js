@@ -68,6 +68,8 @@ export class UsersService {
 
     await this.usersRepository.save(user);
 
+    console.log(user.email, 'email check');
+
     await this.emailService
       .sendConfirmationEmail(
         user.email,

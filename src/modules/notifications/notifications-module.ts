@@ -10,8 +10,8 @@ import { EmailService } from './email-service';
         port: 587,
         secure: false,
         auth: {
-          user: process.env.GMAIL_LOGIN,
-          pass: process.env.GMAIL_PASSWORD,
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASSWORD,
         },
       },
       defaults: {

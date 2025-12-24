@@ -13,7 +13,7 @@ import { AuthQueryRepository } from './infrastructure/auth/authQueryRepository';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]), //forFeature позволяет ижектировать UserModel в провайдеры
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [UserController, AuthController],
   providers: [
