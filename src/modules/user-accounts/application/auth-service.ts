@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
 import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { JwtService } from '@nestjs/jwt';
+import { UserContextDto } from '../guards/dto/user-context.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -10,14 +11,23 @@ export class AuthService {
     private bcryptService: BcryptService,
   ) {}
 
-  async validateUser(login: string, password: string): Promise<null> {
+  async validateUser(
+    login: string,
+    password: string,
+  ): Promise<UserContextDto | null> {
     const user = await this.usersRepository.findByLogin(login);
     if (!user) {
       return null;
     }
-//остановился здесь, нужно закомитить и прописать фукнцию CompareHash
-    const isPasswordValid = await this.bcryptService
+    const isPasswordValid = await this.bcryptService.checkPassword({
+      password,
+      hash: user.passwordHash,
+    });
 
+    if (!isPasswordValid) {
+      return null;
+    }
 
+    return { id: user._id.toString() };
   }
 }

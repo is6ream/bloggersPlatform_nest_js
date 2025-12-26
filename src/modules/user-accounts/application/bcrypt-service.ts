@@ -7,7 +7,8 @@ export class BcryptService {
     return bcrypt.hash(password, salt);
   }
 
-  async checkPassword(password: string, hash: string) {
+  async checkPassword(args: { password: string; hash: string }) {
+    const { password, hash } = args;
     return bcrypt.compare(password, hash);
   }
 }
