@@ -9,7 +9,8 @@ import { BcryptService } from './bcrypt-service';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 import { EmailService } from 'src/modules/notifications/email-service';
-
+import { JwtService } from '@nestjs/jwt';
+import { UserContextDto } from '../guards/dto/user-context.dto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -18,6 +19,7 @@ export class UsersService {
     private usersRepository: UsersRepository,
     private bcryptService: BcryptService,
     private emailService: EmailService,
+    private jwtService: JwtService,
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<string> {
@@ -76,5 +78,15 @@ export class UsersService {
         user.emailConfirmation.confirmationCode,
       )
       .catch(console.error);
+  }
+
+  async loginUser(userId: string) {
+    const accessToken = await this.jwtService.signAsync({
+      id: userId,
+    } as UserContextDto);
+
+    return {
+      accessToken,
+    };
   }
 }
