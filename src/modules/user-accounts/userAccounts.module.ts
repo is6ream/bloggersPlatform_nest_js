@@ -10,13 +10,18 @@ import { AuthController } from './api/authController';
 import { EmailService } from '../notifications/email-service';
 import { AuthService } from './application/auth-service';
 import { AuthQueryRepository } from './infrastructure/auth/authQueryRepository';
+import { JwtService } from '@nestjs/jwt';
+import { LocalStrategy } from './guards/local/local-strategy';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    PassportModule,
   ],
   controllers: [UserController, AuthController],
   providers: [
+    LocalStrategy,
     UsersQueryRepository,
     UsersRepository,
     UsersService,
@@ -24,6 +29,7 @@ import { AuthQueryRepository } from './infrastructure/auth/authQueryRepository';
     EmailService,
     AuthService,
     AuthQueryRepository,
+    JwtService,
   ],
   exports: [],
 })
