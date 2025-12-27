@@ -10,9 +10,9 @@ import {
 } from '@nestjs/common';
 import { CreateUserInputDto } from './dto/createUserInputDto';
 import { Body } from '@nestjs/common';
-import { AuthUserInputDto } from './dto/auth-user-input.dto';
 import { LocalAuthGuard } from '../guards/local/local-auth.guard';
 import { ApiBody } from '@nestjs/swagger';
+import { UserContextDto } from '../guards/dto/user-context.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -33,8 +33,8 @@ export class AuthController {
       },
     },
   })
-  login(@Body() body: AuthUserInputDto): Promise<string> {
-    return this.usersService.loginUser(body);
+  async login(@Body() user: UserContextDto): Promise<{ accessToken: string }> {
+    return await this.usersService.loginUser(user.id);
   }
 
   @Post('registration')
