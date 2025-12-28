@@ -1,7 +1,8 @@
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { EmailService } from './email-service';
-
+import * as dotenv from 'dotenv';
+dotenv.config();
 @Module({
   imports: [
     MailerModule.forRoot({
@@ -10,12 +11,12 @@ import { EmailService } from './email-service';
         port: 587,
         secure: false,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD,
+          user: 'd.ilyasovunibell@gmail.com',
+          pass: 'enns kzmt jace sqfi',
         },
       },
       defaults: {
-        from: process.env.GMAIL_LOGIN,
+        from: process.env.SMTP_USER,
       },
     }),
   ],
