@@ -5,9 +5,8 @@ import { AppService } from './appService';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BloggersPlatformModule } from '../bloggers-platform/bloggers-platform.module';
 import { TestingModule } from '../testing/testing-module';
-import { NotificationsModule } from '../notifications/notifications-module';
 import { ConfigModule } from '@nestjs/config';
-
+import { EmailAdapter } from '../notifications/email-adapter';
 @Module({
   imports: [
     MongooseModule.forRoot('mongodb://127.0.0.1:27017/blogger-platform'),
@@ -18,9 +17,9 @@ import { ConfigModule } from '@nestjs/config';
     UserAccountsModule,
     BloggersPlatformModule,
     TestingModule,
-    NotificationsModule,
+
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, EmailAdapter],
 })
 export class AppModule {}

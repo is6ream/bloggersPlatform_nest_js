@@ -1,14 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { MailerService } from '@nestjs-modules/mailer';
+import { EmailAdapter } from './email-adapter';
 @Injectable()
 export class EmailService {
-  constructor(private mailerService: MailerService) {}
+  constructor(private EmailAdapter: EmailAdapter) {}
 
   async sendConfirmationEmail(email: string, code: string) {
-    await this.mailerService.sendMail({
-      to: email,
-      subject: 'Email confirmation',
-      text: `confirm registration via link https://some.com?code=${code}`,
-    });
+    await this.EmailAdapter.sendConfirmationCodeEmail(email, code);
   }
 }

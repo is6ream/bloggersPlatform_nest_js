@@ -13,6 +13,7 @@ import { AuthQueryRepository } from './infrastructure/auth/authQueryRepository';
 import { JwtService } from '@nestjs/jwt';
 import { LocalStrategy } from './guards/local/local-strategy';
 import { PassportModule } from '@nestjs/passport';
+import { EmailAdapter } from '../notifications/email-adapter';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PassportModule } from '@nestjs/passport';
     AuthService,
     AuthQueryRepository,
     JwtService,
+    EmailAdapter,
   ],
   exports: [],
 })
