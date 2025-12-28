@@ -7,6 +7,9 @@ dotenv.config();
 const configVariables = {
   SMTP_USER: process.env.SMTP_USER,
   SMTP_PASSWORD: process.env.SMTP_PASSWORD,
+  SMTP_HOST: process.env.SMTP_HOST,
+  SMTP_PORT: process.env.SMTP_PORT,
+  SMTP_SERVICE: process.env.SMTP_SERVICE,
 };
 
 @Injectable()
@@ -17,7 +20,7 @@ export class EmailAdapter {
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: configVariables.SMTP_USER,
+        user: 'd.ilyasovunibell@gmail.com',
         pass: configVariables.SMTP_PASSWORD,
       },
     });
@@ -40,7 +43,7 @@ export class EmailAdapter {
 
   async sendRecoveryCodeEmail(email: string, code: string) /*: Promise<void>*/ {
     await this.transporter.sendMail({
-      from: '"Rocovery code" <aliakseiyarmolinforit@gmail.com>',
+      from: '"Recovery code" <aliakseiyarmolinforit@gmail.com>',
       to: email,
       subject: 'Password Recovery',
       html: `<h1>Password recovery</h1>
