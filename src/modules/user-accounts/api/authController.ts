@@ -34,6 +34,7 @@ export class AuthController {
     },
   })
   async login(@Body() user: UserContextDto): Promise<{ accessToken: string }> {
+    console.log(user, 'user check');
     return await this.usersService.loginUser(user.id);
   }
 

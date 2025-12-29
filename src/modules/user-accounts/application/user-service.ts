@@ -81,9 +81,12 @@ export class UsersService {
   }
 
   async loginUser(userId: string) {
-    const accessToken = await this.jwtService.signAsync({
-      id: userId,
-    } as UserContextDto); //здесь падает ошибка что secret key не найден
+    const accessToken = await this.jwtService.signAsync(
+      {
+        id: userId,
+      } as UserContextDto,
+      { secret: process.env.JWT_SECRET },
+    ); //здесь падает ошибка что secret key не найден
 
     return {
       accessToken,

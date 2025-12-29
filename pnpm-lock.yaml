@@ -65,6 +65,9 @@ importers:
       passport:
         specifier: ^0.7.0
         version: 0.7.0
+      passport-http:
+        specifier: ^0.3.0
+        version: 0.3.0
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1
@@ -3532,6 +3535,10 @@ packages:
   parseurl@1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
     engines: {node: '>= 0.8'}
+
+  passport-http@0.3.0:
+    resolution: {integrity: sha512-OwK9DkqGVlJfO8oD0Bz1VDIo+ijD3c1ZbGGozIZw+joIP0U60pXY7goB+8wiDWtNqHpkTaQiJ9Ux1jE3Ykmpuw==}
+    engines: {node: '>= 0.4.0'}
 
   passport-jwt@4.0.1:
     resolution: {integrity: sha512-UCKMDYhNuGOBE9/9Ycuoyh7vP6jpeTp/+sfMJl7nLff/t6dps+iaeE0hhNkKN8/HZHcJ7lCdOyDxHdDoxoSvdQ==}
@@ -8865,6 +8872,10 @@ snapshots:
     optional: true
 
   parseurl@1.3.3: {}
+
+  passport-http@0.3.0:
+    dependencies:
+      passport-strategy: 1.0.0
 
   passport-jwt@4.0.1:
     dependencies:

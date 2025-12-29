@@ -11,14 +11,24 @@ import { EmailService } from '../notifications/email-service';
 import { AuthService } from './application/auth-service';
 import { AuthQueryRepository } from './infrastructure/auth/authQueryRepository';
 import { JwtService } from '@nestjs/jwt';
-import { LocalStrategy } from './guards/local/local-strategy';
+import { LocalStrategy } from './strategies/local-strategy';
 import { PassportModule } from '@nestjs/passport';
 import { EmailAdapter } from '../notifications/email-adapter';
-
+import { JwtModule } from '@nestjs/jwt';
+import * as dotenv from 'dotenv';
+dotenv.config();
+console.log(process.env.JWT_SECRET, 'JWT_SECRET check');
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is not defined in .env file');
+}
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     PassportModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '60m' },
+    }),
   ],
   controllers: [UserController, AuthController],
   providers: [

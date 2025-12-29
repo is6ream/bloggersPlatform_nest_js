@@ -1,4 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
 import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { JwtService } from '@nestjs/jwt';
@@ -17,7 +23,7 @@ export class AuthService {
   ): Promise<UserContextDto | null> {
     const user = await this.usersRepository.findByLogin(login);
     if (!user) {
-      return null;
+      throw new UnauthorizedException('invalid password or email');
     }
     const isPasswordValid = await this.bcryptService.checkPassword({
       password,
@@ -25,7 +31,7 @@ export class AuthService {
     });
 
     if (!isPasswordValid) {
-      return null;
+      throw new UnauthorizedException('invalid password or email');
     }
 
     return { id: user._id.toString() };

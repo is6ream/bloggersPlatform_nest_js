@@ -20,13 +20,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       };
       const responseBody: any = exception.getResponse();
 
+      console.log(responseBody, "responseBody check");
       //@ts-ignore
       responseBody.message.forEach((m) => {
         errorResponse.errorMessages.push(m);
       });
 
       response.status(status).json(errorResponse);
-    } else {
+    } 
+    
+    
+    else {
       response.status(status).json({
         statusCode: status,
         timestamp: new Date().toISOString(),
