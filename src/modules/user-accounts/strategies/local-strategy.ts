@@ -13,13 +13,16 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 
   //validate возвращает то, что в последствии будет записано в req.user, как он это делает? Разобраться
   async validate(username: string, password: string): Promise<UserContextDto> {
-    const user = await this.authService.validateUser(username, password);
-    if (!user) {
+    const userId: UserContextDto | null = await this.authService.validateUser(
+      username,
+      password,
+    );
+    if (!userId) {
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
         message: 'Invalid username or password',
       });
     }
-    return user;
+    return userId;
   }
 }
