@@ -33,4 +33,11 @@ export class UsersRepository {
       deleteAt: null,
     });
   }
+
+  async findByLoginOrEmail(loginOrEmail: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      $or: [{ login: loginOrEmail }, { email: loginOrEmail }],
+      deleteAt: null,
+    });
+  }
 }
