@@ -17,6 +17,7 @@ import { ApiBody } from '@nestjs/swagger';
 import { UserContextDto } from '../guards/dto/user-context.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
 import { LoginInputDto } from './dto/login-input.dto';
+import { PasswordRecoveryInputDto } from './dto/password-recovery-input.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -46,6 +47,12 @@ export class AuthController {
   }
 
   @Post('password-recovery')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async passwordRecovery(
+    @Body() body: PasswordRecoveryInputDto,
+  ): Promise<void> {
+    return await this.authService.passwordRecovery(body);
+  }
 
   @Post('registration')
   registration(@Body() body: CreateUserInputDto): Promise<void> {
