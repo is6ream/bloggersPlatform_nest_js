@@ -14,23 +14,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
 
-    if (status === 400) {
+    if (status === 401) {
       const errorResponse: any = {
         errorMessages: [],
       };
       const responseBody: any = exception.getResponse();
 
-      console.log(responseBody, "responseBody check");
+      console.log(responseBody, 'message check');
       //@ts-ignore
       responseBody.message.forEach((m) => {
         errorResponse.errorMessages.push(m);
       });
 
+      //откуда должно браться поле field??
       response.status(status).json(errorResponse);
-    } 
-    
-    
-    else {
+    } else {
       response.status(status).json({
         statusCode: status,
         timestamp: new Date().toISOString(),

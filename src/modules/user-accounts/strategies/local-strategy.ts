@@ -11,10 +11,12 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({ usernameField: 'login' });
   }
 
-  //validate возвращает то, что в последствии будет записано в req.user, как он это делает? Разобраться
-  async validate(username: string, password: string): Promise<UserContextDto> {
+  async validate(
+    loginOrEmail: string,
+    password: string,
+  ): Promise<UserContextDto> {
     const userId: UserContextDto | null = await this.authService.validateUser(
-      username,
+      loginOrEmail,
       password,
     );
     if (!userId) {

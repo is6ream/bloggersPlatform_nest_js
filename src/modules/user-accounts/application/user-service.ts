@@ -11,6 +11,9 @@ import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes'
 import { EmailService } from 'src/modules/notifications/email-service';
 import { JwtService } from '@nestjs/jwt';
 import { UserContextDto } from '../guards/dto/user-context.dto';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -86,7 +89,7 @@ export class UsersService {
         id: userId,
       } as UserContextDto,
       { secret: process.env.JWT_SECRET },
-    ); //здесь падает ошибка что secret key не найден
+    );
 
     return {
       accessToken,
