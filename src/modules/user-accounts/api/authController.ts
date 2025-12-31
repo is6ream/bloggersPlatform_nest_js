@@ -13,6 +13,7 @@ import { Body } from '@nestjs/common';
 import { LocalAuthGuard } from '../guards/local/local-auth.guard';
 import { ApiBody } from '@nestjs/swagger';
 import { UserContextDto } from '../guards/dto/user-context.dto';
+import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -33,8 +34,9 @@ export class AuthController {
       },
     },
   })
-  async login(@Body() user: UserContextDto): Promise<{ accessToken: string }> {
-    console.log(user, 'user check');
+  async login(
+    @ExtractUserFromRequest() user: UserContextDto,
+  ): Promise<{ accessToken: string }> {
     return await this.usersService.loginUser(user.id);
   }
 

@@ -8,9 +8,6 @@ import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
 import { BcryptService } from './bcrypt-service';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
-import { EmailService } from 'src/modules/notifications/email-service';
-import { JwtService } from '@nestjs/jwt';
-import { UserContextDto } from '../guards/dto/user-context.dto';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -21,8 +18,7 @@ export class UsersService {
     private UserModel: UserModelType,
     private usersRepository: UsersRepository,
     private bcryptService: BcryptService,
-    private emailService: EmailService,
-    private jwtService: JwtService,
+   
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<string> {
@@ -64,35 +60,5 @@ export class UsersService {
     user.makeDeleted();
 
     await this.usersRepository.save(user);
-  }
-
-  async registerUser(dto: CreateUserDto) {
-    const createdUserId = await this.createUser(dto);
-
-    const user = await this.usersRepository.findOrNotFoundFail(createdUserId);
-
-    await this.usersRepository.save(user);
-
-    console.log(user.email, 'email check');
-
-    await this.emailService
-      .sendConfirmationEmail(
-        user.email,
-        user.emailConfirmation.confirmationCode,
-      )
-      .catch(console.error);
-  }
-
-  async loginUser(userId: string) {
-    const accessToken = await this.jwtService.signAsync(
-      {
-        id: userId,
-      } as UserContextDto,
-      { secret: process.env.JWT_SECRET },
-    );
-
-    return {
-      accessToken,
-    };
   }
 }
