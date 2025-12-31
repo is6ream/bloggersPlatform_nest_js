@@ -3,25 +3,23 @@ import {
   INestApplication,
   ValidationPipe,
 } from '@nestjs/common';
-
 export function pipesSetup(app: INestApplication) {
-  return app.useGlobalPipes(
+  app.useGlobalPipes(
     new ValidationPipe({
+      transform: true,
       stopAtFirstError: false,
       exceptionFactory: (errors) => {
-        const errorsForResponse: any[] = [];
+        const errorsForResponse = errors.map((error) => ({
+          message:
+            Object.values(error.constraints || {})[0] || 'Validation error',
+          field: error.property,
+        }));
 
-        errors.forEach((e) => {
-          const constraintKeys = Object.keys(e.constraints!);
-          constraintKeys.forEach((ck) => {
-            errorsForResponse.push({
-              message: e.constraints![ck],
-              field: e.property,
-            });
-          });
+        console.log('🟡 ValidationPipe error:', errorsForResponse);
+
+        throw new BadRequestException({
+          errorsMessages: errorsForResponse,
         });
-        console.log(errorsForResponse, 'errors check in pipe');
-        throw new BadRequestException(errorsForResponse);
       },
     }),
   );

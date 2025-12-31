@@ -7,6 +7,8 @@ import {
   HttpStatus,
   Post,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CreateUserInputDto } from './dto/createUserInputDto';
 import { Body } from '@nestjs/common';
@@ -23,8 +25,9 @@ export class AuthController {
     private authQueryRepository: AuthQueryRepository,
   ) {}
 
-  @Post('login') //как мне здесь указать что в теле запроса должны быть строки?
+  @Post('login') //как мне отдавать ошибки в правильном формате
   @HttpCode(HttpStatus.OK)
+  @UsePipes(new ValidationPipe())
   @UseGuards(LocalAuthGuard)
   @ApiBody({
     schema: {
@@ -41,6 +44,8 @@ export class AuthController {
   ): Promise<{ accessToken: string }> {
     return await this.authService.loginUser(user.id);
   }
+
+  @Post('password-recovery')
 
   @Post('registration')
   registration(@Body() body: CreateUserInputDto): Promise<void> {

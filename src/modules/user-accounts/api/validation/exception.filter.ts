@@ -1,8 +1,8 @@
 import {
-  ArgumentsHost,
+  HttpException,
   Catch,
   ExceptionFilter,
-  HttpException,
+  ArgumentsHost,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
@@ -11,28 +11,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
+    const responseBody = exception.getResponse();
 
+    // console.log(status, 'status check');
+
+    // console.log(responseBody, 'responseBody check');
     if (status === 400) {
-      const errorResponse: any = {
-        errorMessages: [],
-      };
-      const responseBody: any = exception.getResponse();
-
-      console.log(responseBody, 'message check');
-      //@ts-ignore
-      responseBody.message.forEach((m) => {
-        errorResponse.errorMessages.push(m);
-      });
-
-      //откуда должно браться поле field??
-      response.status(status).json(errorResponse);
+      response.status(status).json(responseBody);
     } else {
+      // Для других ошибок - стандартный формат
       response.status(status).json({
         statusCode: status,
         timestamp: new Date().toISOString(),
-        path: request.url,
+        path: ctx.getRequest<Request>().url,
       });
     }
   }
