@@ -20,8 +20,6 @@ export function pipesSetup(app: INestApplication) {
             });
           });
         });
-        //pipe выкидывает объект?
-        //  { message: 'Unauthorized', statusCode: 401 } message check
         console.log(errorsForResponse, 'errors check in pipe');
         throw new BadRequestException(errorsForResponse);
       },

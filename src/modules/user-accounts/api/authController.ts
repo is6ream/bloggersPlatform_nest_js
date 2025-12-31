@@ -14,6 +14,7 @@ import { LocalAuthGuard } from '../guards/local/local-auth.guard';
 import { ApiBody } from '@nestjs/swagger';
 import { UserContextDto } from '../guards/dto/user-context.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
+import { LoginInputDto } from './dto/login-input.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -22,7 +23,7 @@ export class AuthController {
     private authQueryRepository: AuthQueryRepository,
   ) {}
 
-  @Post('login')
+  @Post('login') //как мне здесь указать что в теле запроса должны быть строки?
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @ApiBody({
@@ -35,6 +36,7 @@ export class AuthController {
     },
   })
   async login(
+    @Body() body: LoginInputDto,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
     return await this.authService.loginUser(user.id);
