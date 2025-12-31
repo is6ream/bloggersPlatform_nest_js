@@ -37,11 +37,11 @@ export class AuthController {
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
-    return await this.usersService.loginUser(user.id);
+    return await this.authService.loginUser(user.id);
   }
 
   @Post('registration')
   registration(@Body() body: CreateUserInputDto): Promise<void> {
-    return this.usersService.registerUser(body);
+    return this.authService.registerUser(body);
   }
 }
