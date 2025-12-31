@@ -16,8 +16,10 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
-  async validateUser(password: string): Promise<UserContextDto | null> {
-    //откуда здесь вязть logonOrEmail?
+  async validateUser(
+    loginOrEmail: string,
+    password: string,
+  ): Promise<UserContextDto | null> {
     const user = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
     if (!user) {
       throw new UnauthorizedException('invalid password or email');
@@ -30,7 +32,6 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('invalid password or email');
     }
-
     return { id: user._id.toString() };
   }
 
