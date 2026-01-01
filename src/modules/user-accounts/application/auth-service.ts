@@ -4,8 +4,10 @@ import { BcryptService } from './bcrypt-service';
 import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { JwtService } from '@nestjs/jwt';
 import { UserContextDto } from '../guards/dto/user-context.dto';
-import { EmailService } from 'src/modules/notifications/email-service';
 import { UsersService } from './user-service';
+import { UserDocument } from '../domain/userEntity';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 @Injectable()
 export class AuthService {
   constructor(
@@ -13,7 +15,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private bcryptService: BcryptService,
-    private emailService: EmailService,
+    private emailAdapter: EmailAdapter,
   ) {}
 
   async validateUser(
@@ -41,15 +43,23 @@ export class AuthService {
     const user = await this.usersRepository.findOrNotFoundFail(createdUserId);
 
     await this.usersRepository.save(user);
-
-    console.log(user.email, 'email check');
-
-    await this.emailService
-      .sendConfirmationEmail(
+    await this.emailAdapter
+      .sendConfirmationCodeEmail(
         user.email,
         user.emailConfirmation.confirmationCode,
       )
       .catch(console.error);
+  }
+  async passwordRecovery(email: string) {
+    const user: UserDocument | null =
+      await this.usersRepository.findByEmail(email);
+    if (!user) {
+      throw new DomainException({ code: 1, message: 'User not found' });
+    }
+    await this.emailAdapter.sendRecoveryCodeEmail(
+      email,
+      user.emailConfirmation.confirmationCode,
+    );
   }
 
   async loginUser(userId: string) {
@@ -59,7 +69,6 @@ export class AuthService {
       } as UserContextDto,
       { secret: process.env.JWT_SECRET },
     );
-
     return {
       accessToken,
     };

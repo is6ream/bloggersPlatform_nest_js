@@ -40,4 +40,10 @@ export class UsersRepository {
       deleteAt: null,
     });
   }
+
+  async findByEmail(email: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      email,
+    });
+  }
 }

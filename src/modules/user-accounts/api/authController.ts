@@ -26,7 +26,7 @@ export class AuthController {
     private authQueryRepository: AuthQueryRepository,
   ) {}
 
-  @Post('login') //как мне отдавать ошибки в правильном формате
+  @Post('login')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ValidationPipe())
   @UseGuards(LocalAuthGuard)

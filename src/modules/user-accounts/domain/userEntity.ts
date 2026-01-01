@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { PasswordRecoverySchema, PasswordRecovery } from './passRecoverySchema';
+import { PasswordRecoverySchema, PasswordRecovery } from './schemas/passRecoverySchema';
 import {
   EmailConfirmationSchema,
   EmailConfirmation,
-} from './emailConfirmationSchema';
+} from './schemas/emailConfirmationSchema';
 import { HydratedDocument, Model } from 'mongoose';
 import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
 import { randomUUID } from 'crypto';
@@ -58,7 +58,6 @@ export class User {
   }
 
   update(dto: UpdateUserDto) {
-    //остановился здесь
     if (dto.email !== this.email) {
       this.emailConfirmation.isConfirmed = false;
     }
