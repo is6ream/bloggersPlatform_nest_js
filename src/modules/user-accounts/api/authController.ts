@@ -18,6 +18,7 @@ import { UserContextDto } from '../guards/dto/user-context.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
 import { LoginInputDto } from './dto/login-input.dto';
 import { PasswordRecoveryInputDto } from './dto/password-recovery-input.dto';
+import { NewPasswordInputDto } from './dto/new-password-input.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -61,5 +62,10 @@ export class AuthController {
 
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async newPassword(@Body() body)
+  async newPassword(@Body() body: NewPasswordInputDto): Promise<void> {
+    return this.authService.confirmNewPassword({
+      newPassword: body.newPassword,
+      recoveryCode: body.recoveryCode,
+    });
+  }
 }
