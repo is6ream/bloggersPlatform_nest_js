@@ -3,6 +3,8 @@ import { AuthService } from './auth-service';
 import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { Test } from '@nestjs/testing';
 import { UsersService } from './user-service';
+import { JwtService } from '@nestjs/jwt';
+import { BcryptService } from './bcrypt-service';
 
 describe('AuthService - Password Recovery', () => {
   let authService: AuthService;
@@ -34,6 +36,19 @@ describe('AuthService - Password Recovery', () => {
             // другие методы если нужны
           },
         },
+        {
+          provide: JwtService,
+          useValue: {
+            signAsync: jest.fn(),
+          }
+        },
+        {
+          provide: BcryptService,
+          useValue: {
+            generateHash: jest.fn(),
+            checkPassword: jest.fn(),
+          }
+        }
       ],
     }).compile();
 
