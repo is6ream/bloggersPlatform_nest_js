@@ -67,9 +67,7 @@ describe('AuthService - Password Recovery', () => {
         isConfirmed: false,
         expirationDate: new Date(),
       },
-      // другие поля которые нужны
     };
-    console.log(mockUser);
 
     usersRepository.findByEmail = jest.fn().mockResolvedValue(mockUser);
     emailAdapter.sendRecoveryCodeEmail = jest.fn().mockResolvedValue(true);

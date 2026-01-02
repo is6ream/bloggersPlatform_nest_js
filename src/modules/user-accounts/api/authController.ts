@@ -58,4 +58,8 @@ export class AuthController {
   registration(@Body() body: CreateUserInputDto): Promise<void> {
     return this.authService.registerUser(body);
   }
+
+  @Post('new-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async newPassword(@Body() body)
 }
