@@ -42,11 +42,15 @@ export class UsersRepository {
     });
   }
 
-  async findByEmail(
-    email: string,
-  ): Promise<UserDocument | null> {
+  async findByEmail(email: string): Promise<UserDocument | null> {
     return this.UserModel.findOne({
       email,
+    });
+  }
+
+  async findByRecoveryCode(code: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      code,
     });
   }
 }

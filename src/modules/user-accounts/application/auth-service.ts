@@ -74,4 +74,11 @@ export class AuthService {
       accessToken,
     };
   }
+
+  async confirmNewPassword(
+    newPassword: string,
+    recoveryCode: string,
+  ): Promise<void> {
+    const user = this.usersRepository.findByRecoveryCode(recoveryCode);
+  }
 }
