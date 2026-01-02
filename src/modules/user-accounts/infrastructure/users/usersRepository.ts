@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserModelType } from '../../domain/userEntity';
 import { UserDocument } from '../../domain/userEntity';
+import { PasswordRecoveryInputDto } from '../../api/dto/password-recovery-input.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -41,7 +42,9 @@ export class UsersRepository {
     });
   }
 
-  async findByEmail(email: string): Promise<UserDocument | null> {
+  async findByEmail(
+    email: string,
+  ): Promise<UserDocument | null> {
     return this.UserModel.findOne({
       email,
     });

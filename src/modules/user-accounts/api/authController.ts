@@ -51,7 +51,7 @@ export class AuthController {
   async passwordRecovery(
     @Body() body: PasswordRecoveryInputDto,
   ): Promise<void> {
-    return await this.authService.passwordRecovery(body);
+    return await this.authService.passwordRecovery(body.email);
   }
 
   @Post('registration')

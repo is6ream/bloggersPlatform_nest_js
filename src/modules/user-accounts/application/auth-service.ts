@@ -8,6 +8,7 @@ import { UsersService } from './user-service';
 import { UserDocument } from '../domain/userEntity';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
+import { PasswordRecoveryInputDto } from '../api/dto/password-recovery-input.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -56,6 +57,7 @@ export class AuthService {
     if (!user) {
       throw new DomainException({ code: 1, message: 'User not found' });
     }
+    console.log('confirmation code: ', user.emailConfirmation.confirmationCode);
     await this.emailAdapter.sendRecoveryCodeEmail(
       email,
       user.emailConfirmation.confirmationCode,
