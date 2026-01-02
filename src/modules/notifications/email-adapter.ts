@@ -31,7 +31,7 @@ export class EmailAdapter {
     code: string,
   ) /*: Promise<void>*/ {
     await this.transporter.sendMail({
-      from: '"Confirm email" <aliakseiyarmolinforit@gmail.com>',
+      from: '"Confirm email" <d.ilyasovunibell@gmail.com>',
       to: email,
       subject: 'Confirmation Code',
       html: `<h1>Thank for your registration</h1>
@@ -43,7 +43,7 @@ export class EmailAdapter {
 
   async sendRecoveryCodeEmail(email: string, code: string) /*: Promise<void>*/ {
     await this.transporter.sendMail({
-      from: '"Recovery code" <aliakseiyarmolinforit@gmail.com>',
+      from: '"Recovery code" <d.ilyasovunibell@gmail.com>',
       to: email,
       subject: 'Password Recovery',
       html: `<h1>Password recovery</h1>

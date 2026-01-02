@@ -57,7 +57,6 @@ export class AuthService {
     if (!user) {
       throw new DomainException({ code: 1, message: 'User not found' });
     }
-    console.log('confirmation code: ', user.emailConfirmation.confirmationCode);
     await this.emailAdapter.sendRecoveryCodeEmail(
       email,
       user.emailConfirmation.confirmationCode,

@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { UsersService } from './user-service';
 import { JwtService } from '@nestjs/jwt';
 import { BcryptService } from './bcrypt-service';
+import { User } from '../domain/userEntity';
 
 describe('AuthService - Password Recovery', () => {
   let authService: AuthService;
@@ -40,15 +41,15 @@ describe('AuthService - Password Recovery', () => {
           provide: JwtService,
           useValue: {
             signAsync: jest.fn(),
-          }
+          },
         },
         {
           provide: BcryptService,
           useValue: {
             generateHash: jest.fn(),
             checkPassword: jest.fn(),
-          }
-        }
+          },
+        },
       ],
     }).compile();
 
@@ -59,8 +60,16 @@ describe('AuthService - Password Recovery', () => {
 
   it('should send recovery email for existing user', async () => {
     const mockUser = {
+      _id: '123',
       email: 'user@example.com',
+      emailConfirmation: {
+        confirmationCode: 'abc-123-def',
+        isConfirmed: false,
+        expirationDate: new Date(),
+      },
+      // другие поля которые нужны
     };
+    console.log(mockUser);
 
     usersRepository.findByEmail = jest.fn().mockResolvedValue(mockUser);
     emailAdapter.sendRecoveryCodeEmail = jest.fn().mockResolvedValue(true);
