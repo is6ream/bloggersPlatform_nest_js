@@ -22,7 +22,8 @@
       "src/*": ["src/*"]
     }
   },
-  "exclude": [
+
+    "exclude": [
     "node_modules",
     "dist",
     "**/*.spec.ts",

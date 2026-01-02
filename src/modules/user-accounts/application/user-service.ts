@@ -18,7 +18,6 @@ export class UsersService {
     private UserModel: UserModelType,
     private usersRepository: UsersRepository,
     private bcryptService: BcryptService,
-   
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<string> {
