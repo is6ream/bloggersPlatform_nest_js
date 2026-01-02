@@ -83,6 +83,26 @@ describe('AuthService - Password Recovery', () => {
     );
   });
 
+  it('should confirm new password', async () => {
+    const mockDto = {
+      newPassword: '12345678',
+      recoveryCode: '3213dsfdrewfsert4',
+    };
+
+    usersRepository.findByRecoveryCode = jest
+      .fn()
+      .mockResolvedValue(mockDto.recoveryCode);
+
+    await authService.confirmNewPassword(
+      mockDto.newPassword,
+      mockDto.recoveryCode,
+    );
+
+    expect(usersRepository.findByRecoveryCode).toHaveBeenCalledWith(
+      mockDto.recoveryCode,
+    );
+  });
+
   // it('should throw error for non-existing user', async () => {
   //   usersRepository.findByEmail = jest.fn().mockResolvedValue(null);
 

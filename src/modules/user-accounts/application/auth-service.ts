@@ -79,6 +79,14 @@ export class AuthService {
     newPassword: string,
     recoveryCode: string,
   ): Promise<void> {
-    const user = this.usersRepository.findByRecoveryCode(recoveryCode);
+    const user: UserDocument | null =
+      await this.usersRepository.findByRecoveryCode(recoveryCode);
+
+    if (!user) {
+      throw new DomainException({ code: 1, message: 'User not found' });
+    }
+
   }
+
+  
 }
