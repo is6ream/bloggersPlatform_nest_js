@@ -81,6 +81,6 @@ export class AuthController {
   async emailResending(
     @Body() body: EmailResendingInputDto,
   ): Promise<void> {
-    return this.authService
+    return this.authService.emailResending(body.email);
   }
 }
