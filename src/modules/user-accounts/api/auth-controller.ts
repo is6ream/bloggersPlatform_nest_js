@@ -10,7 +10,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { CreateUserInputDto } from './dto/createUserInputDto';
+import { CreateUserInputDto } from './dto/create-user.input.dto';
 import { Body } from '@nestjs/common';
 import { LocalAuthGuard } from '../guards/local/local-auth.guard';
 import { ApiBody } from '@nestjs/swagger';
@@ -64,10 +64,7 @@ export class AuthController {
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async newPassword(@Body() body: NewPasswordInputDto): Promise<void> {
-    return this.authService.resetPassword(
-      body.newPassword,
-      body.recoveryCode,
-    );
+    return this.authService.resetPassword(body.newPassword, body.recoveryCode);
   }
 
   @Post('registration-confirmation')
@@ -75,6 +72,12 @@ export class AuthController {
   async confirmRegistration(
     @Body() body: PasswordConfirmationInputDto,
   ): Promise<void> {
-    return this.usersService.confirmRegistration(body.code);
+    return this.authService.confirmRegistration(body.code);
   }
+
+  @Post('registration-email-resending')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async emailResending(
+    @Body() body: 
+  )
 }

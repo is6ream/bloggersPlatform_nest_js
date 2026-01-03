@@ -49,8 +49,10 @@ export class UsersRepository {
   }
 
   async findByRecoveryCode(code: string): Promise<UserDocument | null> {
+    console.log('code check in BLL', code);
+
     return this.UserModel.findOne({
-      code,
+      'emailConfirmation.confirmationCode': code,
     });
   }
 }
