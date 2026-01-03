@@ -121,4 +121,16 @@ export class AuthService {
     user.emailConfirmation.isConfirmed = true;
     await this.usersRepository.save(user);
   }
+
+  async emailResending(email: string){
+    const user: UserDocument | null =
+      await this.usersRepository.findByEmail(email);
+    if (!user) {
+      throw new DomainException({ code: 1, message: 'User not found' });
+    }
+    await this.emailAdapter.sendConfirmationCodeEmail(
+      email,
+      user.emailConfirmation.confirmationCode,
+    );
+  }
 }

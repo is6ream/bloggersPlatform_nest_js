@@ -20,6 +20,7 @@ import { LoginInputDto } from './dto/login-input.dto';
 import { PasswordRecoveryInputDto } from './dto/password-recovery-input.dto';
 import { NewPasswordInputDto } from './dto/new-password-input.dto';
 import { PasswordConfirmationInputDto } from './dto/password-confirmation.input.dto';
+import { EmailResendingInputDto } from './dto/email-resending.input.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -78,6 +79,8 @@ export class AuthController {
   @Post('registration-email-resending')
   @HttpCode(HttpStatus.NO_CONTENT)
   async emailResending(
-    @Body() body: 
-  )
+    @Body() body: EmailResendingInputDto,
+  ): Promise<void> {
+    return this.authService
+  }
 }
