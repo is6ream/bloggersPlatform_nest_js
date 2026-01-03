@@ -86,7 +86,16 @@ export class AuthService {
       throw new DomainException({ code: 1, message: 'User not found' });
     }
 
-  }
+    if (user.emailConfirmation.expirationDate < new Date(Date.now())) {
+      throw new DomainException({
+        code: 2,
+        message: 'Recovery code expired',
+      });
+    }
 
-  
+    const newPasswordHash = await this.bcryptService.generateHash(newPassword);
+
+    user.passwordHash = newPasswordHash;
+    await this.usersRepository.save(user);
+  }
 }

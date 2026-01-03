@@ -63,9 +63,9 @@ export class AuthController {
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async newPassword(@Body() body: NewPasswordInputDto): Promise<void> {
-    return this.authService.confirmNewPassword({
-      newPassword: body.newPassword,
-      recoveryCode: body.recoveryCode,
-    });
+    return this.authService.confirmNewPassword(
+      body.newPassword,
+      body.recoveryCode,
+    );
   }
 }
