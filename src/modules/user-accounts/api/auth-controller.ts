@@ -19,6 +19,7 @@ import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-
 import { LoginInputDto } from './dto/login-input.dto';
 import { PasswordRecoveryInputDto } from './dto/password-recovery-input.dto';
 import { NewPasswordInputDto } from './dto/new-password-input.dto';
+import { PasswordConfirmationInputDto } from './dto/password-confirmation.input.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -63,9 +64,17 @@ export class AuthController {
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async newPassword(@Body() body: NewPasswordInputDto): Promise<void> {
-    return this.authService.confirmNewPassword(
+    return this.authService.resetPassword(
       body.newPassword,
       body.recoveryCode,
     );
+  }
+
+  @Post('registration-confirmation')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async confirmRegistration(
+    @Body() body: PasswordConfirmationInputDto,
+  ): Promise<void> {
+    return this.usersService.confirmRegistration(body.code);
   }
 }

@@ -75,7 +75,7 @@ export class AuthService {
     };
   }
 
-  async confirmNewPassword(
+  async resetPassword(
     newPassword: string,
     recoveryCode: string,
   ): Promise<void> {
@@ -96,6 +96,28 @@ export class AuthService {
     const newPasswordHash = await this.bcryptService.generateHash(newPassword);
 
     user.passwordHash = newPasswordHash;
+    await this.usersRepository.save(user);
+  }
+
+  async confirmRegistration(code: string): Promise<void> {
+    const user: UserDocument | null =
+      await this.usersRepository.findByRecoveryCode(code);
+    if (!user) {
+      throw new DomainException({ code: 1, message: 'User not found' });
+    }
+    if (user.emailConfirmation.confirmationCode !== code) {
+      throw new DomainException({
+        code: 2,
+        message: 'Invalid confirmation code',
+      });
+    }
+    if (user.emailConfirmation.expirationDate < new Date(Date.now())) {
+      throw new DomainException({ code: 2, message: 'Code is expired' });
+    }
+    if (user.emailConfirmation.isConfirmed) {
+      throw new DomainException({ code: 2, message: 'User already confirmed' });
+    }
+    user.emailConfirmation.isConfirmed = true;
     await this.usersRepository.save(user);
   }
 }
