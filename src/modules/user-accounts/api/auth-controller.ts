@@ -14,7 +14,7 @@ import {
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
 import { Body } from '@nestjs/common';
 import { LocalAuthGuard } from '../guards/local/local-auth.guard';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { UserContextDto } from '../guards/dto/user-context.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
 import { LoginInputDto } from './dto/input/login-input.dto';
@@ -23,6 +23,7 @@ import { NewPasswordInputDto } from './dto/input/new-password-input.dto';
 import { PasswordConfirmationInputDto } from './dto/input/password-confirmation.input.dto';
 import { EmailResendingInputDto } from './dto/input/email-resending.input.dto';
 import { GetMeOutputDto } from './dto/output/get-me-output.dto';
+import { JwtAuthGuard } from '../guards/jwt/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -85,8 +86,9 @@ export class AuthController {
     return this.authService.emailResending(body.email);
   }
 
-  @Get('me') //тут нужно подключить guard и стратегию
-  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
   async getMe(
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<GetMeOutputDto> {
