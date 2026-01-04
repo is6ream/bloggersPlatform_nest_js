@@ -8,7 +8,6 @@ import { UsersService } from './user-service';
 import { UserDocument } from '../domain/userEntity';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
-import { PasswordRecoveryInputDto } from '../api/dto/password-recovery-input.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -122,7 +121,7 @@ export class AuthService {
     await this.usersRepository.save(user);
   }
 
-  async emailResending(email: string){
+  async emailResending(email: string) {
     const user: UserDocument | null =
       await this.usersRepository.findByEmail(email);
     if (!user) {

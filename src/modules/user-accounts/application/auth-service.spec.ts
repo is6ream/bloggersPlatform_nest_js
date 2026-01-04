@@ -93,10 +93,7 @@ describe('AuthService - Password Recovery', () => {
       .fn()
       .mockResolvedValue(mockDto.recoveryCode);
 
-    await authService.confirmNewPassword(
-      mockDto.newPassword,
-      mockDto.recoveryCode,
-    );
+    await authService.resetPassword(mockDto.newPassword, mockDto.recoveryCode);
 
     expect(usersRepository.findByRecoveryCode).toHaveBeenCalledWith(
       mockDto.recoveryCode,

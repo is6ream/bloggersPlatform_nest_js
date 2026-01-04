@@ -23,4 +23,4 @@ export function pipesSetup(app: INestApplication) {
       },
     }),
   );
-}
+} //остановился на разборе пайпа для валидации, нужно отловить ошибки.

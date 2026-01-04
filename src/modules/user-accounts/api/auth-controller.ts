@@ -3,6 +3,7 @@ import { AuthService } from '../application/auth-service';
 import { AuthQueryRepository } from '../infrastructure/auth/authQueryRepository';
 import {
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -10,17 +11,17 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { CreateUserInputDto } from './dto/create-user.input.dto';
+import { CreateUserInputDto } from './dto/input/create-user.input.dto';
 import { Body } from '@nestjs/common';
 import { LocalAuthGuard } from '../guards/local/local-auth.guard';
 import { ApiBody } from '@nestjs/swagger';
 import { UserContextDto } from '../guards/dto/user-context.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
-import { LoginInputDto } from './dto/login-input.dto';
-import { PasswordRecoveryInputDto } from './dto/password-recovery-input.dto';
-import { NewPasswordInputDto } from './dto/new-password-input.dto';
-import { PasswordConfirmationInputDto } from './dto/password-confirmation.input.dto';
-import { EmailResendingInputDto } from './dto/email-resending.input.dto';
+import { LoginInputDto } from './dto/input/login-input.dto';
+import { PasswordRecoveryInputDto } from './dto/input/password-recovery-input.dto';
+import { NewPasswordInputDto } from './dto/input/new-password-input.dto';
+import { PasswordConfirmationInputDto } from './dto/input/password-confirmation.input.dto';
+import { EmailResendingInputDto } from './dto/input/email-resending.input.dto';
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -78,9 +79,13 @@ export class AuthController {
 
   @Post('registration-email-resending')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async emailResending(
-    @Body() body: EmailResendingInputDto,
-  ): Promise<void> {
+  async emailResending(@Body() body: EmailResendingInputDto): Promise<void> {
     return this.authService.emailResending(body.email);
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  async getMe(@ExtractUserFromRequest() user: UserContextDto): Promise<User> {
+    return await this.authQueryRepository.getMe(user.id);
   }
 }

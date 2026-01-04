@@ -12,10 +12,10 @@ import {
 import { UsersQueryRepository } from '../infrastructure/users/usersQueryRepository';
 import { UsersService } from '../application/user-service';
 import { UserViewModel } from '../types/output/userViewModel';
-import { CreateUserInputDto } from './dto/create-user.input.dto';
-import { GetUsersQueryParams } from './dto/get-users-query-params.input.dto';
+import { CreateUserInputDto } from './dto/input/create-user.input.dto';
+import { GetUsersQueryParams } from './dto/output/get-users-query-params.input.dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
-import { UserViewDto } from './dto/user.view-dto';
+import { UserViewDto } from './dto/output/user.view-dto';
 @Controller('users')
 export class UserController {
   constructor(
