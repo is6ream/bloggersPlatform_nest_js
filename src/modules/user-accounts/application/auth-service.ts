@@ -38,8 +38,16 @@ export class AuthService {
   }
 
   async registerUser(dto: CreateUserDto) {
-    const createdUserId = await this.usersService.createUser(dto);
+    const existingUser = await this.usersRepository.findUserByLoginOrEmail({
+      login: dto.login,
+      email: dto.email,
+    });
 
+    if (existingUser) {
+      throw new DomainException({ code: 2, message: 'User already exists' });
+    }
+
+    const createdUserId = await this.usersService.createUser(dto);
     const user = await this.usersRepository.findOrNotFoundFail(createdUserId);
 
     await this.usersRepository.save(user);

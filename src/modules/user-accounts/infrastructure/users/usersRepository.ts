@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserModelType } from '../../domain/userEntity';
 import { UserDocument } from '../../domain/userEntity';
 import { PasswordRecoveryInputDto } from '../../api/dto/input/password-recovery-input.dto';
+import { LoginOrEmailDto } from '../dto/login-or-email.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -35,9 +36,11 @@ export class UsersRepository {
     });
   }
 
-  async findByLoginOrEmail(loginOrEmail: string): Promise<UserDocument | null> {
+  async findUserByLoginOrEmail(
+    loginOrEmail: LoginOrEmailDto,
+  ): Promise<UserDocument | null> {
     return this.UserModel.findOne({
-      $or: [{ login: loginOrEmail }, { email: loginOrEmail }],
+      $or: [{ login: loginOrEmail.login }, { email: loginOrEmail.email }],
       deleteAt: null,
     });
   }

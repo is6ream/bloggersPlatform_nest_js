@@ -10,20 +10,24 @@ describe('Auth (e2e)', () => {
   let mongoServer: MongoMemoryServer;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
+    try {
+      mongoServer = await MongoMemoryServer.create();
+      const mongoUri = mongoServer.getUri();
 
-    await mongoose.connect(mongoUri);
+      await mongoose.connect(mongoUri);
 
-    const moduleFixture = await Test.createTestingModule({
-      imports: [AppModule],
-    })
-      .overrideProvider('MONGODB_URI')
-      .useValue(mongoUri)
-      .compile();
+      const moduleFixture = await Test.createTestingModule({
+        imports: [AppModule],
+      })
+        .overrideProvider('MONGODB_URI')
+        .useValue(mongoUri)
+        .compile();
 
-    app = moduleFixture.createNestApplication();
-    await app.init();
+      app = moduleFixture.createNestApplication();
+      await app.init();
+    } catch (err: unknown) {
+      console.log(err);
+    }
   });
 
   afterAll(async () => {
@@ -52,7 +56,5 @@ describe('Auth (e2e)', () => {
         email: 'test@example.com',
       })
       .expect(201);
-
-    console.log('Response:', response.body);
   });
 });
