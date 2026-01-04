@@ -15,6 +15,7 @@ import { PassportModule } from '@nestjs/passport';
 import { EmailAdapter } from '../notifications/email-adapter';
 import { JwtModule } from '@nestjs/jwt';
 import * as dotenv from 'dotenv';
+import { JwtStrategy } from './strategies/jwt-strategy';
 dotenv.config();
 console.log(process.env.JWT_SECRET, 'JWT_SECRET check');
 if (!process.env.JWT_SECRET) {
@@ -31,6 +32,7 @@ if (!process.env.JWT_SECRET) {
   ],
   controllers: [UserController, AuthController],
   providers: [
+    JwtStrategy,
     LocalStrategy,
     UsersQueryRepository,
     UsersRepository,

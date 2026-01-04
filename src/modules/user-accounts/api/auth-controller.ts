@@ -87,7 +87,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @Get('me')
+  @Get('me') //todo - test
   @UseGuards(JwtAuthGuard)
   async getMe(
     @ExtractUserFromRequest() user: UserContextDto,
