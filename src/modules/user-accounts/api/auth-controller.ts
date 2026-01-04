@@ -23,6 +23,7 @@ import { NewPasswordInputDto } from './dto/input/new-password-input.dto';
 import { PasswordConfirmationInputDto } from './dto/input/password-confirmation.input.dto';
 import { EmailResendingInputDto } from './dto/input/email-resending.input.dto';
 import { GetMeOutputDto } from './dto/output/get-me-output.dto';
+
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -84,7 +85,7 @@ export class AuthController {
     return this.authService.emailResending(body.email);
   }
 
-  @Get('me')
+  @Get('me') //тут нужно подключить guard и стратегию
   @HttpCode(HttpStatus.OK)
   async getMe(
     @ExtractUserFromRequest() user: UserContextDto,

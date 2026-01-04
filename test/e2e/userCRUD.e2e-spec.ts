@@ -32,7 +32,5 @@ describe('User CRUD (e2e)', () => {
     const res = await request(app.getHttpServer())
       .get('/hometask_13/api/users')
       .expect(200);
-
-    console.log(res); //какую-то шляпу вернул
   });
 });
