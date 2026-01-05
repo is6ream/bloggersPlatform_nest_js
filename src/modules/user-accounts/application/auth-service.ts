@@ -23,7 +23,11 @@ export class AuthService {
     loginOrEmail: string,
     password: string,
   ): Promise<UserContextDto | null> {
-    const user = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
+    const user: UserDocument | null =
+      await this.usersRepository.findUserByLoginOrEmail({
+        login: loginOrEmail,
+        email: loginOrEmail,
+      });
     if (!user) {
       throw new UnauthorizedException('invalid password or email');
     }

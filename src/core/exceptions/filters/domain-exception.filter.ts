@@ -8,7 +8,6 @@ import { DomainException } from '../domain-exceptions';
 import { Request, Response } from 'express';
 import { DomainExceptionCode } from '../domain-exception-codes';
 import { ErrorResponseBody } from './error-response-body.type';
-
 @Catch(DomainException)
 export class DomainHttpExceptionsFilter implements ExceptionFilter {
   catch(exception: DomainException, host: ArgumentsHost): void {
@@ -18,7 +17,7 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
 
     const status = this.mapToHttpStatus(exception.code);
     const responseBody = this.buildResponseBody(exception, request.url);
-
+    console.log(exception, 'exception check');
     response.status(status).json(responseBody);
   }
 
@@ -48,14 +47,13 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
     requestUrl: string,
   ): ErrorResponseBody {
     return {
-      timestamp: new Date().toISOString(),
-      path: requestUrl,
-      message: exception.message,
-      code: exception.code,
-      extensions: exception.extensions,
+      errorMessages: [
+        {
+          message: exception.message,
+          field: exception.extensions?.[0].field,
+        },
+      ],
     };
   }
 }
 
-//todo - переделать exception filter под себя
-//настроить тестовую бд через докер

@@ -32,9 +32,7 @@ describe('AuthService - Password Recovery', () => {
         {
           provide: UsersService,
           useValue: {
-            // Методы UsersService которые использует AuthService
             createUser: jest.fn(),
-            // другие методы если нужны
           },
         },
         {
