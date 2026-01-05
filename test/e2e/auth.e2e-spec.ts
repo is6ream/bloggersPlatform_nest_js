@@ -5,6 +5,9 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { AppModule } from 'src/modules/app-module/appModule';
 
+
+//поднять в докере бд 
+//докер декстоп виндовс - как поднять монго
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   let mongoServer: MongoMemoryServer;
@@ -46,6 +49,7 @@ describe('Auth (e2e)', () => {
       await collections[key].deleteMany({});
     }
   });
+
 
   it('/auth/registration (POST)', async () => {
     const response = await request(app.getHttpServer())

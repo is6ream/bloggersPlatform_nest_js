@@ -8,6 +8,7 @@ import { UsersService } from './user-service';
 import { UserDocument } from '../domain/userEntity';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
+import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 @Injectable()
 export class AuthService {
   constructor(
@@ -36,27 +37,49 @@ export class AuthService {
     }
     return { id: user._id.toString() };
   }
-
   async registerUser(dto: CreateUserDto) {
     const existingUser = await this.usersRepository.findUserByLoginOrEmail({
       login: dto.login,
       email: dto.email,
     });
 
-    if (existingUser) {
-      throw new DomainException({ code: 2, message: 'User already exists' });
+    if (existingUser?.login === dto.login) {
+      throw new DomainException({
+        code: DomainExceptionCode.BadRequest,
+        message: 'User with such login already exists',
+        extensions: [
+          {
+            message: 'User with such login already exists',
+            field: 'login',
+          },
+        ],
+      });
+    }
+
+    if (existingUser?.email === dto.email) {
+      throw new DomainException({
+        code: DomainExceptionCode.BadRequest,
+        message: 'User with such email already exists',
+        extensions: [
+          {
+            message: 'User with such email already exists',
+            field: 'email',
+          },
+        ],
+      });
     }
 
     const createdUserId = await this.usersService.createUser(dto);
     const user = await this.usersRepository.findOrNotFoundFail(createdUserId);
-
     await this.usersRepository.save(user);
     await this.emailAdapter
       .sendConfirmationCodeEmail(
         user.email,
         user.emailConfirmation.confirmationCode,
       )
-      .catch(console.error);
+      .catch((error) => {
+        console.error(`Error sending email: ${error}`);
+      });
   }
   async passwordRecovery(email: string) {
     const user: UserDocument | null =
