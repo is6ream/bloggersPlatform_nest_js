@@ -1,5 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { PasswordRecoverySchema, PasswordRecovery } from './schemas/passRecoverySchema';
+import {
+  PasswordRecoverySchema,
+  PasswordRecovery,
+} from './schemas/passRecoverySchema';
 import {
   EmailConfirmationSchema,
   EmailConfirmation,

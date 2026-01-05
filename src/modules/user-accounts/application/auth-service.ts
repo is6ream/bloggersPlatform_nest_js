@@ -29,15 +29,14 @@ export class AuthService {
         email: loginOrEmail,
       });
     if (!user) {
-      throw new UnauthorizedException('invalid password or email');
+      return null;
     }
     const isPasswordValid = await this.bcryptService.checkPassword({
       password,
       hash: user.passwordHash,
     });
-
     if (!isPasswordValid) {
-      throw new UnauthorizedException('invalid password or email');
+      return null;
     }
     return { id: user._id.toString() };
   }

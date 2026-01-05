@@ -6,10 +6,7 @@ import { UserContextDto } from '../dto/user-context.dto';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  handleRequest<TUser = UserContextDto>(
-    err: any,
-    user: TUser | false,
-  ): TUser {
+  handleRequest<TUser = UserContextDto>(err: any, user: TUser | false): TUser {
     if (err || !user) {
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,

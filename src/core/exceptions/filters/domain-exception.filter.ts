@@ -16,9 +16,14 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const status = this.mapToHttpStatus(exception.code);
+
+    if (exception.code === DomainExceptionCode.Unauthorized) {
+      response.status(status).send();
+      return;
+    }
     const responseBody = this.buildResponseBody(exception, request.url);
-    console.log(exception, 'exception check');
     response.status(status).json(responseBody);
+    console.log(exception.code, 'exception CODE!!!! check');
   }
 
   private mapToHttpStatus(code: DomainExceptionCode): number {
@@ -50,10 +55,9 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
       errorMessages: [
         {
           message: exception.message,
-          field: exception.extensions?.[0].field,
+          field: exception.extensions?.[0]?.field,
         },
       ],
     };
   }
 }
-
