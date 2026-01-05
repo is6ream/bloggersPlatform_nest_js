@@ -34,8 +34,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe())
+  @HttpCode(HttpStatus.OK) //не работает пайп, отдаю пароль в формате числа, падает ошибка 401, хотя должна 400
   @UseGuards(LocalAuthGuard)
   @ApiBody({
     schema: {
