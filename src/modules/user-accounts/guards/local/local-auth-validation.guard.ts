@@ -30,9 +30,8 @@ export class LocalAuthValidationGuard extends AuthGuard('local') {
     }
 
     try {
-      return (super.canActivate(context)) as boolean;
+      return await super.canActivate(context) as boolean;
     } catch (error) {
-
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
         message: 'Invalid credentials',

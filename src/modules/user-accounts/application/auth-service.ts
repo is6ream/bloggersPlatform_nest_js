@@ -103,6 +103,7 @@ export class AuthService {
       } as UserContextDto,
       { secret: process.env.JWT_SECRET },
     );
+    console.log(accessToken, 'accessToken check');
     return {
       accessToken,
     };

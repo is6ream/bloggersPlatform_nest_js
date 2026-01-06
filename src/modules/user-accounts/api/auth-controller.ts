@@ -33,7 +33,7 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  @HttpCode(HttpStatus.OK) //не работает пайп, отдаю пароль в формате числа, падает ошибка 401, хотя должна 400
+  @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthValidationGuard)
   @ApiBody({
     schema: {
@@ -47,7 +47,7 @@ export class AuthController {
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
-    return this.authService.loginUser(user.id); //возврат функции
+    return this.authService.loginUser(user.id);
   }
 
   @Post('password-recovery')
