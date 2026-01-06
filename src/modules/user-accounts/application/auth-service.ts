@@ -124,15 +124,16 @@ export class AuthService {
       throw new DomainException({ code: 1, message: 'User not found' });
     }
 
-    if (user.emailConfirmation.expirationDate < new Date(Date.now())) {
+    if (user.passwordRecovery?.expiresAt! < new Date(Date.now())) {
       throw new DomainException({
         code: 2,
         message: 'Recovery code expired',
       });
     }
 
+    console.log(newPassword, 'newPassword check');
     const newPasswordHash = await this.bcryptService.generateHash(newPassword);
-
+    console.log(newPasswordHash, 'newPasswordHash check');
     user.passwordHash = newPasswordHash;
     await this.usersRepository.save(user);
   }
