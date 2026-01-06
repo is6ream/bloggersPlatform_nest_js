@@ -1,10 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ExecutionContext } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { BadRequestException } from '@nestjs/common';
 import { LoginInputDto } from '../../api/dto/input/login-input.dto';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
 @Injectable()
 export class LocalAuthValidationGuard extends AuthGuard('local') {
@@ -15,14 +19,24 @@ export class LocalAuthValidationGuard extends AuthGuard('local') {
     const errors = await validate(dto);
 
     if (errors.length > 0) {
-      throw new BadRequestException({
-        errorsMessages: errors.map((err) => ({
+      throw new DomainException({
+        code: DomainExceptionCode.ValidationError,
+        message: 'Validation failed',
+        extensions: errors.map((err) => ({
           message: Object.values(err.constraints || {})[0],
           field: err.property,
         })),
       });
     }
 
-    return super.canActivate(context) as Promise<boolean>;
+    try {
+      return (super.canActivate(context)) as boolean;
+    } catch (error) {
+
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Invalid credentials',
+      });
+    }
   }
 }

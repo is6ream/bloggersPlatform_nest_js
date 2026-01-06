@@ -51,8 +51,20 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
     exception: DomainException,
     requestUrl: string,
   ): ErrorResponseBody {
+    if (
+      exception.code === DomainExceptionCode.ValidationError &&
+      exception.extensions?.length > 0
+    ) {
+      return {
+        errorsMessages: exception.extensions.map((ext) => ({
+          message: ext.message,
+          field: ext.field,
+        })),
+      };
+    }
+
     return {
-      errorMessages: [
+      errorsMessages: [
         {
           message: exception.message,
           field: exception.extensions?.[0]?.field,

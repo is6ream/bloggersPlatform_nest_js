@@ -13,17 +13,16 @@ import {
 } from '@nestjs/common';
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
 import { Body } from '@nestjs/common';
-import { LocalAuthGuard } from '../guards/local/local-auth.guard';
 import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { UserContextDto } from '../guards/dto/user-context.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
-import { LoginInputDto } from './dto/input/login-input.dto';
 import { PasswordRecoveryInputDto } from './dto/input/password-recovery-input.dto';
 import { NewPasswordInputDto } from './dto/input/new-password-input.dto';
 import { PasswordConfirmationInputDto } from './dto/input/password-confirmation.input.dto';
 import { EmailResendingInputDto } from './dto/input/email-resending.input.dto';
 import { GetMeOutputDto } from './dto/output/get-me-output.dto';
 import { JwtAuthGuard } from '../guards/jwt/jwt-auth.guard';
+import { LocalAuthValidationGuard } from '../guards/local/local-auth-validation.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -35,7 +34,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK) //не работает пайп, отдаю пароль в формате числа, падает ошибка 401, хотя должна 400
-  @UseGuards(LocalAuthGuard)
+  @UseGuards(LocalAuthValidationGuard)
   @ApiBody({
     schema: {
       type: 'object',
@@ -46,10 +45,9 @@ export class AuthController {
     },
   })
   async login(
-    @Body() body: LoginInputDto,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
-    return await this.authService.loginUser(user.id);
+    return this.authService.loginUser(user.id); //возврат функции
   }
 
   @Post('password-recovery')
@@ -57,7 +55,7 @@ export class AuthController {
   async passwordRecovery(
     @Body() body: PasswordRecoveryInputDto,
   ): Promise<void> {
-    return await this.authService.passwordRecovery(body.email);
+    return this.authService.passwordRecovery(body.email);
   }
 
   @Post('registration')
@@ -91,6 +89,6 @@ export class AuthController {
   async getMe(
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<GetMeOutputDto> {
-    return await this.authQueryRepository.getMe(user.id);
+    return this.authQueryRepository.getMe(user.id);
   }
 }
