@@ -16,6 +16,7 @@ import { EmailAdapter } from '../notifications/email-adapter';
 import { JwtModule } from '@nestjs/jwt';
 import * as dotenv from 'dotenv';
 import { JwtStrategy } from './strategies/jwt-strategy';
+import { ThrottlerModule } from '@nestjs/throttler';
 dotenv.config();
 console.log(process.env.JWT_SECRET, 'JWT_SECRET check');
 if (!process.env.JWT_SECRET) {
@@ -29,6 +30,12 @@ if (!process.env.JWT_SECRET) {
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '60m' },
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, 
+        limit: 5, 
+      },
+    ]),
   ],
   controllers: [UserController, AuthController],
   providers: [
