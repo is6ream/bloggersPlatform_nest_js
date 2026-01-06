@@ -4,7 +4,6 @@ import { AuthQueryRepository } from '../infrastructure/auth/authQueryRepository'
 import {
   Controller,
   Get,
-  HttpCode,
   HttpStatus,
   Post,
   UseGuards,
@@ -12,7 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
-import { Body } from '@nestjs/common';
+import { Body, HttpCode } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { UserContextDto } from '../guards/dto/user-context.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
@@ -62,6 +61,7 @@ export class AuthController {
   }
 
   @Post('registration')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({
     default: { limit: 5, ttl: 60000 },
   })

@@ -85,6 +85,17 @@ export class User {
     };
   }
 
+  requestNewConfirmationCode(): void {
+    if (this.emailConfirmation.isConfirmed) {
+      throw new Error('Email already confirmed');
+    }
+
+    this.emailConfirmation.confirmationCode = this.generateRecoveryCode();
+    this.emailConfirmation.expirationDate = new Date(
+      Date.now() + 24 * 60 * 60 * 1000,
+    );
+  }
+
   clearRecoveryCode(): void {
     this.passwordRecovery = null;
   }

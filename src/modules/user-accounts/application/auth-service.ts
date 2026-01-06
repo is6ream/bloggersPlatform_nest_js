@@ -72,9 +72,10 @@ export class AuthService {
       });
     }
 
-    const createdUserId = await this.usersService.createUser(dto);
-    const user = await this.usersRepository.findOrNotFoundFail(createdUserId);
-    await this.usersRepository.save(user);
+    const userId: string = await this.usersService.createUser(dto);
+    const user: UserDocument =
+      await this.usersRepository.findOrNotFoundFail(userId);
+
     await this.emailAdapter
       .sendConfirmationCodeEmail(
         user.email,
@@ -161,12 +162,12 @@ export class AuthService {
   async emailResending(email: string) {
     const user: UserDocument | null =
       await this.usersRepository.findByEmail(email);
-    if (!user) {
+    if (!user || user.emailConfirmation.isConfirmed) {
       throw new DomainException({ code: 1, message: 'User not found' });
     }
-    await this.emailAdapter.sendConfirmationCodeEmail(
-      email,
-      user.emailConfirmation.confirmationCode,
-    );
+    //здесь нужно сгенерировать код подтвреждения и сохранить в бд
+    user.requestPasswordRecovery();
+    await this.usersRepository.save(user);
+    await this.emailAdapter.sendConfirmationCodeEmail(email, user);
   }
 }

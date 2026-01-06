@@ -19,7 +19,6 @@ import { JwtStrategy } from './strategies/jwt-strategy';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BasicAuthStrategy } from './strategies/basic-strategy';
 dotenv.config();
-console.log(process.env.JWT_SECRET, 'JWT_SECRET check');
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in .env file');
 }
