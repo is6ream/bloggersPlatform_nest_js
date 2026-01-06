@@ -23,8 +23,10 @@ import { EmailResendingInputDto } from './dto/input/email-resending.input.dto';
 import { GetMeOutputDto } from './dto/output/get-me-output.dto';
 import { JwtAuthGuard } from '../guards/jwt/jwt-auth.guard';
 import { LocalAuthValidationGuard } from '../guards/local/local-auth-validation.guard';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(
     private usersService: UsersService,
@@ -51,23 +53,35 @@ export class AuthController {
   }
 
   @Post('password-recovery')
+  @Throttle({
+    default: { limit: 5, ttl: 60000 },
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
     return this.authService.passwordRecovery(body.email);
   }
 
   @Post('registration')
+  @Throttle({
+    default: { limit: 5, ttl: 60000 },
+  })
   registration(@Body() body: CreateUserInputDto): Promise<void> {
     return this.authService.registerUser(body);
   }
 
   @Post('new-password')
+  @Throttle({
+    default: { limit: 5, ttl: 60000 },
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async newPassword(@Body() body: NewPasswordInputDto): Promise<void> {
     return this.authService.resetPassword(body.newPassword, body.recoveryCode);
   }
 
   @Post('registration-confirmation')
+  @Throttle({
+    default: { limit: 5, ttl: 60000 },
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async confirmRegistration(
     @Body() body: PasswordConfirmationInputDto,
@@ -76,6 +90,9 @@ export class AuthController {
   }
 
   @Post('registration-email-resending')
+  @Throttle({
+    default: { limit: 5, ttl: 60000 },
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async emailResending(@Body() body: EmailResendingInputDto): Promise<void> {
     return this.authService.emailResending(body.email);
