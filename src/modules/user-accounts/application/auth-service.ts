@@ -130,10 +130,7 @@ export class AuthService {
         message: 'Recovery code expired',
       });
     }
-
-    console.log(newPassword, 'newPassword check');
     const newPasswordHash = await this.bcryptService.generateHash(newPassword);
-    console.log(newPasswordHash, 'newPasswordHash check');
     user.passwordHash = newPasswordHash;
     await this.usersRepository.save(user);
   }
