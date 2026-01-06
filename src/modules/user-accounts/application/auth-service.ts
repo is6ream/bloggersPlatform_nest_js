@@ -90,9 +90,13 @@ export class AuthService {
     if (!user) {
       return null;
     }
+
+    user.requestPasswordRecovery();
+    await this.usersRepository.save(user);
+
     await this.emailAdapter.sendRecoveryCodeEmail(
       email,
-      user.emailConfirmation.confirmationCode,
+      user.passwordRecovery?.code!,
     );
   }
 

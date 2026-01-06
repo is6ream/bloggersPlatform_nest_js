@@ -30,7 +30,7 @@ export class User {
   emailConfirmation: EmailConfirmation;
 
   @Prop({ type: PasswordRecoverySchema })
-  passwordRecovery: PasswordRecovery;
+  passwordRecovery: PasswordRecovery | null;
 
   createdAt: Date;
   updatedAt: Date;
@@ -67,18 +67,32 @@ export class User {
     this.email = dto.email;
   }
 
-  setConfirmCode() {
-    this.emailConfirmation;
+  private generateRecoveryCode(): string {
+    return randomUUID();
+  }
+
+  requestPasswordRecovery(): void {
+    if (!this.emailConfirmation.isConfirmed) {
+      throw new Error('Email must be confirmed');
+    }
+
+    const recoveryCode = this.generateRecoveryCode();
+
+    this.passwordRecovery = {
+      code: recoveryCode,
+      expiresAt: new Date(Date.now() + 3600000), // 1 час
+      isUsed: false,
+    };
+  }
+
+  clearRecoveryCode(): void {
+    this.passwordRecovery = null;
   }
 }
-//Создаем схему на основе класса
 export const UserSchema = SchemaFactory.createForClass(User);
 
-//регистрируем методы сущности в схеме монгус
 UserSchema.loadClass(User);
 
-//типизируем документ
 export type UserDocument = HydratedDocument<User>;
 
-//Типизация модели + статические и инстанс методы
 export type UserModelType = Model<UserDocument> & typeof User;
