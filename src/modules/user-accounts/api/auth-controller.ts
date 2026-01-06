@@ -52,9 +52,7 @@ export class AuthController {
 
   @Post('password-recovery')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async passwordRecovery(
-    @Body() body: PasswordRecoveryInputDto,
-  ): Promise<void> {
+  async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
     return this.authService.passwordRecovery(body.email);
   }
 

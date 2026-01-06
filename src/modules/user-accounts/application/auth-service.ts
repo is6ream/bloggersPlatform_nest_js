@@ -88,7 +88,7 @@ export class AuthService {
     const user: UserDocument | null =
       await this.usersRepository.findByEmail(email);
     if (!user) {
-      throw new DomainException({ code: 1, message: 'User not found' });
+      return null;
     }
     await this.emailAdapter.sendRecoveryCodeEmail(
       email,
