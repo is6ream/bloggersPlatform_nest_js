@@ -36,13 +36,7 @@ export class UserController {
 
   @Post()
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewModel> {
-    console.log('password length:', body.password.length); // 9
-    console.log('password:', body.password); // "testtes12"
-    console.log('typeof password:', typeof body.password); // string
     const userId: string = await this.usersService.createUser(body);
-
-    console.log('check');
-
     return this.usersQueryRepository.getByIdOrNotFoundFail(userId);
   }
 

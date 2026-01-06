@@ -17,6 +17,7 @@ import { JwtModule } from '@nestjs/jwt';
 import * as dotenv from 'dotenv';
 import { JwtStrategy } from './strategies/jwt-strategy';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { BasicAuthStrategy } from './strategies/basic-strategy';
 dotenv.config();
 console.log(process.env.JWT_SECRET, 'JWT_SECRET check');
 if (!process.env.JWT_SECRET) {
@@ -32,8 +33,8 @@ if (!process.env.JWT_SECRET) {
     }),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, 
-        limit: 5, 
+        ttl: 60000,
+        limit: 5,
       },
     ]),
   ],
@@ -51,6 +52,7 @@ if (!process.env.JWT_SECRET) {
     EmailAdapter,
     UsersService,
     EmailAdapter,
+    BasicAuthStrategy,
   ],
   exports: [],
 })
