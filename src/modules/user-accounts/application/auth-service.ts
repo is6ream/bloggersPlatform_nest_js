@@ -138,10 +138,14 @@ export class AuthService {
 
   async confirmRegistration(code: string): Promise<void> {
     const user: UserDocument | null =
-      await this.usersRepository.findByRecoveryCode(code);
+      await this.usersRepository.findByConfirmationCode(code);
     console.log(code, 'code check');
     if (!user) {
-      throw new DomainException({ code: 2, message: 'User not found' });
+      throw new DomainException({
+        code: 2,
+        message: 'User not found',
+        extensions: [{ message: 'User not found', field: 'code' }],
+      });
     }
     if (user.emailConfirmation.confirmationCode !== code) {
       throw new DomainException({

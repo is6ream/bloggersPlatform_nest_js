@@ -22,6 +22,7 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
       return;
     }
     const responseBody = this.buildResponseBody(exception, request.url);
+    console.log(responseBody, 'responseBody check');
     response.status(status).json(responseBody);
     console.log(exception.code, 'exception CODE!!!! check');
   }
@@ -62,6 +63,14 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
         })),
       };
     }
+
+    console.log('SECOND RETURN triggered:', {
+      code: exception.code,
+      message: exception.message,
+      extensions: exception.extensions,
+      extensionsLength: exception.extensions?.length,
+      firstExtensionField: exception.extensions?.[0]?.field,
+    });
 
     return {
       errorsMessages: [
