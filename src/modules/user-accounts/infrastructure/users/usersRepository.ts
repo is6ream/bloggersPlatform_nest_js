@@ -56,4 +56,10 @@ export class UsersRepository {
       'passwordRecovery.code': code,
     });
   }
+
+  async findByConfirmationCode(code: string): Promise<UserDocument | null> {
+    return this.UserModel.findOne({
+      'emailConfirmation.confirmationCode': code,
+    });
+  }
 }

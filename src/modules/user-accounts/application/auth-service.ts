@@ -137,11 +137,11 @@ export class AuthService {
   }
 
   async confirmRegistration(code: string): Promise<void> {
-    console.log(code, 'code check');
     const user: UserDocument | null =
       await this.usersRepository.findByRecoveryCode(code);
+    console.log(code, 'code check');
     if (!user) {
-      throw new DomainException({ code: 1, message: 'User not found' });
+      throw new DomainException({ code: 2, message: 'User not found' });
     }
     if (user.emailConfirmation.confirmationCode !== code) {
       throw new DomainException({
@@ -165,9 +165,11 @@ export class AuthService {
     if (!user || user.emailConfirmation.isConfirmed) {
       throw new DomainException({ code: 1, message: 'User not found' });
     }
-    //здесь нужно сгенерировать код подтвреждения и сохранить в бд
-    user.requestPasswordRecovery();
+    user.requestNewConfirmationCode();
     await this.usersRepository.save(user);
-    await this.emailAdapter.sendConfirmationCodeEmail(email, user);
+    await this.emailAdapter.sendConfirmationCodeEmail(
+      email,
+      user.emailConfirmation.confirmationCode,
+    );
   }
 }
