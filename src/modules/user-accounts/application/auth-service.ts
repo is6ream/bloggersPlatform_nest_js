@@ -157,7 +157,16 @@ export class AuthService {
       throw new DomainException({ code: 2, message: 'Code is expired' });
     }
     if (user.emailConfirmation.isConfirmed) {
-      throw new DomainException({ code: 2, message: 'User already confirmed' });
+      throw new DomainException({
+        code: 2,
+        message: 'User already confirmed',
+        extensions: [
+          {
+            message: 'User already confirmed',
+            field: 'code',
+          },
+        ],
+      });
     }
     user.emailConfirmation.isConfirmed = true;
     await this.usersRepository.save(user);
@@ -166,8 +175,25 @@ export class AuthService {
   async emailResending(email: string) {
     const user: UserDocument | null =
       await this.usersRepository.findByEmail(email);
-    if (!user || user.emailConfirmation.isConfirmed) {
-      throw new DomainException({ code: 1, message: 'User not found' });
+    if (!user) {
+      throw new DomainException({
+        code: 2,
+        message: 'User not found',
+        extensions: [{ message: 'User not found', field: 'email' }],
+      });
+    }
+
+    if (user.emailConfirmation.isConfirmed) {
+      throw new DomainException({
+        code: 2,
+        message: 'Email already confirmed',
+        extensions: [
+          {
+            message: 'Email already confirmed',
+            field: 'email',
+          },
+        ],
+      });
     }
     user.requestNewConfirmationCode();
     await this.usersRepository.save(user);

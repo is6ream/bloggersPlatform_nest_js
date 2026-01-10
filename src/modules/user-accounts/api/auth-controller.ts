@@ -63,7 +63,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({
-    default: { limit: 5, ttl: 60000 },
+    default: { limit: 15, ttl: 60000 },
   })
   registration(@Body() body: CreateUserInputDto): Promise<void> {
     return this.authService.registerUser(body);
@@ -90,9 +90,9 @@ export class AuthController {
   }
 
   @Post('registration-email-resending')
-  @Throttle({
-    default: { limit: 5, ttl: 60000 },
-  })
+  // @Throttle({
+  //   default: { limit: 5, ttl: 60000 },
+  // })
   @HttpCode(HttpStatus.NO_CONTENT)
   async emailResending(@Body() body: EmailResendingInputDto): Promise<void> {
     return this.authService.emailResending(body.email);
