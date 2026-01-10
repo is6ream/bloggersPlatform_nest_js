@@ -15,12 +15,10 @@ export function pipesSetup(app: INestApplication) {
           field: error.property,
         }));
 
-        console.log('🟡 ValidationPipe error:', errorsForResponse);
-
         throw new BadRequestException({
           errorsMessages: errorsForResponse,
         });
       },
     }),
   );
-} //остановился на разборе пайпа для валидации, нужно отловить ошибки.
+} 

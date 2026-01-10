@@ -14,13 +14,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const responseBody = exception.getResponse();
 
-    // console.log(status, 'status check');
-
-    // console.log(responseBody, 'responseBody check');
     if (status === 400) {
       response.status(status).json(responseBody);
     } else {
-      // Для других ошибок - стандартный формат
       response.status(status).json({
         statusCode: status,
         timestamp: new Date().toISOString(),

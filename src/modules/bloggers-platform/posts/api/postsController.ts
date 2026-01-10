@@ -54,7 +54,6 @@ export class PostsController {
 
   @Get(':id')
   async getById(@Param('id') id: string): Promise<PostViewModel> {
-    console.log('req check');
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
 

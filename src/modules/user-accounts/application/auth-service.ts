@@ -108,7 +108,6 @@ export class AuthService {
       } as UserContextDto,
       { secret: process.env.JWT_SECRET },
     );
-    console.log(accessToken, 'accessToken check');
     return {
       accessToken,
     };
@@ -139,7 +138,6 @@ export class AuthService {
   async confirmRegistration(code: string): Promise<void> {
     const user: UserDocument | null =
       await this.usersRepository.findByConfirmationCode(code);
-    console.log(code, 'code check');
     if (!user) {
       throw new DomainException({
         code: 2,

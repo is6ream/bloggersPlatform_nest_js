@@ -25,9 +25,6 @@ export class PostQueryRepository {
     if (!post) {
       throw new NotFoundException('post not found');
     }
-
-    console.log(post, 'post check in DAL');
-
     return PostViewDto.mapToView(post);
   }
 
