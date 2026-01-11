@@ -65,7 +65,7 @@ export class BlogsController {
     return this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
   }
 
-  @Get(':id') //декоратор API-response
+  @Get(':id')
   async getById(@Param('id') id: string): Promise<BlogViewModel> {
     return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
   }

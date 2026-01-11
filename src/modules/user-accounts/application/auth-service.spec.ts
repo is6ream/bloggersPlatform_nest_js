@@ -97,12 +97,4 @@ describe('AuthService - Password Recovery', () => {
       mockDto.recoveryCode,
     );
   });
-
-  // it('should throw error for non-existing user', async () => {
-  //   usersRepository.findByEmail = jest.fn().mockResolvedValue(null);
-
-  //   await expect(
-  //     authService.passwordRecovery('nonexistent@example.com'),
-  //   ).rejects.toThrow('User not found');
-  // });
 });
