@@ -85,7 +85,7 @@ export class BlogsController {
     @Param('id') id: string,
     @Body() body: UpdateBlogDto,
   ): Promise<void> {
-    return this.blogsService.updateBlog(id, body);
+    return this.commandBus.execute(new UpdateBlogCommand(id, body));
   }
 
   @Delete(':id')
