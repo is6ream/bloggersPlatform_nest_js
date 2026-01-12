@@ -7,8 +7,6 @@ import {
   HttpStatus,
   Post,
   UseGuards,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
 import { Body, HttpCode } from '@nestjs/common';

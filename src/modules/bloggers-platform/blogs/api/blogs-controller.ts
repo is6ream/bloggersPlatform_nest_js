@@ -28,6 +28,7 @@ import { CreateBlogCommand } from '../application/useCases/create-blog-use-case'
 import { BlogDocument } from '../domain/blogEntity';
 import { CreateBlogByBlogIdCommand } from '../application/useCases/create-blog-by-blogId-use-case';
 import { PostDocument } from '../../posts/domain/postEntity';
+import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
 @Controller('blogs')
 export class BlogsController {
   constructor(
@@ -56,7 +57,7 @@ export class BlogsController {
   @Post(':id/posts')
   async createPostForSpecificBlog(
     @Param('id') id: string,
-    @Body() body: CreatePostInputDto,
+    @Body() body: CreatePostByBlogIdInputDto,
   ): Promise<PostViewModel> {
     const post: PostDocument = await this.commandBus.execute(
       new CreateBlogByBlogIdCommand(id, body),
@@ -70,7 +71,6 @@ export class BlogsController {
     const blog: BlogDocument = await this.commandBus.execute(
       new CreateBlogCommand(body),
     );
-
     return blog.toViewModel(blog._id.toString());
   }
 

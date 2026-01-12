@@ -15,12 +15,13 @@ import {
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { CreatePostInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostInputDto';
+import { CreatePostByBlogIdInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostByBlogIdInputDto';
 
 @Injectable()
 export class CreateBlogByBlogIdCommand {
   constructor(
     public postId: string,
-    public dto: CreatePostInputDto,
+    public dto: CreatePostByBlogIdInputDto,
   ) {}
 }
 
@@ -47,6 +48,7 @@ export class CreateBlogByBlogIdUseCase implements ICommandHandler<CreateBlogByBl
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,
       blogId: blog._id,
+      blogName: blog.name,
     });
     await this.postRepository.save(post);
     return post;
