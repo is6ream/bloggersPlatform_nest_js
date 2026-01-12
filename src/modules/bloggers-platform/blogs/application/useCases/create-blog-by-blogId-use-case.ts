@@ -2,7 +2,6 @@ import { PostRepository } from './../../../posts/infrastructure/postRepository';
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectModel } from '@nestjs/mongoose';
-import { CreatePostDto } from 'src/modules/bloggers-platform/posts/domain/dto/createPostDto';
 import {
   Blog,
   BlogDocument,
@@ -15,12 +14,13 @@ import {
 } from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { CreatePostInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostInputDto';
 
 @Injectable()
 export class CreateBlogByBlogIdCommand {
   constructor(
     public postId: string,
-    public dto: CreatePostDto,
+    public dto: CreatePostInputDto,
   ) {}
 }
 

@@ -26,7 +26,7 @@ import { PostsService } from '../../posts/application/posts-service';
 import { CommandBus } from '@nestjs/cqrs';
 import { CreateBlogCommand } from '../application/useCases/create-blog-use-case';
 import { BlogDocument } from '../domain/blogEntity';
-
+import { CreateBlogByBlogIdCommand } from '../application/useCases/create-blog-by-blogId-use-case';
 @Controller('blogs')
 export class BlogsController {
   constructor(
@@ -58,7 +58,7 @@ export class BlogsController {
     @Body() body: CreatePostInputDto,
   ): Promise<PostViewModel> {
     const postId = await this.commandBus.execute(
-      new CreatePostByBlogIdCommand(id, body),
+      new CreateBlogByBlogIdCommand(id, body),
     );
 
     return await this.postsQueryRepository.getByIdOrNotFoundFail(postId);
