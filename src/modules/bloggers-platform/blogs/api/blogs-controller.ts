@@ -23,6 +23,7 @@ import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-param
 import { CreatePostInputDto } from '../../posts/dto/input/createPostInputDto';
 import { PostViewModel } from '../../posts/api/model/postViewModel';
 import { PostsService } from '../../posts/application/posts-service';
+import { CommandBus } from '@nestjs/cqrs';
 
 @Controller('blogs')
 export class BlogsController {
@@ -31,6 +32,7 @@ export class BlogsController {
     private postsService: PostsService,
     private blogsQueryRepository: BlogsQueryRepository,
     private postsQueryRepository: PostQueryRepository,
+    private commandBus: CommandBus,
   ) {}
 
   @Get()
@@ -61,7 +63,6 @@ export class BlogsController {
   @Post()
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
     const blogId = await this.blogsService.createBlog(body);
-
     return this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
   }
 
