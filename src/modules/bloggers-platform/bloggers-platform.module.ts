@@ -15,12 +15,17 @@ import { Post } from './posts/domain/postEntity';
 import { CommentsQueryRepository } from './comments/infrastructure/commentsQueryRepository';
 import { Comment, CommentsSchema } from './comments/domain/commentEntity';
 import { CommentsController } from './comments/api/commentsController';
+import { CqrsModule } from '@nestjs/cqrs';
+import {  CreateBlogUseCase } from './blogs/application/useCases/create-blog-use-case';
+
+const commandHandlers = [CreateBlogUseCase];
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
     MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentsSchema }]),
+    CqrsModule,
   ],
   controllers: [BlogsController, PostsController, CommentsController],
   providers: [
@@ -31,6 +36,7 @@ import { CommentsController } from './comments/api/commentsController';
     PostRepository,
     PostsService,
     CommentsQueryRepository,
+    ...commandHandlers,
   ],
   exports: [],
 })

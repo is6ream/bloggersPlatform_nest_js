@@ -10,7 +10,7 @@ import { CreateBlogDto } from '../../dto/input/createBlogDto';
 export class CreateBlogCommand {
   constructor(public dto: CreateBlogDto) {}
 }
-
+@CommandHandler(CreateBlogCommand)
 export class CreateBlogUseCase implements ICommandHandler<CreateBlogCommand> {
   constructor(
     @InjectModel(Blog.name)
