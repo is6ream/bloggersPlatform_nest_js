@@ -24,6 +24,7 @@ import { CreatePostInputDto } from '../../posts/dto/input/createPostInputDto';
 import { PostViewModel } from '../../posts/api/model/postViewModel';
 import { PostsService } from '../../posts/application/posts-service';
 import { CommandBus } from '@nestjs/cqrs';
+import { CreateBlogCommand } from '../application/useCases/create-blog-use-case';
 
 @Controller('blogs')
 export class BlogsController {
@@ -62,8 +63,10 @@ export class BlogsController {
 
   @Post()
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
-    const blogId = await this.blogsService.createBlog(body);
-    return this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
+    const blogId = await this.commandBus.execute(new CreateBlogCommand(body));
+
+   //   return blog.toViewModel(); todo
+
   }
 
   @Get(':id')

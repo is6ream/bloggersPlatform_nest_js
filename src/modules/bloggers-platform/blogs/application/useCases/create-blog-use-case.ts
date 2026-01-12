@@ -1,6 +1,6 @@
 import { BlogsRepository } from './../../infrastructure/blogsRepository';
 import { Injectable } from '@nestjs/common';
-import { BlogModelType } from '../../domain/blogEntity';
+import { BlogDocument, BlogModelType } from '../../domain/blogEntity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Blog } from '../../domain/blogEntity';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -18,13 +18,13 @@ export class CreateBlogUseCase implements ICommandHandler<CreateBlogCommand> {
     private blogsRepository: BlogsRepository,
   ) {}
 
-  async execute(command: CreateBlogCommand): Promise<string> {
-    const blog = new this.BlogModel({
+  async execute(command: CreateBlogCommand): Promise<BlogDocument> {
+    const blog: BlogDocument = new this.BlogModel({
       name: command.dto.name,
       description: command.dto.description,
       websiteUrl: command.dto.websiteUrl,
     });
     await this.blogsRepository.save(blog);
-    return blog._id.toString();
+    return blog;
   }
 }
