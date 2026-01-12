@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { BlogsService } from '../application/blogs-service';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
@@ -20,7 +21,6 @@ import { UpdateBlogDto } from '../dto/input/updateBlogDto';
 import { PostPaginatedViewDto } from '../../posts/api/paginated/paginated.post.view-dto';
 import { PostQueryRepository } from '../../posts/infrastructure/postQueryRepository';
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
-import { CreatePostInputDto } from '../../posts/dto/input/createPostInputDto';
 import { PostViewModel } from '../../posts/api/model/postViewModel';
 import { PostsService } from '../../posts/application/posts-service';
 import { CommandBus } from '@nestjs/cqrs';
@@ -29,7 +29,10 @@ import { BlogDocument } from '../domain/blogEntity';
 import { CreateBlogByBlogIdCommand } from '../application/useCases/create-blog-by-blogId-use-case';
 import { PostDocument } from '../../posts/domain/postEntity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
+import { UpdateBlogCommand } from '../application/useCases/update-blog-use-case';
+import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
 @Controller('blogs')
+@UseGuards(BasicAuthGuard)
 export class BlogsController {
   constructor(
     private blogsService: BlogsService,

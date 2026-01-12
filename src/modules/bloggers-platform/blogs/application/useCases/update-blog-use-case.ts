@@ -4,6 +4,7 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Blog, BlogDocument, BlogModelType } from '../../domain/blogEntity';
 import { BlogsRepository } from '../../infrastructure/blogsRepository';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
 
 @Injectable()
 export class UpdateBlogCommand {
@@ -24,6 +25,9 @@ export class UpdateBlogUseCase implements ICommandHandler<UpdateBlogCommand> {
     const blog: BlogDocument = await this.blogsRepository.findOrNotFoundFail(
       command.id,
     );
+    if (!blog) {
+      throw new DomainException({ code: 1, message: 'Blog not found' });
+    }
     blog.updateBlog(command.dto);
     await this.blogsRepository.save(blog);
   }

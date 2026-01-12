@@ -18,8 +18,13 @@ import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CreateBlogUseCase } from './blogs/application/useCases/create-blog-use-case';
 import { CreateBlogByBlogIdUseCase } from './blogs/application/useCases/create-blog-by-blogId-use-case';
+import { UpdateBlogUseCase } from './blogs/application/useCases/update-blog-use-case';
 
-const commandHandlers = [CreateBlogUseCase, CreateBlogByBlogIdUseCase];
+const commandHandlers = [
+  CreateBlogUseCase,
+  CreateBlogByBlogIdUseCase,
+  UpdateBlogUseCase,
+];
 
 @Module({
   imports: [
