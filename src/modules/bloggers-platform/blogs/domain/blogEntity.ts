@@ -26,7 +26,7 @@ export class Blog {
   createdAt: Date;
   updatedAt: Date;
 
-  @Prop({ type: Boolean, required: true, default: false })
+  @Prop({ type: Boolean, required: true, default: true })
   isMembership: boolean;
 
   static createInstance(dto: CreateBlogDto) {
