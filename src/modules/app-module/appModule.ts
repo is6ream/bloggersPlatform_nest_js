@@ -7,6 +7,7 @@ import { BloggersPlatformModule } from '../bloggers-platform/bloggers-platform.m
 import { TestingModule } from '../testing/testing-module';
 // import { ConfigModule } from '@nestjs/config';
 import { EmailAdapter } from '../notifications/email-adapter';
+import { CqrsModule } from '@nestjs/cqrs';
 @Module({
   imports: [
     MongooseModule.forRoot('mongodb://127.0.0.1:27017/blogger-platform'),
@@ -14,6 +15,7 @@ import { EmailAdapter } from '../notifications/email-adapter';
     //   isGlobal: true,
     //   envFilePath: '.env',
     // }),
+    CqrsModule.forRoot(),
     UserAccountsModule,
     BloggersPlatformModule,
     TestingModule,

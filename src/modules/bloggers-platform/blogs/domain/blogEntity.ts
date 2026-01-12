@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { CreateBlogDto } from '../dto/input/createBlogDto';
 import { HydratedDocument, Model } from 'mongoose';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
+import { BlogViewDto } from '../dto/output/blogViewDto';
 
 @Schema({
   timestamps: {
@@ -48,6 +49,17 @@ export class Blog {
       throw new Error('Entity already deleted');
     }
     this.deleteAt = new Date();
+  }
+
+  toViewModel(id: string): BlogViewDto {
+    return {
+      id: id,
+      name: this.name,
+      description: this.description,
+      websiteUrl: this.websiteUrl,
+      createdAt: this.createdAt,
+      isMembership: this.isMembership,
+    };
   }
 }
 
