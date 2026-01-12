@@ -55,6 +55,24 @@ export class Post {
     }
     this.deleteAt = new Date();
   }
+
+  toViewModel(id: string) {
+    return {
+      id: id,
+      title: this.title,
+      shortDescription: this.shortDescription,
+      content: this.content,
+      blogId: this.blogId,
+      blogName: this.blogName,
+      createdAt: this.createdAt,
+      extendedLikesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+        myStatus: 'None',
+        newestLikes: [],
+      },
+    };
+  }
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);

@@ -16,9 +16,10 @@ import { CommentsQueryRepository } from './comments/infrastructure/commentsQuery
 import { Comment, CommentsSchema } from './comments/domain/commentEntity';
 import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';
-import {  CreateBlogUseCase } from './blogs/application/useCases/create-blog-use-case';
+import { CreateBlogUseCase } from './blogs/application/useCases/create-blog-use-case';
+import { CreateBlogByBlogIdUseCase } from './blogs/application/useCases/create-blog-by-blogId-use-case';
 
-const commandHandlers = [CreateBlogUseCase];
+const commandHandlers = [CreateBlogUseCase, CreateBlogByBlogIdUseCase];
 
 @Module({
   imports: [
