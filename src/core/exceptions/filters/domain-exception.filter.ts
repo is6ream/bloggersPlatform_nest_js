@@ -49,7 +49,7 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
   private buildResponseBody(
     exception: DomainException,
     requestUrl: string,
-  ): ErrorResponseBody {
+  ): ErrorResponseBody | undefined {
     if (
       exception.code === DomainExceptionCode.ValidationError &&
       exception.extensions?.length > 0
@@ -60,6 +60,10 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
           field: ext.field,
         })),
       };
+    }
+
+    if (exception.code === DomainExceptionCode.NotFound) {
+      return 
     }
 
     return {

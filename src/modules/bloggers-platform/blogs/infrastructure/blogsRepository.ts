@@ -22,8 +22,7 @@ export class BlogsRepository {
     const blog = await this.findById(id);
     if (!blog) {
       console.log(blog, 'blog in DAL checkBlogExist');
-      throw new HttpException('', 404); //здесь должна быть просто 404
-      //для всех 404 ошибок в приложении должен быть глобальный exception filer
+      throw new DomainException({ code: 1, message: 'Blog not found' });
     }
     return blog;
   }
