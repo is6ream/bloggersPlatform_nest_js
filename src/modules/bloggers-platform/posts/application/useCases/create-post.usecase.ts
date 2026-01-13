@@ -18,9 +18,9 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     private postRepository: PostRepository,
   ) {}
 
-  async execute(command: CreatePostCommand): Promise<Post> {
+  async execute(command: CreatePostCommand): Promise<string> {
     const post: PostDocument = new this.PostModel(command.dto);
     await this.postRepository.save(post);
-    return post;
+    return post._id.toString();
   }
 }

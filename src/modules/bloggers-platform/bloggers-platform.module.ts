@@ -18,17 +18,9 @@ import { CommentsQueryRepository } from './comments/infrastructure/commentsQuery
 import { Comment, CommentsSchema } from './comments/domain/commentEntity';
 import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';
-import { UpdateBlogUseCase } from './blogs/application/useCases/update-blog-usecase';
-import { CreateBlogUseCase } from './blogs/application/useCases/create-blog.usecase';
-import { GetBlogByIdQueryHandler } from './blogs/application/queries/get-blog-byId.query';
+import { blogCommandHandlers } from './blogs/application/blog-command-handlers';
 
-const commandHandlers = [
-  CreateBlogUseCase,
-  CreateBlogByBlogIdUseCase,
-  UpdateBlogUseCase,
-  DeleteBlogByIdUseCase,
-  GetBlogByIdQueryHandler,
-];
+
 
 @Module({
   imports: [
@@ -46,7 +38,7 @@ const commandHandlers = [
     PostRepository,
     PostsService,
     CommentsQueryRepository,
-    ...commandHandlers,
+    ...blogCommandHandlers,
   ],
   exports: [],
 })

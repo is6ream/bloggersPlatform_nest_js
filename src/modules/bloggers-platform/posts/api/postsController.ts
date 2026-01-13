@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { GetPostsQueryParams } from './query/get-posts-query-params';
 import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
@@ -22,7 +23,8 @@ import { UpdatePostInputDto } from '../dto/input/updatePostInputDto';
 import { CommentViewModel } from './model/commentViewModel';
 import { CommentsQueryRepository } from '../../comments/infrastructure/commentsQueryRepository';
 import { GetCommentsQueryParams } from './query/qet-comments-query-params';
-
+import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
+import { CreatePostCommand } from '../application/useCases/create-post.useCase';
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -46,11 +48,11 @@ export class PostsController {
   ): Promise<PostPaginatedViewDto> {
     return this.postQueryRepository.getAll(query);
   }
-
+  
+  @UseGuards(BasicAuthGuard)
   @Post()
   async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
-    const postId = await this.postsService.createPost(body);
-
+    const postId = await this.commandBus.execute(new CreatePostCommand(body));
     return this.postQueryRepository.getByIdOrNotFoundFail(postId);
   }
 
