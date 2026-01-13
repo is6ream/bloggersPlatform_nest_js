@@ -1,3 +1,4 @@
+import { DeleteBlogByIdUseCase } from './blogs/application/useCases/delete-blog-by-id-use-case';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BlogSchema } from './blogs/domain/blogEntity';
@@ -24,6 +25,7 @@ const commandHandlers = [
   CreateBlogUseCase,
   CreateBlogByBlogIdUseCase,
   UpdateBlogUseCase,
+  DeleteBlogByIdUseCase,
 ];
 
 @Module({

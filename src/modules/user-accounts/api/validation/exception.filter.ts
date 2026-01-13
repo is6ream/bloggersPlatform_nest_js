@@ -16,6 +16,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (status === 400) {
       response.status(status).json(responseBody);
+    }
+
+    if (status === 404) {
+      response.status(status).send();
     } else {
       response.status(status).json({
         statusCode: status,

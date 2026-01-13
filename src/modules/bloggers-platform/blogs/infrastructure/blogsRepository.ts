@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Blog, BlogDocument, BlogModelType } from '../domain/blogEntity';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
 
 @Injectable()
 export class BlogsRepository {
@@ -20,7 +21,9 @@ export class BlogsRepository {
   async findOrNotFoundFail(id: string): Promise<BlogDocument> {
     const blog = await this.findById(id);
     if (!blog) {
-      throw new NotFoundException('blog not found');
+      console.log(blog, 'blog in DAL checkBlogExist');
+      throw new HttpException('', 404); //здесь должна быть просто 404
+      //для всех 404 ошибок в приложении должен быть глобальный exception filer
     }
     return blog;
   }

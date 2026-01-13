@@ -31,6 +31,7 @@ import { PostDocument } from '../../posts/domain/postEntity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
 import { UpdateBlogCommand } from '../application/useCases/update-blog-use-case';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
+import { DeleteBlogCommand } from '../application/useCases/delete-blog-by-id-use-case';
 @Controller('blogs')
 @UseGuards(BasicAuthGuard)
 export class BlogsController {
@@ -91,9 +92,10 @@ export class BlogsController {
     return this.commandBus.execute(new UpdateBlogCommand(id, body));
   }
 
+  //остановился здесь, нужно выбросить 404 ошибку
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(@Param('id') id: string): Promise<void> {
-    return this.blogsService.deleteBlog(id);
+    return this.commandBus.execute(new DeleteBlogCommand(id));
   }
 }
