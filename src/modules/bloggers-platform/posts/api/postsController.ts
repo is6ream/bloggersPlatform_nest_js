@@ -24,7 +24,7 @@ import { CommentViewModel } from './model/commentViewModel';
 import { CommentsQueryRepository } from '../../comments/infrastructure/commentsQueryRepository';
 import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
-import { CreatePostCommand } from '../application/useCases/create-post.useCase';
+import { CreatePostCommand } from '../application/useCases/create-post.usecase';
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -48,7 +48,7 @@ export class PostsController {
   ): Promise<PostPaginatedViewDto> {
     return this.postQueryRepository.getAll(query);
   }
-  
+
   @UseGuards(BasicAuthGuard)
   @Post()
   async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
