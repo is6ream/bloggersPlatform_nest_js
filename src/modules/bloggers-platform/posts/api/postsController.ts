@@ -26,12 +26,12 @@ import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
 import { CreatePostCommand } from '../application/useCases/create-post.usecase';
 import { UpdatePostCommand } from '../application/useCases/update-post.usecase';
+import { DeletePostCommand } from '../application/useCases/delete-post.usecase';
 @Controller('posts')
 export class PostsController {
   constructor(
     private postQueryRepository: PostQueryRepository,
     private commentsQueryRepository: CommentsQueryRepository,
-    private postsService: PostsService,
     private commandBus: CommandBus,
   ) {}
 
@@ -76,6 +76,6 @@ export class PostsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(@Param('id') id: string): Promise<void> {
-    return this.postsService.deletePost(id);
+    return this.commandBus.execute(new DeletePostCommand(id));
   }
 }

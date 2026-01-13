@@ -4,6 +4,10 @@ import { CreatePostInputDto } from '../../dto/input/createPostInputDto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument, PostModelType } from '../../domain/postEntity';
+import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
+import { BlogDocument } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { CreatePostDomainDto } from '../types/create-post-domain.dto';
 
 @Injectable()
 export class CreatePostCommand {
@@ -16,10 +20,29 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     @InjectModel(Post.name)
     private PostModel: PostModelType,
     private postRepository: PostRepository,
+    private blogsRepository: BlogsRepository,
   ) {}
 
   async execute(command: CreatePostCommand): Promise<string> {
-    const post: PostDocument = new this.PostModel(command.dto);
+    const blog: BlogDocument = await this.blogsRepository.findOrNotFoundFail(
+      command.dto.blogId,
+    );
+    if (!blog) {
+      throw new DomainException({
+        code: 2,
+        message: 'Blog not found',
+        extensions: [{ message: 'Blog not found', field: 'blogId' }],
+      });
+    }
+
+    const createPostDto: CreatePostDomainDto = {
+      title: command.dto.title,
+      shortDescription: command.dto.shortDescription,
+      content: command.dto.content,
+      blogId: command.dto.blogId,
+      blogName: blog.name,
+    }
+    const post: PostDocument = this.PostModel.createInstance(createPostDto);
     await this.postRepository.save(post);
     return post._id.toString();
   }
