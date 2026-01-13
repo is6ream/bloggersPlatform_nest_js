@@ -23,17 +23,18 @@ import { PostQueryRepository } from '../../posts/infrastructure/postQueryReposit
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
 import { PostViewModel } from '../../posts/api/model/postViewModel';
 import { PostsService } from '../../posts/application/posts-service';
-import { CommandBus } from '@nestjs/cqrs';
-import { CreateBlogCommand } from '../application/useCases/create-blog-use-case';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { BlogDocument } from '../domain/blogEntity';
-import { CreateBlogByBlogIdCommand } from '../application/useCases/create-blog-by-blogId-use-case';
 import { PostDocument } from '../../posts/domain/postEntity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
-import { UpdateBlogCommand } from '../application/useCases/update-blog-use-case';
+import { UpdateBlogCommand } from '../application/useCases/update-blog-usecase';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
-import { DeleteBlogCommand } from '../application/useCases/delete-blog-by-id-use-case';
+import { DeleteBlogCommand } from '../application/useCases/delete-blog-by-id.usecase';
+import { CreateBlogCommand } from '../application/useCases/create-blog.usecase';
+import { CreateBlogByBlogIdCommand } from '../application/useCases/create-blog-by-blogId.usecase';
+import { GetBlogByIdQuery } from '../application/queries/get-blog-byId.query';
+
 @Controller('blogs')
-@UseGuards(BasicAuthGuard)
 export class BlogsController {
   constructor(
     private blogsService: BlogsService,
@@ -41,6 +42,7 @@ export class BlogsController {
     private blogsQueryRepository: BlogsQueryRepository,
     private postsQueryRepository: PostQueryRepository,
     private commandBus: CommandBus,
+    private queryBus: QueryBus, //пока только внедрил зависимость
   ) {}
 
   @Get()
@@ -58,6 +60,7 @@ export class BlogsController {
     return this.postsQueryRepository.getAllPostsForBlog(id, query);
   }
 
+  @UseGuards(BasicAuthGuard)
   @Post(':id/posts')
   async createPostForSpecificBlog(
     @Param('id') id: string,
@@ -70,6 +73,7 @@ export class BlogsController {
     return post.toViewModel(post._id.toString());
   }
 
+  @UseGuards(BasicAuthGuard)
   @Post()
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
     const blog: BlogDocument = await this.commandBus.execute(
@@ -80,9 +84,10 @@ export class BlogsController {
 
   @Get(':id')
   async getById(@Param('id') id: string): Promise<BlogViewModel> {
-    return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
+    return this.queryBus.execute(new GetBlogByIdQuery(id));
   }
 
+  @UseGuards(BasicAuthGuard)
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async updateBlog(
@@ -92,7 +97,7 @@ export class BlogsController {
     return this.commandBus.execute(new UpdateBlogCommand(id, body));
   }
 
-  //остановился здесь, нужно выбросить 404 ошибку
+  @UseGuards(BasicAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(@Param('id') id: string): Promise<void> {

@@ -1,4 +1,5 @@
-import { DeleteBlogByIdUseCase } from './blogs/application/useCases/delete-blog-by-id-use-case';
+import { CreateBlogByBlogIdUseCase } from './blogs/application/useCases/create-blog-by-blogId.usecase';
+import { DeleteBlogByIdUseCase } from './blogs/application/useCases/delete-blog-by-id.usecase';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BlogSchema } from './blogs/domain/blogEntity';
@@ -17,15 +18,16 @@ import { CommentsQueryRepository } from './comments/infrastructure/commentsQuery
 import { Comment, CommentsSchema } from './comments/domain/commentEntity';
 import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';
-import { CreateBlogUseCase } from './blogs/application/useCases/create-blog-use-case';
-import { CreateBlogByBlogIdUseCase } from './blogs/application/useCases/create-blog-by-blogId-use-case';
-import { UpdateBlogUseCase } from './blogs/application/useCases/update-blog-use-case';
+import { UpdateBlogUseCase } from './blogs/application/useCases/update-blog-usecase';
+import { CreateBlogUseCase } from './blogs/application/useCases/create-blog.usecase';
+import { GetBlogByIdQueryHandler } from './blogs/application/queries/get-blog-byId.query';
 
 const commandHandlers = [
   CreateBlogUseCase,
   CreateBlogByBlogIdUseCase,
   UpdateBlogUseCase,
   DeleteBlogByIdUseCase,
+  GetBlogByIdQueryHandler,
 ];
 
 @Module({
