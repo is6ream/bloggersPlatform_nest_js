@@ -1,4 +1,4 @@
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Blog, BlogDocument, BlogModelType } from '../domain/blogEntity';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
@@ -21,9 +21,30 @@ export class BlogsRepository {
   async findOrNotFoundFail(id: string): Promise<BlogDocument> {
     const blog = await this.findById(id);
     if (!blog) {
-      console.log(blog, 'blog in DAL checkBlogExist');
       throw new DomainException({ code: 1, message: 'Blog not found' });
     }
+    return blog;
+  }
+
+  async findByIdOrThrowValidationError(id: string): Promise<BlogDocument> {
+    const blog = await this.BlogModel.findOne({
+      _id: id,
+      deleteAt: null,
+    });
+
+    if (!blog) {
+      throw new DomainException({
+        code: 2, 
+        message: 'Blog not found',
+        extensions: [
+          {
+            message: 'Blog with specified id not found',
+            field: 'blogId',
+          },
+        ],
+      });
+    }
+
     return blog;
   }
 

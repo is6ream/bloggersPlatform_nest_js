@@ -24,10 +24,11 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
   ) {}
 
   async execute(command: CreatePostCommand): Promise<string> {
-    const blog: BlogDocument = await this.blogsRepository.findOrNotFoundFail(
+    const blog: BlogDocument = await this.blogsRepository.findByIdOrThrowValidationError(
       command.dto.blogId,
     );
     if (!blog) {
+      console.log('err checlk')
       throw new DomainException({
         code: 2,
         message: 'Blog not found',
