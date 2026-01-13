@@ -35,6 +35,14 @@ export class PostsController {
     private commandBus: CommandBus,
   ) {}
 
+  @Put(':id/like-status')
+  async updateLikeStatus(
+    @Param('id') id: string,
+    @Body() body: { likeStatus: string },
+  ): Promise<void> {
+    return this.commandBus.execute(new UpdateLikeStatusCommand(id, body));
+  }
+
   @Get(':id/comments')
   async getCommentByPostId(
     @Param('id') postId: string,
