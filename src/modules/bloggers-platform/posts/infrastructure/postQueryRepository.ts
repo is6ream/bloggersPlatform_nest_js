@@ -7,6 +7,7 @@ import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { PostPaginatedViewDto } from '../api/paginated/paginated.post.view-dto';
 import { PostViewDto } from '../dto/output/postViewDto';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
 
 @Injectable()
 export class PostQueryRepository {
@@ -23,7 +24,7 @@ export class PostQueryRepository {
     });
 
     if (!post) {
-      throw new NotFoundException('post not found');
+      throw new DomainException({ code: 1, message: 'Post not found' });
     }
     return PostViewDto.mapToView(post);
   }
