@@ -27,15 +27,7 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     const blog: BlogDocument = await this.blogsRepository.findByIdOrThrowValidationError(
       command.dto.blogId,
     );
-    if (!blog) {
-      console.log('err checlk')
-      throw new DomainException({
-        code: 2,
-        message: 'Blog not found',
-        extensions: [{ message: 'Blog not found', field: 'blogId' }],
-      });
-    }
-
+  
     const createPostDto: CreatePostDomainDto = {
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,

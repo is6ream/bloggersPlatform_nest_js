@@ -27,25 +27,44 @@ export class BlogsRepository {
   }
 
   async findByIdOrThrowValidationError(id: string): Promise<BlogDocument> {
-    const blog = await this.BlogModel.findOne({
-      _id: id,
-      deleteAt: null,
-    });
-
-    if (!blog) {
-      throw new DomainException({
-        code: 2, 
-        message: 'Blog not found',
-        extensions: [
-          {
-            message: 'Blog with specified id not found',
-            field: 'blogId',
-          },
-        ],
+    try {
+      const blog = await this.BlogModel.findOne({
+        _id: id,
+        deleteAt: null,
       });
-    }
 
-    return blog;
+      if (!blog) {
+        throw new DomainException({
+          code: 2,
+          message: 'Blog not found',
+          extensions: [
+            {
+              message: 'Blog with specified id not found',
+              field: 'blogId',
+            },
+          ],
+        });
+      }
+
+      return blog;
+    } catch (error) {
+      if (
+        error.name === 'CastError' ||
+        error.message.includes('Cast to ObjectId failed')
+      ) {
+        throw new DomainException({
+          code: 3,
+          message: 'Invalid blog id format',
+          extensions: [
+            {
+              message: 'Invalid blog id format',
+              field: 'blogId',
+            },
+          ],
+        });
+      }
+      throw error;
+    }
   }
 
   async checkBlogExist(id: string): Promise<void> {
