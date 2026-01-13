@@ -37,12 +37,10 @@ import { GetBlogByIdQuery } from '../application/queries/get-blog-byId.query';
 @Controller('blogs')
 export class BlogsController {
   constructor(
-    private blogsService: BlogsService,
-    private postsService: PostsService,
     private blogsQueryRepository: BlogsQueryRepository,
     private postsQueryRepository: PostQueryRepository,
     private commandBus: CommandBus,
-    private queryBus: QueryBus, //пока только внедрил зависимость
+    private queryBus: QueryBus,
   ) {}
 
   @Get()

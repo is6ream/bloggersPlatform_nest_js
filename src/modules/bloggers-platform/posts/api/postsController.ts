@@ -1,3 +1,4 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import {
   Controller,
@@ -28,6 +29,7 @@ export class PostsController {
     private postQueryRepository: PostQueryRepository,
     private commentsQueryRepository: CommentsQueryRepository,
     private postsService: PostsService,
+    private commandBus: CommandBus,
   ) {}
 
   @Get(':id/comments')
