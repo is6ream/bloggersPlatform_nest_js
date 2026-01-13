@@ -18,7 +18,6 @@ import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 import { PostViewModel } from './model/postViewModel';
 import { PostQueryRepository } from '../infrastructure/postQueryRepository';
-import { PostsService } from '../application/posts-service';
 import { UpdatePostInputDto } from '../dto/input/updatePostInputDto';
 import { CommentViewModel } from './model/commentViewModel';
 import { CommentsQueryRepository } from '../../comments/infrastructure/commentsQueryRepository';
@@ -27,6 +26,7 @@ import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-aut
 import { CreatePostCommand } from '../application/useCases/create-post.usecase';
 import { UpdatePostCommand } from '../application/useCases/update-post.usecase';
 import { DeletePostCommand } from '../application/useCases/delete-post.usecase';
+import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -36,6 +36,7 @@ export class PostsController {
   ) {}
 
   @Put(':id/like-status')
+  @UseGuards(JwtAuthGuard)
   async updateLikeStatus(
     @Param('id') id: string,
     @Body() body: { likeStatus: string },
