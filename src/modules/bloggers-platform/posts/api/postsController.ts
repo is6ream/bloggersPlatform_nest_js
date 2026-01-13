@@ -25,6 +25,7 @@ import { CommentsQueryRepository } from '../../comments/infrastructure/commentsQ
 import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
 import { CreatePostCommand } from '../application/useCases/create-post.usecase';
+import { UpdatePostCommand } from '../application/useCases/update-post.usecase';
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -61,15 +62,17 @@ export class PostsController {
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
 
+  @UseGuards(BasicAuthGuard)
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async updatePost(
     @Param('id') id: string,
     @Body() body: UpdatePostInputDto,
   ): Promise<void> {
-    return this.postsService.updatePost(id, body);
+    return this.commandBus.execute(new UpdatePostCommand(id, body));
   }
 
+  @UseGuards(BasicAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deletePost(@Param('id') id: string): Promise<void> {

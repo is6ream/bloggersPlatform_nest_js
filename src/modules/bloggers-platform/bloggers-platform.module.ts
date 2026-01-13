@@ -19,6 +19,7 @@ import { Comment, CommentsSchema } from './comments/domain/commentEntity';
 import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';
 import { blogCommandHandlers } from './blogs/application/blog-command-handlers';
+import { postCommandHandlers } from './posts/application/post-command-handlers';
 
 
 
@@ -39,6 +40,7 @@ import { blogCommandHandlers } from './blogs/application/blog-command-handlers';
     PostsService,
     CommentsQueryRepository,
     ...blogCommandHandlers,
+    ...postCommandHandlers
   ],
   exports: [],
 })
