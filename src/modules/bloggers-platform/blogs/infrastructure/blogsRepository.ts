@@ -28,11 +28,7 @@ export class BlogsRepository {
 
   async findByIdOrThrowValidationError(id: string): Promise<BlogDocument> {
     try {
-      const blog = await this.BlogModel.findOne({
-        _id: id,
-        deleteAt: null,
-      });
-
+      const blog = await this.findById(id);
       if (!blog) {
         throw new DomainException({
           code: 2,

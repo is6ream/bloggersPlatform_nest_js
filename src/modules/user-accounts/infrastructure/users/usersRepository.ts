@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserModelType } from '../../domain/userEntity';
 import { UserDocument } from '../../domain/userEntity';
 import { LoginOrEmailDto } from '../dto/login-or-email.dto';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
 
 @Injectable()
 export class UsersRepository {
@@ -23,6 +24,14 @@ export class UsersRepository {
     const user = await this.findById(id);
     if (!user) {
       throw new NotFoundException('user not found');
+    }
+    return user;
+  }
+
+  async findByIdOrThrowValidationError(id: string): Promise<UserDocument> {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new DomainException({ code: 2, message: 'User not found', extensions: [{ message: 'User not found', field: 'userId' }] });
     }
     return user;
   }
