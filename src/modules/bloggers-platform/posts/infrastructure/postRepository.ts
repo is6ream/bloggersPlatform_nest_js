@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument, PostModelType } from '../domain/postEntity';
 import { NotFoundException } from '@nestjs/common';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
-
+import { LikeDocument } from '../../likes/domain/like-entity';
 @Injectable()
 export class PostRepository {
   constructor(@InjectModel(Post.name) private PostModel: PostModelType) {}
@@ -32,4 +32,7 @@ export class PostRepository {
       throw new NotFoundException(`post with id: ${id} not found `);
     }
   }
-}
+
+async likeStatusSave(like: LikeDocument): Promise<void> {
+    await like.save();
+  }}

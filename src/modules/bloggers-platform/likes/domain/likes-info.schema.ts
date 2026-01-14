@@ -8,7 +8,7 @@ export class LikesInfo {
     @Prop({type: Number, required: true, default: 0})
     dislikesCount: number
     @Prop({type: String, required: true, default: 'None'})
-    myStatus: string
+    status: string
 }
 
 export const LikesInfoSchema = SchemaFactory.createForClass(LikesInfo)

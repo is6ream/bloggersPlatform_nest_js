@@ -77,6 +77,35 @@ export class Post {
       },
     };
   }
+
+  updateLikeCounter( oldLikeStatus: string, newLikeStatus: string) {
+    if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
+      this.extendedLikesInfo.likesCount--;
+      this.extendedLikesInfo.dislikesCount++;
+      return;
+    }
+    if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
+      this.extendedLikesInfo.likesCount--;
+      return;
+    }
+    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
+      this.extendedLikesInfo.likesCount++;
+      this.extendedLikesInfo.dislikesCount--;
+      return;
+    }
+    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
+      this.extendedLikesInfo.dislikesCount--;
+      return;
+    }
+    if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
+      this.extendedLikesInfo.likesCount++;
+      return;
+    }
+    if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
+      this.extendedLikesInfo.dislikesCount++;
+      return;
+    }
+  }
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);
@@ -86,3 +115,4 @@ PostSchema.loadClass(Post);
 export type PostDocument = HydratedDocument<Post>;
 
 export type PostModelType = Model<PostDocument> & typeof Post;
+

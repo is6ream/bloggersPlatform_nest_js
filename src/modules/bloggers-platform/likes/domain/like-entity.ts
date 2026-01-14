@@ -4,7 +4,7 @@ import { CreateLikeForPostDto } from '../types/create-like.forPost.dto';
 import { HydratedDocument , Model} from 'mongoose';
 export class Like {
   @Prop({ type: String, enum: Object.values(LikeStatus), required: true })
-  likeStatus: string;
+  status: string;
 
   @Prop({ type: String, required: true })
   userId: string;
@@ -18,13 +18,13 @@ export class Like {
   @Prop({ type: Date, required: true })
   createdAt: Date;
 
-  static createInstance(dto: CreateLikeForPostDto) {
+  static createInstance(dto: CreateLikeForPostDto): LikeDocument {
     const like = new this();
-    like.likeStatus = dto.likeStatus;
+    like.status = dto.likeStatus;
     like.userId = dto.userId;
     like.parentId = dto.postId;
     like.parentType = 'Post';
-    return like;
+    return like as LikeDocument;
   }
 }
 
