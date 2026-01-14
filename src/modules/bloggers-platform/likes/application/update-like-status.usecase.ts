@@ -5,6 +5,8 @@ import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/
 import { InjectModel } from '@nestjs/mongoose';
 import { Like } from '../domain/like-entity';
 import { LikeModelType } from '../domain/like-entity';
+import { PostDocument } from '../../posts/domain/postEntity';
+import { LikeStatus } from '../types/like-status';
 @Injectable()
 export class UpdateLikeStatusCommand {
   constructor(
@@ -25,7 +27,9 @@ export class UpdateLikeStatusUseCase implements ICommandHandler {
 
   async execute(command: UpdateLikeStatusCommand): Promise<any> {
     const post = await this.postRepository.findOrNotFoundFail(command.postId);
-    const user = await this.usersRepository.findByIdOrThrowValidationError(command.userId);
+    const user = await this.usersRepository.findByIdOrThrowValidationError(
+      command.userId,
+    );
     const like = await this.LikeModel.findOne({
       userId: command.userId,
       parentId: command.postId,
@@ -39,9 +43,44 @@ export class UpdateLikeStatusUseCase implements ICommandHandler {
         postId: command.postId,
         parentType: 'Post',
       });
-      //todo - прописать условия при отсуствии статуса у пользователя
-
-
+    }
+  }
+  private async likesForPostCount(
+    post: PostDocument,
+    oldLikeStatus: LikeStatus,
+    newLikeStatus: LikeStatus,
+  ) {
+    if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
+      post.likesInfo.likesCount--;
+      post.likesInfo.dislikesCount++;
+      await this.postRepository.save(post);
+      return;
+    }
+    if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
+      post.likesInfo.likesCount--;
+      await this.postRepository.save(post);
+      return;
+    }
+    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
+      post.likesInfo.likesCount++;
+      post.likesInfo.dislikesCount--;
+      await this.postRepository.save(post);
+      return;
+    }
+    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
+      post.likesInfo.dislikesCount--;
+      await this.postRepository.save(post);
+      return;
+    }
+    if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
+      post.likesInfo.likesCount++;
+      await this.postRepository.save(post);
+      return;
+    }
+    if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
+      post.likesInfo.dislikesCount++;
+      await this.postRepository.save(post);
+      return;
     }
   }
 }

@@ -32,6 +32,8 @@ export class Post {
   createdAt: Date;
   updatedAt: Date;
 
+  @Prop({type})
+
   static createInstance(dto: CreatePostDto) {
     const post = new this();
     post.title = dto.title;
@@ -82,3 +84,5 @@ PostSchema.loadClass(Post);
 export type PostDocument = HydratedDocument<Post>;
 
 export type PostModelType = Model<PostDocument> & typeof Post;
+
+
