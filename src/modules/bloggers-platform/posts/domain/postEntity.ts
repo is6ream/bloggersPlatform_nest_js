@@ -3,7 +3,8 @@ import { CreatePostDto } from './dto/createPostDto';
 import { HydratedDocument } from 'mongoose';
 import { Model } from 'mongoose';
 import { UpdatePostDto } from './dto/updatePostDto';
-
+import { LikesInfoSchema } from '../../likes/domain/likes-info.schema';
+import { LikesInfo } from '../../likes/domain/likes-info.schema';
 @Schema({
   timestamps: {
     createdAt: 'createdAt',
@@ -32,7 +33,8 @@ export class Post {
   createdAt: Date;
   updatedAt: Date;
 
-  @Prop({type})
+  @Prop({ type: LikesInfoSchema, required: true })
+  extendedLikesInfo: LikesInfo;
 
   static createInstance(dto: CreatePostDto) {
     const post = new this();
@@ -84,5 +86,3 @@ PostSchema.loadClass(Post);
 export type PostDocument = HydratedDocument<Post>;
 
 export type PostModelType = Model<PostDocument> & typeof Post;
-
-
