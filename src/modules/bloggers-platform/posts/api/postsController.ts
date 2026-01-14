@@ -1,3 +1,4 @@
+import { ExtractUserFromRequest } from './../../../user-accounts/guards/decorators/param/extract-user-from-request.decorator';
 import { CommandBus } from '@nestjs/cqrs';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import {
@@ -27,6 +28,9 @@ import { CreatePostCommand } from '../application/useCases/create-post.usecase';
 import { UpdatePostCommand } from '../application/useCases/update-post.usecase';
 import { DeletePostCommand } from '../application/useCases/delete-post.usecase';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
+import { UpdateLikeStatusCommand } from '../../likes/application/update-like-status.usecase';
+import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.dto';
+
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -40,6 +44,7 @@ export class PostsController {
   async updateLikeStatus(
     @Param('id') id: string,
     @Body() body: { likeStatus: string },
+    @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
     return this.commandBus.execute(new UpdateLikeStatusCommand(id, body));
   }

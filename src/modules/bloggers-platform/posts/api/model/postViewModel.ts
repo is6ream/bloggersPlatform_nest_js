@@ -1,4 +1,4 @@
-import { NewestLikes } from 'src/modules/bloggers-platform/likes/types/newestLikes';
+import { NewestLikes } from 'src/modules/bloggers-platform/likes/types/newest-likes';
 
 export class PostViewModel {
   id: string;

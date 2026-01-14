@@ -1,4 +1,4 @@
-import { NewestLikes } from 'src/modules/bloggers-platform/likes/types/newestLikes';
+import { NewestLikes } from 'src/modules/bloggers-platform/likes/types/newest-likes';
 import { PostDocument } from '../../domain/postEntity';
 
 export class PostViewDto {
