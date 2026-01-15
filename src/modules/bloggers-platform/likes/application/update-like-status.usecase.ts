@@ -5,7 +5,7 @@ import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/
 import { InjectModel } from '@nestjs/mongoose';
 import { Like, LikeDocument } from '../domain/like-entity';
 import { LikeModelType } from '../domain/like-entity';
-import { Post } from '../../posts/domain/postEntity';
+import { Post, PostDocument, PostModelType } from '../../posts/domain/postEntity';
 @Injectable()
 export class UpdateLikeStatusCommand {
   constructor(
@@ -19,6 +19,7 @@ export class UpdateLikeStatusCommand {
 export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatusCommand> {
   constructor(
     @InjectModel(Post.name)
+    private PostModel: PostModelType,
     @InjectModel(Like.name)
     private LikeModel: LikeModelType,
     private postRepository: PostRepository,
@@ -26,7 +27,7 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
   ) {}
 
   async execute(command: UpdateLikeStatusCommand): Promise<any> {
-    const post = await this.postRepository.findOrNotFoundFail(command.postId);
+    let post: PostDocument = await this.postRepository.findOrNotFoundFail(command.postId);
     const user = await this.usersRepository.findByIdOrThrowValidationError(
       command.userId,
     );
@@ -35,7 +36,8 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
       userId: command.userId,
       parentId: command.postId,
     });
-    //доменный метод будем тестировать
+
+
     if (!like) {
       const newLike: LikeDocument = this.LikeModel.createInstance({
         likeStatus: command.likeStatus,
@@ -43,59 +45,24 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
         postId: command.postId,
         parentType: 'Post',
       });
-      await this.likesForPostCount(post, 'None', command.likeStatus);
+      post.updateLikeCounter('None', command.likeStatus);
       await this.postRepository.likeStatusSave(newLike);
+      await this.postRepository.save(post);
       return;
     }
 
-    if (like.status === command.likeStatus) {
+       if (like.status === command.likeStatus) {
       return;
     }
 
     let oldLikeStatus = like.status;
     like.status = command.likeStatus;
     like.createdAt = new Date();
-    await this.likesForPostCount(post, oldLikeStatus, command.likeStatus);
+     post.updateLikeCounter(oldLikeStatus, command.likeStatus);
     await this.postRepository.likeStatusSave(like);
+    await this.postRepository.save(post);
     return;
   }
 
-  // private async likesForPostCount(
-  //   post: PostDocument,
-  //   oldLikeStatus: string,
-  //   newLikeStatus: string,
-  // ) {
-  //   if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
-  //     post.extendedLikesInfo.likesCount--;
-  //     post.extendedLikesInfo.dislikesCount++;
-  //     await this.postRepository.save(post);
-  //     return;
-  //   }
-  //   if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
-  //     post.extendedLikesInfo.likesCount--;
-  //     await this.postRepository.save(post);
-  //     return;
-  //   }
-  //   if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
-  //     post.extendedLikesInfo.likesCount++;
-  //     post.extendedLikesInfo.dislikesCount--;
-  //     await this.postRepository.save(post);
-  //     return;
-  //   }
-  //   if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
-  //     post.extendedLikesInfo.dislikesCount--;
-  //     await this.postRepository.save(post);
-  //     return;
-  //   }
-  //   if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
-  //     post.extendedLikesInfo.likesCount++;
-  //     await this.postRepository.save(post);
-  //     return;
-  //   }
-  //   if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
-  //     post.extendedLikesInfo.dislikesCount++;
-  //     await this.postRepository.save(post);
-  //     return;
-  //   }
-  // }
+  
 }

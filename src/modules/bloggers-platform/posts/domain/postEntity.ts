@@ -11,6 +11,8 @@ import { LikesInfo } from '../../likes/domain/likes-info.schema';
     updatedAt: false,
   },
 })
+export class PostMethods {}
+
 export class Post {
   @Prop({ type: String, required: true })
   title: string;
@@ -78,34 +80,32 @@ export class Post {
     };
   }
 
-  updateLikeCounter( oldLikeStatus: string, newLikeStatus: string) {
-    if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
-      this.extendedLikesInfo.likesCount--;
-      this.extendedLikesInfo.dislikesCount++;
-      return;
-    }
-    if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
-      this.extendedLikesInfo.likesCount--;
-      return;
-    }
-    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
-      this.extendedLikesInfo.likesCount++;
-      this.extendedLikesInfo.dislikesCount--;
-      return;
-    }
-    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
-      this.extendedLikesInfo.dislikesCount--;
-      return;
-    }
-    if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
-      this.extendedLikesInfo.likesCount++;
-      return;
-    }
-    if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
-      this.extendedLikesInfo.dislikesCount++;
-      return;
-    }
+  updateLikeCounter  (
+  oldLikeStatus: string,
+  newLikeStatus: string,
+) {
+
+  if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
+    this.extendedLikesInfo.likesCount--;
+    this.extendedLikesInfo.dislikesCount++;
   }
+  if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
+    this.extendedLikesInfo.likesCount--;
+  }
+  if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
+    this.extendedLikesInfo.likesCount++;
+    this.extendedLikesInfo.dislikesCount--;
+  }
+  if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
+    this.extendedLikesInfo.dislikesCount--;
+  }
+  if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
+    this.extendedLikesInfo.likesCount++;
+  }
+  if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
+    this.extendedLikesInfo.dislikesCount++;
+  }
+};
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);
@@ -115,4 +115,3 @@ PostSchema.loadClass(Post);
 export type PostDocument = HydratedDocument<Post>;
 
 export type PostModelType = Model<PostDocument> & typeof Post;
-
