@@ -40,13 +40,24 @@ export class Post {
 
   static createInstance(dto: CreatePostDto) {
     const post = new this();
+
+    // Обязательные поля из DTO
     post.title = dto.title;
     post.shortDescription = dto.shortDescription;
     post.content = dto.content;
     post.blogId = dto.blogId;
     post.blogName = dto.blogName;
 
-    return post as PostDocument;
+    // ✅ Инициализируем ВСЕ поля!
+    post.deleteAt = null; // Или undefined
+    post.extendedLikesInfo = {
+      likesCount: 0,
+      dislikesCount: 0,
+      status: 'None',
+      newestLikes: [],
+    };
+
+    return post;
   }
 
   updatePost(dto: UpdatePostDto): void {
@@ -80,11 +91,7 @@ export class Post {
     };
   }
 
-  updateLikeCounter(
-    oldLikeStatus: string,
-    newLikeStatus: string,
-  ) {
-    //rolecheck, валидация,
+  updateLikeCounter(oldLikeStatus: string, newLikeStatus: string) {
     if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
       this.extendedLikesInfo.likesCount--;
       this.extendedLikesInfo.dislikesCount++;

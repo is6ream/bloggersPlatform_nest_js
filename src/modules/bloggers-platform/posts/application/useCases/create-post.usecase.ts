@@ -24,18 +24,22 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
   ) {}
 
   async execute(command: CreatePostCommand): Promise<string> {
-    const blog: BlogDocument = await this.blogsRepository.findByIdOrThrowValidationError(
-      command.dto.blogId,
-    );
-  
+    const blog: BlogDocument =
+      await this.blogsRepository.findByIdOrThrowValidationError(
+        command.dto.blogId,
+      );
+
     const createPostDto: CreatePostDomainDto = {
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,
       blogId: command.dto.blogId,
       blogName: blog.name,
-    }
+    };
+
+    console.log(createPostDto, 'createPostDto check');
     const post: PostDocument = this.PostModel.createInstance(createPostDto);
+    console.log(post, 'post check');
     await this.postRepository.save(post);
     return post._id.toString();
   }

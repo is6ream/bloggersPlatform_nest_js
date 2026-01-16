@@ -45,6 +45,7 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
         postId: command.postId,
         parentType: 'Post',
       });
+      console.log(newLike, 'newLike check');
       post.updateLikeCounter('None', command.likeStatus);
 
       console.log(post, 'post after updateLikeCounter');
@@ -60,7 +61,7 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
     let oldLikeStatus = like.status;
     like.status = command.likeStatus;
     like.createdAt = new Date();
-    post.updateLikeCounter( oldLikeStatus, command.likeStatus);
+    post.updateLikeCounter(oldLikeStatus, command.likeStatus);
     await this.postRepository.likeStatusSave(like);
     await this.postRepository.save(post);
     return;
