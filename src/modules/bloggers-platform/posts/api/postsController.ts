@@ -43,10 +43,12 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   async updateLikeStatus(
     @Param('id') id: string,
-    @Body() body: { likeStatus: string },
+    @Body() body: string,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
-    return this.commandBus.execute(new UpdateLikeStatusCommand(id, body));
+    return this.commandBus.execute(
+      new UpdateLikeStatusCommand(id, user.id, body),
+    );
   }
 
   @Get(':id/comments')

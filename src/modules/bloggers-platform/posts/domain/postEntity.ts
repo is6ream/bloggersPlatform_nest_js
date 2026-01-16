@@ -80,37 +80,37 @@ export class Post {
     };
   }
 
-  updateLikeCounter  (
-  oldLikeStatus: string,
-  newLikeStatus: string,
-) {
-
-  if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
-    this.extendedLikesInfo.likesCount--;
-    this.extendedLikesInfo.dislikesCount++;
+  updateLikeCounter(
+    oldLikeStatus: string,
+    newLikeStatus: string,
+  ) {
+    //rolecheck, валидация,
+    if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
+      this.extendedLikesInfo.likesCount--;
+      this.extendedLikesInfo.dislikesCount++;
+    }
+    if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
+      this.extendedLikesInfo.likesCount--;
+    }
+    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
+      this.extendedLikesInfo.likesCount++;
+      this.extendedLikesInfo.dislikesCount--;
+    }
+    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
+      this.extendedLikesInfo.dislikesCount--;
+    }
+    if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
+      this.extendedLikesInfo.likesCount++;
+    }
+    if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
+      this.extendedLikesInfo.dislikesCount++;
+    }
   }
-  if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
-    this.extendedLikesInfo.likesCount--;
-  }
-  if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
-    this.extendedLikesInfo.likesCount++;
-    this.extendedLikesInfo.dislikesCount--;
-  }
-  if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
-    this.extendedLikesInfo.dislikesCount--;
-  }
-  if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
-    this.extendedLikesInfo.likesCount++;
-  }
-  if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
-    this.extendedLikesInfo.dislikesCount++;
-  }
-};
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);
 
-PostSchema.loadClass(Post);
+PostSchema.loadClass(Post); //посмотреть документацию
 
 export type PostDocument = HydratedDocument<Post>;
 

@@ -5,7 +5,7 @@ import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/
 import { InjectModel } from '@nestjs/mongoose';
 import { Like, LikeDocument } from '../domain/like-entity';
 import { LikeModelType } from '../domain/like-entity';
-import { Post, PostDocument, PostModelType } from '../../posts/domain/postEntity';
+import { PostDocument } from '../../posts/domain/postEntity';
 @Injectable()
 export class UpdateLikeStatusCommand {
   constructor(
@@ -18,16 +18,17 @@ export class UpdateLikeStatusCommand {
 @CommandHandler(UpdateLikeStatusCommand)
 export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatusCommand> {
   constructor(
-    @InjectModel(Post.name)
-    private PostModel: PostModelType,
     @InjectModel(Like.name)
     private LikeModel: LikeModelType,
     private postRepository: PostRepository,
     private usersRepository: UsersRepository,
   ) {}
-
   async execute(command: UpdateLikeStatusCommand): Promise<any> {
-    let post: PostDocument = await this.postRepository.findOrNotFoundFail(command.postId);
+    let post: PostDocument = await this.postRepository.findOrNotFoundFail(
+      command.postId,
+    );
+    console.log(post, 'post check');
+    console.log(command.userId, 'command userId check');
     const user = await this.usersRepository.findByIdOrThrowValidationError(
       command.userId,
     );
@@ -37,7 +38,6 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
       parentId: command.postId,
     });
 
-
     if (!like) {
       const newLike: LikeDocument = this.LikeModel.createInstance({
         likeStatus: command.likeStatus,
@@ -46,23 +46,23 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
         parentType: 'Post',
       });
       post.updateLikeCounter('None', command.likeStatus);
-      await this.postRepository.likeStatusSave(newLike);
-      await this.postRepository.save(post);
+
+      console.log(post, 'post after updateLikeCounter');
+      await this.postRepository.likeStatusSave(newLike); //некорретно сохраняется likeEntity
+      await this.postRepository.save(post); //нет полей extendedLikeInfo в postEntity после обновления
       return;
     }
 
-       if (like.status === command.likeStatus) {
+    if (like.status === command.likeStatus) {
       return;
     }
 
     let oldLikeStatus = like.status;
     like.status = command.likeStatus;
     like.createdAt = new Date();
-     post.updateLikeCounter(oldLikeStatus, command.likeStatus);
+    post.updateLikeCounter( oldLikeStatus, command.likeStatus);
     await this.postRepository.likeStatusSave(like);
     await this.postRepository.save(post);
     return;
   }
-
-  
 }

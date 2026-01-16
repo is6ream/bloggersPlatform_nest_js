@@ -20,7 +20,9 @@ import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';
 import { blogCommandHandlers } from './blogs/application/blog-command-handlers';
 import { postCommandHandlers } from './posts/application/post-command-handlers';
-
+import { Like, LikeSchema } from './likes/domain/like-entity';
+import { UsersRepository } from '../user-accounts/infrastructure/users/usersRepository';
+import { User, UserSchema } from '../user-accounts/domain/userEntity';
 
 
 @Module({
@@ -28,6 +30,8 @@ import { postCommandHandlers } from './posts/application/post-command-handlers';
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
     MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentsSchema }]),
+    MongooseModule.forFeature([{ name: Like.name, schema: LikeSchema }]),
+    MongooseModule.forFeature([{name: User.name, schema: UserSchema}]),
     CqrsModule,
   ],
   controllers: [BlogsController, PostsController, CommentsController],
@@ -39,6 +43,7 @@ import { postCommandHandlers } from './posts/application/post-command-handlers';
     PostRepository,
     PostsService,
     CommentsQueryRepository,
+    UsersRepository,
     ...blogCommandHandlers,
     ...postCommandHandlers
   ],
