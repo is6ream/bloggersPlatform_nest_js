@@ -19,7 +19,7 @@ export class CreateBlogUseCase implements ICommandHandler<CreateBlogCommand> {
   ) {}
 
   async execute(command: CreateBlogCommand): Promise<BlogDocument> {
-    const blog: BlogDocument = new this.BlogModel({
+    const blog: BlogDocument = this.BlogModel.createInstance({
       name: command.dto.name,
       description: command.dto.description,
       websiteUrl: command.dto.websiteUrl,

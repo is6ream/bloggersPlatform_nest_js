@@ -8,7 +8,7 @@ import {
   BlogModelType,
 } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
 import {
-  Post,
+  PostEntity,
   PostDocument,
   PostModelType,
 } from 'src/modules/bloggers-platform/posts/domain/postEntity';
@@ -30,7 +30,7 @@ export class CreateBlogByBlogIdUseCase implements ICommandHandler<CreateBlogByBl
   constructor(
     @InjectModel(Blog.name)
     private BlogModel: BlogModelType,
-    @InjectModel(Post.name)
+    @InjectModel(PostEntity.name)
     private PostModel: PostModelType,
     private postRepository: PostRepository,
     private blogRepository: BlogsRepository,

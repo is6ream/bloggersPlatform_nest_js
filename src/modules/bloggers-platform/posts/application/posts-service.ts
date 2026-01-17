@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { PostDocument, PostModelType } from '../domain/postEntity';
-import { Post } from '../domain/postEntity';
+import { PostEntity } from '../domain/postEntity';
 import { BlogDocument } from '../../blogs/domain/blogEntity';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
 import { PostRepository } from '../infrastructure/postRepository';
@@ -12,7 +12,7 @@ import { CreatePostForBlogInputDto } from '../../blogs/dto/input/createPostForBl
 @Injectable()
 export class PostsService {
   constructor(
-    @InjectModel(Post.name)
+    @InjectModel(PostEntity.name)
     private PostModel: PostModelType,
     private blogsRepository: BlogsRepository,
     private postRepository: PostRepository,
@@ -22,13 +22,13 @@ export class PostsService {
     const blog: BlogDocument = await this.blogsRepository.findOrNotFoundFail(
       dto.blogId,
     );
-    const post: PostDocument = this.PostModel.createInstance({
+    const post = this.PostModel.createInstance({
       title: dto.title,
       shortDescription: dto.shortDescription,
       content: dto.content,
       blogId: dto.blogId,
       blogName: blog.name,
-    });
+    }) as PostDocument;
 
     await this.postRepository.save(post);
 
@@ -42,15 +42,15 @@ export class PostsService {
     const blog: BlogDocument =
       await this.blogsRepository.findOrNotFoundFail(blogId);
 
-    const post: PostDocument = this.PostModel.createInstance({
+    const post = this.PostModel.createInstance({
       title: dto.title,
       shortDescription: dto.shortDescription,
       content: dto.content,
       blogId: blogId,
       blogName: blog.name,
-    });
+    }) as PostDocument;
 
-    await this.postRepository.save(post);
+    await this.postRepository.save(post as PostDocument);
 
     return post._id.toString();
   }

@@ -12,8 +12,7 @@ import { PostQueryRepository } from './posts/infrastructure/postQueryRepository'
 import { PostRepository } from './posts/infrastructure/postRepository';
 import { PostsService } from './posts/application/posts-service';
 import { PostsController } from './posts/api/postsController';
-import { PostSchema } from './posts/domain/postEntity';
-import { Post } from './posts/domain/postEntity';
+import { PostEntity, PostSchema } from './posts/domain/postEntity';
 import { CommentsQueryRepository } from './comments/infrastructure/commentsQueryRepository';
 import { Comment, CommentsSchema } from './comments/domain/commentEntity';
 import { CommentsController } from './comments/api/commentsController';
@@ -24,14 +23,13 @@ import { Like, LikeSchema } from './likes/domain/like-entity';
 import { UsersRepository } from '../user-accounts/infrastructure/users/usersRepository';
 import { User, UserSchema } from '../user-accounts/domain/userEntity';
 
-
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
-    MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
+    MongooseModule.forFeature([{ name: PostEntity.name, schema: PostSchema }]),
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentsSchema }]),
     MongooseModule.forFeature([{ name: Like.name, schema: LikeSchema }]),
-    MongooseModule.forFeature([{name: User.name, schema: UserSchema}]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     CqrsModule,
   ],
   controllers: [BlogsController, PostsController, CommentsController],
@@ -45,7 +43,7 @@ import { User, UserSchema } from '../user-accounts/domain/userEntity';
     CommentsQueryRepository,
     UsersRepository,
     ...blogCommandHandlers,
-    ...postCommandHandlers
+    ...postCommandHandlers,
   ],
   exports: [],
 })

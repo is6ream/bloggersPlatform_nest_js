@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { UpdatePostDto } from './dto/updatePostDto';
 import { LikesInfoSchema } from '../../likes/domain/likes-info.schema';
 import { LikesInfo } from '../../likes/domain/likes-info.schema';
+import { CreatePostDomainDto } from '../application/types/create-post-domain.dto';
 @Schema({
   timestamps: {
     createdAt: 'createdAt',
@@ -13,9 +14,9 @@ import { LikesInfo } from '../../likes/domain/likes-info.schema';
 })
 export class PostMethods {}
 
-export class Post {
+export class PostEntity {
   @Prop({ type: String, required: true })
-  title: string;
+  public title: string;
 
   @Prop({ type: String, required: true })
   shortDescription: string;
@@ -38,26 +39,25 @@ export class Post {
   @Prop({ type: LikesInfoSchema, required: true })
   extendedLikesInfo: LikesInfo;
 
-  static createInstance(dto: CreatePostDto) {
+  static createInstance(dto: CreatePostDomainDto) {
+    console.log(dto, 'dto check');
     const post = new this();
 
-    // Обязательные поля из DTO
     post.title = dto.title;
+    console.log(post, 'пост после замены тайтла');
     post.shortDescription = dto.shortDescription;
     post.content = dto.content;
     post.blogId = dto.blogId;
     post.blogName = dto.blogName;
-
-    // ✅ Инициализируем ВСЕ поля!
-    post.deleteAt = null; // Или undefined
+    post.deleteAt = null;
     post.extendedLikesInfo = {
       likesCount: 0,
       dislikesCount: 0,
       status: 'None',
       newestLikes: [],
     };
-
-    return post;
+    console.log(post, 'post in static method check');
+    return post as PostDocument;
   }
 
   updatePost(dto: UpdatePostDto): void {
@@ -115,10 +115,12 @@ export class Post {
   }
 }
 
-export const PostSchema = SchemaFactory.createForClass(Post);
+export const PostSchema = SchemaFactory.createForClass(PostEntity);
 
-PostSchema.loadClass(Post); //посмотреть документацию
+PostSchema.loadClass(PostEntity);
 
-export type PostDocument = HydratedDocument<Post>;
+export type PostDocument = HydratedDocument<PostEntity>;
 
-export type PostModelType = Model<PostDocument> & typeof Post;
+export type PostModelType = Model<PostDocument> & typeof PostEntity;
+
+//остановился тут, некорретктно создается тип PostEntity
