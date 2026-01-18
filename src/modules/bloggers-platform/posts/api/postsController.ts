@@ -17,10 +17,10 @@ import {
 import { GetPostsQueryParams } from './query/get-posts-query-params';
 import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
-import { PostViewModel } from './model/postViewModel';
+import { PostViewModel } from './model/output/postViewModel';
 import { PostQueryRepository } from '../infrastructure/postQueryRepository';
 import { UpdatePostInputDto } from '../dto/input/updatePostInputDto';
-import { CommentViewModel } from './model/commentViewModel';
+import { CommentViewModel } from './model/output/commentViewModel';
 import { CommentsQueryRepository } from '../../comments/infrastructure/commentsQueryRepository';
 import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
@@ -58,6 +58,12 @@ export class PostsController {
   ): Promise<PaginatedViewDto<CommentViewModel>> {
     return this.commentsQueryRepository.getCommentByPostId(postId, query);
   }
+
+  @Post(':id/comments')
+  async createComment(
+    @Param('id') postId: string,
+    @Body() body: 
+  )
 
   @Get()
   async getAll(

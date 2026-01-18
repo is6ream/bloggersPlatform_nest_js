@@ -1,4 +1,4 @@
-import { CommentViewModel } from '../../posts/api/model/commentViewModel';
+import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
 import { CommentDocument } from '../domain/commentEntity';
 
 export class CommentViewDto extends CommentViewModel {
