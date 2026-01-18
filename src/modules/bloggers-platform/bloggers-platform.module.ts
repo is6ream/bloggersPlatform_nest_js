@@ -13,7 +13,7 @@ import { PostRepository } from './posts/infrastructure/postRepository';
 import { PostsService } from './posts/application/posts-service';
 import { PostsController } from './posts/api/postsController';
 import { PostEntity, PostSchema } from './posts/domain/postEntity';
-import { CommentsQueryRepository } from './comments/infrastructure/commentsQueryRepository';
+import { CommentsQueryRepository } from './comments/infrastructure/comments-queryRepository';
 import { Comment, CommentsSchema } from './comments/domain/commentEntity';
 import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';

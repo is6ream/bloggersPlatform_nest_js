@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { CommentatorInfo } from './schemas/commentatorInfoSchema';
 import { LikesInfo } from './schemas/likesInfoSchema';
 import { HydratedDocument, Model } from 'mongoose';
-
+import { CreateCommentInputDto } from '../../posts/api/model/input/create-comment.input.dto';
 @Schema({
   timestamps: {
     createdAt: 'createdAt',
@@ -23,6 +23,14 @@ export class Comment {
 
   @Prop({ type: LikesInfo, required: true })
   likesInfo: LikesInfo;
+
+  static createInstance(dto: CreateCommentInputDto) {
+    const comment = new this();
+    comment.content = dto.content;
+    comment.commentatorInfo = dto.commentatorInfo;
+    comment.likesInfo = dto.likesInfo;
+    return comment as CommentDocument;
+  }
 }
 
 export const CommentsSchema = SchemaFactory.createForClass(Comment);

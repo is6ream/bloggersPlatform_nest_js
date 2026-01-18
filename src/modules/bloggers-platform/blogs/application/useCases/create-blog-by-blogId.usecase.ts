@@ -14,7 +14,6 @@ import {
 } from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
-import { CreatePostInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostInputDto';
 import { CreatePostByBlogIdInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostByBlogIdInputDto';
 
 @Injectable()

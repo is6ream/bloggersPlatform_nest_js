@@ -21,7 +21,7 @@ import { PostViewModel } from './model/output/postViewModel';
 import { PostQueryRepository } from '../infrastructure/postQueryRepository';
 import { UpdatePostInputDto } from '../dto/input/updatePostInputDto';
 import { CommentViewModel } from './model/output/commentViewModel';
-import { CommentsQueryRepository } from '../../comments/infrastructure/commentsQueryRepository';
+import { CommentsQueryRepository } from '../../comments/infrastructure/comments-queryRepository';
 import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
 import { CreatePostCommand } from '../application/useCases/create-post.usecase';
@@ -61,6 +61,7 @@ export class PostsController {
   }
 
   @Post(':id/comments')
+  @UseGuards(JwtAuthGuard)
   async createComment(
     @Param('id') postId: string,
     @Body() body: CreateCommentInputDto,
