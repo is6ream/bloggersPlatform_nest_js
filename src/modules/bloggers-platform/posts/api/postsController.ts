@@ -30,6 +30,7 @@ import { DeletePostCommand } from '../application/useCases/delete-post.usecase';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
 import { UpdateLikeStatusCommand } from '../../likes/application/update-like-status.usecase';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.dto';
+import { CreateCommentInputDto } from './model/input/create-comment.input.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -62,8 +63,10 @@ export class PostsController {
   @Post(':id/comments')
   async createComment(
     @Param('id') postId: string,
-    @Body() body: 
-  )
+    @Body() body: CreateCommentInputDto,
+  ): Promise<CommentViewModel> {
+    return this.commandBus.execute(new CreateCommentCommand(postId, body));
+  }
 
   @Get()
   async getAll(
