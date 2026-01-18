@@ -3,6 +3,7 @@ import { CommentatorInfo } from './schemas/commentatorInfoSchema';
 import { LikesInfo } from './schemas/likesInfoSchema';
 import { HydratedDocument, Model } from 'mongoose';
 import { CreateCommentInputDto } from '../../posts/api/model/input/create-comment.input.dto';
+import { CreateCommentDomainDto } from './types/create-comment.domain.dto';
 @Schema({
   timestamps: {
     createdAt: 'createdAt',
@@ -24,11 +25,13 @@ export class Comment {
   @Prop({ type: LikesInfo, required: true })
   likesInfo: LikesInfo;
 
-  static createInstance(dto: CreateCommentInputDto) {
+  static createInstance(dto: CreateCommentDomainDto) {
     const comment = new this();
     comment.content = dto.content;
     comment.commentatorInfo = dto.commentatorInfo;
-    comment.likesInfo = dto.likesInfo;
+    comment.createdAt = new Date();
+    comment.likesInfo = { likesCount: 0, dislikesCount: 0, myStatus: 'None' };
+
     return comment as CommentDocument;
   }
 }

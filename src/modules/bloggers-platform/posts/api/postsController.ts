@@ -31,6 +31,7 @@ import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guar
 import { UpdateLikeStatusCommand } from '../../likes/application/update-like-status.usecase';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.dto';
 import { CreateCommentInputDto } from './model/input/create-comment.input.dto';
+import { CreateCommentCommand } from '../../comments/application/useCases/create-comment.useCase';
 
 @Controller('posts')
 export class PostsController {
@@ -64,9 +65,14 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   async createComment(
     @Param('id') postId: string,
-    @Body() body: CreateCommentInputDto,
+    @Body() content: CreateCommentInputDto,
+    @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<CommentViewModel> {
-    return this.commandBus.execute(new CreateCommentCommand(postId, body));
+    const commentId = await this.commandBus.execute(
+      new CreateCommentCommand(postId, user.id, user.login!, content),
+    );
+
+    return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);
   }
 
   @Get()

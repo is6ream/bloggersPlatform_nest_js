@@ -12,7 +12,9 @@ import { CommentsRepository } from '../../infrastructure/comments-repository';
 export class CreateCommentCommand {
   constructor(
     public postId: string,
-    public dto: CreateCommentInputDto,
+    public userId: string,
+    public userLogin: string,
+    public content: CreateCommentInputDto,
   ) {}
 }
 
@@ -29,8 +31,11 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
 
   async execute(command: CreateCommentCommand): Promise<string> {
     const post = await this.postRepository.findOrNotFoundFail(command.postId);
-    const comment = new Comment(command.dto.content, post, command.dto.userId);
+    const comment = Comment.createInstance({
+      content: command.content.content,
+      commentatorInfo: { userId: command.userId, userLogin: command.userLogin },
+    });
     await this.commentsRepository.save(comment);
-    return comment.id;
+    return comment._id.toString();
   }
 }
