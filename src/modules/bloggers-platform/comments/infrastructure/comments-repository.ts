@@ -13,6 +13,10 @@ export class CommentsRepository {
   ) {}
 
   async save(comment: CommentDocument) {
+    console.log('DAL check');
+    console.log(comment, 'comment check');
+    console.log(typeof comment); // должно быть 'object'
+    console.log(comment.constructor.name); // должно быть 'model' или 'Document'F
     await comment.save();
   }
 }

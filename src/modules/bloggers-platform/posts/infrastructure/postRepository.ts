@@ -19,6 +19,7 @@ export class PostRepository {
     await post.save();
   }
   async findOrNotFoundFail(id: string): Promise<PostDocument> {
+    console.log('checkPostExist');
     const post = await this.findById(id);
     if (!post) {
       throw new DomainException({ code: 1, message: 'Post not found' });

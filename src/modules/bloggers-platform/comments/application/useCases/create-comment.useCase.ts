@@ -31,7 +31,7 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
 
   async execute(command: CreateCommentCommand): Promise<string> {
     const post = await this.postRepository.findOrNotFoundFail(command.postId);
-    const comment = Comment.createInstance({
+    const comment = this.CommentModel.createInstance({
       content: command.content.content,
       commentatorInfo: { userId: command.userId, userLogin: command.userLogin },
     });

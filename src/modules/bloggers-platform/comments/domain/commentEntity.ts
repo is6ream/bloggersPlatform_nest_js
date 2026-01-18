@@ -25,7 +25,7 @@ export class Comment {
   @Prop({ type: LikesInfo, required: true })
   likesInfo: LikesInfo;
 
-  static createInstance(dto: CreateCommentDomainDto) {
+  static createInstance(this: CommentModelType, dto: CreateCommentDomainDto) {
     const comment = new this();
     comment.content = dto.content;
     comment.commentatorInfo = dto.commentatorInfo;
