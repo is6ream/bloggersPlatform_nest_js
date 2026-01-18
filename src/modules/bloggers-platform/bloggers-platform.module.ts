@@ -22,6 +22,7 @@ import { postCommandHandlers } from './posts/application/post-command-handlers';
 import { Like, LikeSchema } from './likes/domain/like-entity';
 import { UsersRepository } from '../user-accounts/infrastructure/users/usersRepository';
 import { User, UserSchema } from '../user-accounts/domain/userEntity';
+import { commentsCommandHadnler } from './comments/application/useCases/comments-command-handler';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { User, UserSchema } from '../user-accounts/domain/userEntity';
     UsersRepository,
     ...blogCommandHandlers,
     ...postCommandHandlers,
+    ...commentsCommandHadnler,
   ],
   exports: [],
 })
