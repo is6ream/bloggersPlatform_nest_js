@@ -39,7 +39,7 @@ export class AuthService {
     if (!isPasswordValid) {
       return null;
     }
-    return { id: user._id.toString() };
+    return { id: user._id.toString(), loginOrEmail: loginOrEmail };
   }
   async registerUser(dto: CreateUserDto) {
     const existingUser = await this.usersRepository.findUserByLoginOrEmail({
