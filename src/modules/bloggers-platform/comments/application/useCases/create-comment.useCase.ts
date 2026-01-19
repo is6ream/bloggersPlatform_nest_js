@@ -4,15 +4,15 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectModel } from '@nestjs/mongoose';
 import { Comment } from '../../domain/commentEntity';
 import { CommentModelType } from '../../domain/commentEntity';
-import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import { PostRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postRepository';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
+import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
+import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
 @Injectable()
 export class CreateCommentCommand {
   constructor(
     public postId: string,
-    public userId: string,
-    public userLogin: string,
+    public user: UserContextDto,
     public content: CreateCommentInputDto,
   ) {}
 }
@@ -24,14 +24,22 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
     private CommentModel: CommentModelType,
     private postRepository: PostRepository,
     private commentsRepository: CommentsRepository,
+    private usersRepository: UsersRepository,
   ) {}
 
   async execute(command: CreateCommentCommand): Promise<string> {
-    const post = await this.postRepository.findOrNotFoundFail(command.postId);
+    await this.postRepository.findOrNotFoundFail(command.postId);
+    const user = await this.usersRepository.findOrNotFoundFail(command.user.id);
+    console.log(command.user.id, 'command user id check in usecase');
     const comment = this.CommentModel.createInstance({
       content: command.content.content,
-      commentatorInfo: { userId: command.userId, userLogin: command.userLogin },
+      commentatorInfo: {
+        userId: command.user.id,
+        userLogin: user.login,
+      },
     });
+
+    console.log(comment, 'comment check in usecase');
     await this.commentsRepository.save(comment);
     return comment._id.toString();
   }

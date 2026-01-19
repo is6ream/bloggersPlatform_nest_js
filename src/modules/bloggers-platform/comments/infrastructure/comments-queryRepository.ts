@@ -25,6 +25,8 @@ export class CommentsQueryRepository {
       deleteAt: null,
     });
 
+    console.log(comment, 'comment check in comments query repository');
+
     if (!comment) {
       throw new NotFoundException('comment not found');
     }

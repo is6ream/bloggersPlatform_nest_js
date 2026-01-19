@@ -44,12 +44,12 @@ export class PostsController {
   @Put(':id/like-status')
   @UseGuards(JwtAuthGuard)
   async updateLikeStatus(
-    @Param('id') id: string,
+    @Param('id') postId: string,
     @Body() body: string,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
     return this.commandBus.execute(
-      new UpdateLikeStatusCommand(id, user.id, body),
+      new UpdateLikeStatusCommand(postId, user.id, body),
     );
   }
 
@@ -69,12 +69,7 @@ export class PostsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<CommentViewModel> {
     const commentId = await this.commandBus.execute(
-      new CreateCommentCommand(
-        postId,
-        user.id,
-        user.loginOrEmail!,
-        content,
-      ),
+      new CreateCommentCommand(postId, user, content),
     );
 
     return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);

@@ -3,17 +3,21 @@ import { CommentDocument } from '../domain/commentEntity';
 
 export class CommentViewDto extends CommentViewModel {
   static mapToView(comment: CommentDocument): CommentViewDto {
-    const dto = new this();
+    const dto = {
+      id: comment._id.toString(),
+      content: comment.content,
+      commentatorInfo: {
+        userId: comment.commentatorInfo.userId,
+        userLogin: comment.commentatorInfo.userLogin,
+      },
+      createdAt: comment.createdAt,
+      likesInfo: {
+        likesCount: comment.likesInfo.likesCount,
+        dislikesCount: comment.likesInfo.dislikesCount,
+        myStatus: comment.likesInfo.myStatus,
+      },
+    };
 
-    dto.id = comment._id.toString();
-    dto.content = comment.content;
-    dto.commentatorInfo.userId = comment.commentatorInfo.userId;
-    dto.commentatorInfo.userLogin = comment.commentatorInfo.userLogin;
-    dto.createdAt = comment.createdAt;
-    dto.likesInfo.likesCount = comment.likesInfo.likesCount;
-    dto.likesInfo.dislikesCount = comment.likesInfo.dislikesCount;
-    dto.likesInfo.myStatus = comment.likesInfo.myStatus;
-
-    return dto;
+    return dto as CommentViewDto;
   }
 }

@@ -10,10 +10,9 @@ export const ExtractUserFromRequest = createParamDecorator(
 
     const user = {
       id: request.user.id,
-      loginOrEmail: request.user.loginOrEmail,
     };
 
-    console.log(user, 'user check in decorator'); //теперь не передается поле логин
+    console.log(user, 'user check in decorator');
     if (!user) {
       throw new Error('there is no user in the request object!');
     }

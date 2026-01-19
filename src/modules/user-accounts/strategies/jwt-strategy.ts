@@ -15,10 +15,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       secretOrKey: process.env.JWT_SECRET as string,
     });
   }
+
   async validate(payload: UserContextDto): Promise<UserContextDto> {
+    console.log(payload, 'payload check in jwt strategy');
     return {
       id: payload.id,
-      loginOrEmail: payload.loginOrEmail,
     };
   }
 }

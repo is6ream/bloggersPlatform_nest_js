@@ -105,14 +105,13 @@ export class AuthService {
   async loginUser(user: UserContextDto) {
     const payload = {
       id: user.id,
-      login: user.loginOrEmail,
     };
-
-    console.log(payload, 'payload check');
 
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: process.env.JWT_SECRET,
     });
+
+    console.log(accessToken, 'accessToken check in loginUser');
     return {
       accessToken,
     };
