@@ -17,9 +17,11 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
+
+    console.log(user.id, ' :userId check in LocalStrategy');
     return {
-      userId: user.id,
-      loginOrEmail: loginOrEmail,
+      id: user.id,
+      loginOrEmail: user.loginOrEmail,
     };
   }
 }

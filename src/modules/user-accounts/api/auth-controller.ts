@@ -1,4 +1,3 @@
-import { UsersService } from '../application/user-service';
 import { AuthService } from '../application/auth-service';
 import { AuthQueryRepository } from '../infrastructure/auth/authQueryRepository';
 import { Controller, Get, HttpStatus, Post, UseGuards } from '@nestjs/common';
@@ -20,7 +19,6 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 @UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(
-    private usersService: UsersService,
     private authService: AuthService,
     private authQueryRepository: AuthQueryRepository,
   ) {}
@@ -40,6 +38,7 @@ export class AuthController {
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
+    console.log(user, 'user check in handler');
     return this.authService.loginUser(user);
   }
 

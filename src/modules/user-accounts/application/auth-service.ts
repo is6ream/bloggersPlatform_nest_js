@@ -39,7 +39,7 @@ export class AuthService {
     if (!isPasswordValid) {
       return null;
     }
-    return { id: user._id.toString(), loginOrEmail: loginOrEmail };
+    return { id: user._id.toString(), loginOrEmail: loginOrEmail }; //здесь в корректном формате передаем данные далее
   }
   async registerUser(dto: CreateUserDto) {
     const existingUser = await this.usersRepository.findUserByLoginOrEmail({
@@ -104,7 +104,7 @@ export class AuthService {
 
   async loginUser(user: UserContextDto) {
     const payload = {
-      sub: user.id,
+      id: user.id,
       login: user.loginOrEmail,
     };
 

@@ -69,7 +69,12 @@ export class PostsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<CommentViewModel> {
     const commentId = await this.commandBus.execute(
-      new CreateCommentCommand(postId, user.id, user.loginOrEmail!, content),
+      new CreateCommentCommand(
+        postId,
+        user.id,
+        user.loginOrEmail!,
+        content,
+      ),
     );
 
     return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);

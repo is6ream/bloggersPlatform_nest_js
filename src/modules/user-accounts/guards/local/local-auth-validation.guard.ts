@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  ExecutionContext,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, ExecutionContext } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -28,9 +24,8 @@ export class LocalAuthValidationGuard extends AuthGuard('local') {
         })),
       });
     }
-
     try {
-      return await super.canActivate(context) as boolean;
+      return (await super.canActivate(context)) as boolean;
     } catch (error) {
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
