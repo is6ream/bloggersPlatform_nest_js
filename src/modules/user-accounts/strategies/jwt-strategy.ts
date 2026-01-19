@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt } from 'passport-jwt';
 import dotenv from 'dotenv';
-import { UserContextDto } from '../guards/dto/user-context.dto';
+import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { Strategy } from 'passport-jwt';
 dotenv.config();
 

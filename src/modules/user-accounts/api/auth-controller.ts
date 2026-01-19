@@ -1,17 +1,11 @@
 import { UsersService } from '../application/user-service';
 import { AuthService } from '../application/auth-service';
 import { AuthQueryRepository } from '../infrastructure/auth/authQueryRepository';
-import {
-  Controller,
-  Get,
-  HttpStatus,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
 import { Body, HttpCode } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { UserContextDto } from '../guards/dto/user-context.dto';
+import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
 import { PasswordRecoveryInputDto } from './dto/input/password-recovery-input.dto';
 import { NewPasswordInputDto } from './dto/input/new-password-input.dto';
@@ -46,7 +40,7 @@ export class AuthController {
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
-    return this.authService.loginUser(user.id);
+    return this.authService.loginUser(user);
   }
 
   @Post('password-recovery')

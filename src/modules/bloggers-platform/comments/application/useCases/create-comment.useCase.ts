@@ -5,7 +5,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Comment } from '../../domain/commentEntity';
 import { CommentModelType } from '../../domain/commentEntity';
 import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
-import { PostModelType } from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import { PostRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postRepository';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
 @Injectable()
@@ -24,13 +23,13 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
     @InjectModel(Comment.name)
     private CommentModel: CommentModelType,
     @InjectModel(PostEntity.name)
-    private PostModel: PostModelType,
     private postRepository: PostRepository,
     private commentsRepository: CommentsRepository,
   ) {}
 
   async execute(command: CreateCommentCommand): Promise<string> {
-    const post = await this.postRepository.findOrNotFoundFail(command.postId);
+    const post = await this.postRepository.findOrNotFoundFail(command.postId); //остановился тут 
+    console.log(command.userLogin, 'command userLogin check');
     const comment = this.CommentModel.createInstance({
       content: command.content.content,
       commentatorInfo: { userId: command.userId, userLogin: command.userLogin },

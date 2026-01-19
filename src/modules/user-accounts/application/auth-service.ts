@@ -3,12 +3,13 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
 import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { JwtService } from '@nestjs/jwt';
-import { UserContextDto } from '../guards/dto/user-context.dto';
+import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { UsersService } from './user-service';
 import { UserDocument } from '../domain/userEntity';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
+import { UserContextOutput } from '../guards/dto/user-context.output.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -22,7 +23,7 @@ export class AuthService {
   async validateUser(
     loginOrEmail: string,
     password: string,
-  ): Promise<UserContextDto | null> {
+  ): Promise<UserContextOutput | null> {
     const user: UserDocument | null =
       await this.usersRepository.findUserByLoginOrEmail({
         login: loginOrEmail,
@@ -101,13 +102,17 @@ export class AuthService {
     );
   }
 
-  async loginUser(userId: string) {
-    const accessToken = await this.jwtService.signAsync(
-      {
-        id: userId,
-      } as UserContextDto,
-      { secret: process.env.JWT_SECRET },
-    );
+  async loginUser(user: UserContextDto) {
+    const payload = {
+      sub: user.id,
+      login: user.loginOrEmail,
+    };
+
+    console.log(payload, 'payload check');
+
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_SECRET,
+    });
     return {
       accessToken,
     };

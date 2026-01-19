@@ -1,4 +1,4 @@
 export class UserContextDto {
   id: string;
-  login?: string;
+  loginOrEmail: string;
 }
