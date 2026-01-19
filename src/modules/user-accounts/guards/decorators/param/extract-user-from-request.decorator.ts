@@ -13,7 +13,7 @@ export const ExtractUserFromRequest = createParamDecorator(
       loginOrEmail: request.user.loginOrEmail,
     };
 
-    console.log(user, 'user check in decorator');
+    console.log(user, 'user check in decorator'); //теперь не передается поле логин
     if (!user) {
       throw new Error('there is no user in the request object!');
     }

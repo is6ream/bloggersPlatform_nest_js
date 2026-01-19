@@ -22,14 +22,12 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
   constructor(
     @InjectModel(Comment.name)
     private CommentModel: CommentModelType,
-    @InjectModel(PostEntity.name)
     private postRepository: PostRepository,
     private commentsRepository: CommentsRepository,
   ) {}
 
   async execute(command: CreateCommentCommand): Promise<string> {
-    const post = await this.postRepository.findOrNotFoundFail(command.postId); //остановился тут 
-    console.log(command.userLogin, 'command userLogin check');
+    const post = await this.postRepository.findOrNotFoundFail(command.postId);
     const comment = this.CommentModel.createInstance({
       content: command.content.content,
       commentatorInfo: { userId: command.userId, userLogin: command.userLogin },
