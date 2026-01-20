@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PostRepository } from '../../posts/infrastructure/postRepository';
+import { PostRepository } from '../../infrastructure/postRepository';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
 import { InjectModel } from '@nestjs/mongoose';
-import { Like, LikeDocument } from '../domain/like-entity';
-import { LikeModelType } from '../domain/like-entity';
-import { PostDocument } from '../../posts/domain/postEntity';
+import { Like, LikeDocument } from '../../../likes/domain/like-entity';
+import { LikeModelType } from '../../../likes/domain/like-entity';
+import { PostDocument } from '../../domain/postEntity';
 @Injectable()
 export class UpdateLikeStatusCommand {
   constructor(

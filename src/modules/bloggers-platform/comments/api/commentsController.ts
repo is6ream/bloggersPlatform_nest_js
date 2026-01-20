@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Put } from '@nestjs/common';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
 import { CommentsQueryRepository } from '../infrastructure/comments-queryRepository';
 import { CommandBus } from '@nestjs/cqrs';
-import { UpdateLikeStatusCommand } from '../../likes/application/update-like-status.usecase';
+import { UpdateLikeStatusCommand } from '../../posts/application/useCases/update-like-status.usecase';
 @Controller('comments')
 export class CommentsController {
   constructor(

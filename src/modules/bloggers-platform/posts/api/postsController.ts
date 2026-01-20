@@ -28,10 +28,10 @@ import { CreatePostCommand } from '../application/useCases/create-post.usecase';
 import { UpdatePostCommand } from '../application/useCases/update-post.usecase';
 import { DeletePostCommand } from '../application/useCases/delete-post.usecase';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
-import { UpdateLikeStatusCommand } from '../../likes/application/update-like-status.usecase';
+import { UpdateLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 import { CreateCommentInputDto } from './model/input/create-comment.input.dto';
-import { CreateCommentCommand } from '../../comments/application/useCases/create-comment.useCase';
+import { CreateCommentCommand } from '../../comments/application/useCases/create-comment.usecase';
 
 @Controller('posts')
 export class PostsController {
