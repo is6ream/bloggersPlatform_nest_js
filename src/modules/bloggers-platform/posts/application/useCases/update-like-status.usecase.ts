@@ -40,7 +40,7 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
       const newLike: LikeDocument = this.LikeModel.createInstance({
         likeStatus: command.likeStatus,
         userId: command.userId,
-        postId: command.postId,
+        parentId: command.postId,
         parentType: 'Post',
       });
       post.updateLikeCounter('None', command.likeStatus);

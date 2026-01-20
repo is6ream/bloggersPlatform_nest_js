@@ -11,9 +11,6 @@ export class LikesInfo {
 
   @Prop({ type: String, required: true, default: 'None' })
   status: string;
-
-  @Prop({ type: NewestLikeSchema, required: true })
-  newestLikes: NewestLike[];
 }
 
 export const LikesInfoSchema = SchemaFactory.createForClass(LikesInfo);

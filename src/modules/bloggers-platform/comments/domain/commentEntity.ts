@@ -1,9 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { CommentatorInfo } from './schemas/commentatorInfoSchema';
-import { LikesInfo } from './schemas/likesInfoSchema';
 import { HydratedDocument, Model } from 'mongoose';
-import { CreateCommentInputDto } from '../../posts/api/model/input/create-comment.input.dto';
 import { CreateCommentDomainDto } from './types/create-comment.domain.dto';
+import { LikesInfo } from '../../likes/domain/likes-info.schema';
 @Schema({
   timestamps: {
     createdAt: 'createdAt',
@@ -23,16 +22,43 @@ export class Comment {
   createdAt: Date;
 
   @Prop({ type: LikesInfo, required: true })
-  likesInfo: LikesInfo;
+  extendedLikesInfo: LikesInfo;
 
   static createInstance(this: CommentModelType, dto: CreateCommentDomainDto) {
     const comment = new this();
     comment.content = dto.content;
     comment.commentatorInfo = dto.commentatorInfo;
     comment.createdAt = new Date();
-    comment.likesInfo = { likesCount: 0, dislikesCount: 0, myStatus: 'None' };
+    comment.extendedLikesInfo = {
+      likesCount: 0,
+      dislikesCount: 0,
+      status: 'None',
+    };
 
     return comment as CommentDocument;
+  }
+
+  updateLikeCounter(oldLikeStatus: string, newLikeStatus: string) {
+    if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
+      this.extendedLikesInfo.likesCount--;
+      this.extendedLikesInfo.dislikesCount++;
+    }
+    if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
+      this.extendedLikesInfo.likesCount--;
+    }
+    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
+      this.extendedLikesInfo.likesCount++;
+      this.extendedLikesInfo.dislikesCount--;
+    }
+    if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
+      this.extendedLikesInfo.dislikesCount--;
+    }
+    if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
+      this.extendedLikesInfo.likesCount++;
+    }
+    if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
+      this.extendedLikesInfo.dislikesCount++;
+    }
   }
 }
 
