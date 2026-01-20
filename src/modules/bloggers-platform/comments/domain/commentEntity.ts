@@ -22,42 +22,41 @@ export class Comment {
   createdAt: Date;
 
   @Prop({ type: LikesInfo, required: true })
-  extendedLikesInfo: LikesInfo;
+  likesInfo: LikesInfo;
 
   static createInstance(this: CommentModelType, dto: CreateCommentDomainDto) {
     const comment = new this();
     comment.content = dto.content;
     comment.commentatorInfo = dto.commentatorInfo;
     comment.createdAt = new Date();
-    comment.extendedLikesInfo = {
+    comment.likesInfo = {
       likesCount: 0,
       dislikesCount: 0,
       status: 'None',
     };
-
     return comment as CommentDocument;
   }
 
   updateLikeCounter(oldLikeStatus: string, newLikeStatus: string) {
     if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
-      this.extendedLikesInfo.likesCount--;
-      this.extendedLikesInfo.dislikesCount++;
+      this.likesInfo.likesCount--;
+      this.likesInfo.dislikesCount++;
     }
     if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
-      this.extendedLikesInfo.likesCount--;
+      this.likesInfo.likesCount--;
     }
     if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
-      this.extendedLikesInfo.likesCount++;
-      this.extendedLikesInfo.dislikesCount--;
+      this.likesInfo.likesCount++;
+      this.likesInfo.dislikesCount--;
     }
     if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
-      this.extendedLikesInfo.dislikesCount--;
+      this.likesInfo.dislikesCount--;
     }
     if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
-      this.extendedLikesInfo.likesCount++;
+      this.likesInfo.likesCount++;
     }
     if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
-      this.extendedLikesInfo.dislikesCount++;
+      this.likesInfo.dislikesCount++;
     }
   }
 }

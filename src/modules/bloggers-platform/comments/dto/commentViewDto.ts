@@ -14,7 +14,7 @@ export class CommentViewDto extends CommentViewModel {
       likesInfo: {
         likesCount: comment.likesInfo.likesCount,
         dislikesCount: comment.likesInfo.dislikesCount,
-        myStatus: comment.likesInfo.myStatus,
+        myStatus: comment.likesInfo.status,
       },
     };
 

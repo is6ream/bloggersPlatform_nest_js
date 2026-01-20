@@ -1,7 +1,7 @@
 import { Prop, SchemaFactory } from '@nestjs/mongoose';
 import { LikeStatus } from '../types/like-status';
 import { HydratedDocument, Model } from 'mongoose';
-import { CreateLikeDto } from '../types/create-like.dto';
+import { CreateLikeDto } from '../types/input/create-like.dto';
 export class Like {
   @Prop({ type: String, enum: Object.values(LikeStatus), required: true })
   status: string;

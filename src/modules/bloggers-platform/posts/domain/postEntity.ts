@@ -3,8 +3,10 @@ import { CreatePostDto } from './dto/createPostDto';
 import { HydratedDocument } from 'mongoose';
 import { Model } from 'mongoose';
 import { UpdatePostDto } from './dto/updatePostDto';
-import { LikesInfoSchema } from '../../likes/domain/likes-info.schema';
-import { LikesInfo } from '../../likes/domain/likes-info.schema';
+import {
+  LikesInfo,
+  LikesInfoSchema,
+} from '../../likes/domain/likes-info.schema';
 import { CreatePostDomainDto } from '../application/types/create-post-domain.dto';
 @Schema({
   timestamps: {
@@ -37,7 +39,7 @@ export class PostEntity {
   updatedAt: Date;
 
   @Prop({ type: LikesInfoSchema, required: true })
-  extendedLikesInfo: LikesInfo;
+  likesInfo: LikesInfo;
 
   static createInstance(dto: CreatePostDomainDto) {
     const post = new this();
@@ -48,11 +50,10 @@ export class PostEntity {
     post.blogId = dto.blogId;
     post.blogName = dto.blogName;
     post.deleteAt = null;
-    post.extendedLikesInfo = {
+    post.likesInfo = {
       likesCount: 0,
       dislikesCount: 0,
       status: 'None',
-      newestLikes: [],
     };
     return post as PostDocument;
   }
@@ -83,31 +84,30 @@ export class PostEntity {
         likesCount: 0,
         dislikesCount: 0,
         myStatus: 'None',
-        newestLikes: [],
       },
     };
   }
 
   updateLikeCounter(oldLikeStatus: string, newLikeStatus: string) {
     if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
-      this.extendedLikesInfo.likesCount--;
-      this.extendedLikesInfo.dislikesCount++;
+      this.likesInfo.likesCount--;
+      this.likesInfo.dislikesCount++;
     }
     if (oldLikeStatus === 'Like' && newLikeStatus === 'None') {
-      this.extendedLikesInfo.likesCount--;
+      this.likesInfo.likesCount--;
     }
     if (oldLikeStatus === 'Dislike' && newLikeStatus === 'Like') {
-      this.extendedLikesInfo.likesCount++;
-      this.extendedLikesInfo.dislikesCount--;
+      this.likesInfo.likesCount++;
+      this.likesInfo.dislikesCount--;
     }
     if (oldLikeStatus === 'Dislike' && newLikeStatus === 'None') {
-      this.extendedLikesInfo.dislikesCount--;
+      this.likesInfo.dislikesCount--;
     }
     if (oldLikeStatus === 'None' && newLikeStatus === 'Like') {
-      this.extendedLikesInfo.likesCount++;
+      this.likesInfo.likesCount++;
     }
     if (oldLikeStatus === 'None' && newLikeStatus === 'Dislike') {
-      this.extendedLikesInfo.dislikesCount++;
+      this.likesInfo.dislikesCount++;
     }
   }
 }
@@ -120,4 +120,3 @@ export type PostDocument = HydratedDocument<PostEntity>;
 
 export type PostModelType = Model<PostDocument> & typeof PostEntity;
 
-//остановился тут, некорретктно создается тип PostEntity

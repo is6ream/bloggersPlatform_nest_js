@@ -9,5 +9,5 @@ export class LikesInfo {
   dislikesCount: number;
 
   @Prop({ type: String, required: true, default: 'None' })
-  myStatus: string;
+  status: string;
 }

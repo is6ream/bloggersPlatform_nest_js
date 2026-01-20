@@ -6,7 +6,7 @@ import { UpdateLikeStatusCommand } from '../../posts/application/useCases/update
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
 import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorators/param/extract-user-from-request.decorator';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
-import { LikeStatusInputDto } from '../../likes/types/like-status.input.dto';
+import { LikeStatusInputDto } from '../../likes/types/input/like-status.input.dto';
 @Controller('comments')
 export class CommentsController {
   constructor(
