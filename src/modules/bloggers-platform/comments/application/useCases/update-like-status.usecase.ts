@@ -1,6 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
-import { Like, LikeDocument } from 'src/modules/bloggers-platform/likes/domain/like-entity';
+import {
+  Like,
+  LikeDocument,
+} from 'src/modules/bloggers-platform/likes/domain/like-entity';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
 import { InjectModel } from '@nestjs/mongoose';
 import { LikeModelType } from 'src/modules/bloggers-platform/likes/domain/like-entity';
@@ -44,5 +47,10 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
         parentType: 'Comment',
       });
       comment.updateLikeCounter('None', command.likeStatus);
+
+      await this.commentsRepository.likeStatusSave(newLike);
+      await this.commentsRepository.save(comment);
+      return; 
+    }
   }
 }

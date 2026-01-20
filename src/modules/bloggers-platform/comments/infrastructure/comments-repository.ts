@@ -25,4 +25,8 @@ export class CommentsRepository {
     }
     return comment;
   }
+
+  async likeStatusSave(like: CommentDocument) {
+    await like.save();
+  }
 }

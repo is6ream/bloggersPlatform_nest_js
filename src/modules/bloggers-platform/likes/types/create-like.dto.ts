@@ -4,4 +4,3 @@ export class CreateLikeDto {
   likeStatus: string;
   parentType: string;
 }
-f
