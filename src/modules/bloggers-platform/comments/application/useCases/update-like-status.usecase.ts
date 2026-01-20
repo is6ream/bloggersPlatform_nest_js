@@ -50,7 +50,19 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
 
       await this.commentsRepository.likeStatusSave(newLike);
       await this.commentsRepository.save(comment);
-      return; 
+      return;
     }
+
+    if (like.status === command.likeStatus) {
+      return;
+    }
+
+    let oldLikeStatus = like.status;
+    like.status = command.likeStatus;
+    like.createdAt = new Date();
+    comment.updateLikeCounter(oldLikeStatus, command.likeStatus);
+    await this.commentsRepository.likeStatusSave(like);
+    await this.commentsRepository.save(comment);
+    return;
   }
 }

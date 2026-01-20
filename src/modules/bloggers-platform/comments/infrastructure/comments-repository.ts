@@ -6,6 +6,7 @@ import {
 } from '../domain/commentEntity';
 import { PostRepository } from '../../posts/infrastructure/postRepository';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { LikeDocument } from '../../likes/domain/like-entity';
 export class CommentsRepository {
   constructor(
     @InjectModel(Comment.name)
@@ -26,7 +27,7 @@ export class CommentsRepository {
     return comment;
   }
 
-  async likeStatusSave(like: CommentDocument) {
+  async likeStatusSave(like: LikeDocument): Promise<void> {
     await like.save();
   }
 }
