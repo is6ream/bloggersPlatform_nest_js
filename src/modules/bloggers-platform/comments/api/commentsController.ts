@@ -1,12 +1,12 @@
+import { LikeStatusInputDto } from './../../likes/types/input/like-status.input.dto';
 import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
 import { CommentsQueryRepository } from '../infrastructure/comments-queryRepository';
 import { CommandBus } from '@nestjs/cqrs';
-import { UpdateLikeStatusCommand } from '../../posts/application/useCases/update-like-status.usecase';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
 import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorators/param/extract-user-from-request.decorator';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
-import { LikeStatusInputDto } from '../../likes/types/input/like-status.input.dto';
+import { UpdateCommentLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 @Controller('comments')
 export class CommentsController {
   constructor(
@@ -22,7 +22,7 @@ export class CommentsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
     return this.commandBus.execute(
-      new UpdateLikeStatusCommand(commentId, user.id, body.likeStatus), 
+      new UpdateCommentLikeStatusCommand(commentId, user.id, body.likeStatus),
     );
   }
 

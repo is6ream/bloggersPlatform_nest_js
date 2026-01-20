@@ -17,15 +17,15 @@ import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { CreatePostByBlogIdInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostByBlogIdInputDto';
 
 @Injectable()
-export class CreateBlogByBlogIdCommand {
+export class CreatePostForSpecificBlogCommand {
   constructor(
     public postId: string,
     public dto: CreatePostByBlogIdInputDto,
   ) {}
 }
 
-@CommandHandler(CreateBlogByBlogIdCommand)
-export class CreateBlogByBlogIdUseCase implements ICommandHandler<CreateBlogByBlogIdCommand> {
+@CommandHandler(CreatePostForSpecificBlogCommand)
+export class CreatePostByBlogIdUseCase implements ICommandHandler<CreatePostForSpecificBlogCommand> {
   constructor(
     @InjectModel(Blog.name)
     private BlogModel: BlogModelType,
@@ -35,7 +35,7 @@ export class CreateBlogByBlogIdUseCase implements ICommandHandler<CreateBlogByBl
     private blogRepository: BlogsRepository,
   ) {}
 
-  async execute(command: CreateBlogByBlogIdCommand): Promise<any> {
+  async execute(command: CreatePostForSpecificBlogCommand): Promise<any> {
     const blog: BlogDocument = await this.blogRepository.findOrNotFoundFail(
       command.postId,
     );

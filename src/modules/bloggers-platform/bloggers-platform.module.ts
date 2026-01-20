@@ -1,5 +1,3 @@
-import { CreateBlogByBlogIdUseCase } from './blogs/application/useCases/create-blog-by-blogId.usecase';
-import { DeleteBlogByIdUseCase } from './blogs/application/useCases/delete-blog-by-id.usecase';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BlogSchema } from './blogs/domain/blogEntity';
@@ -24,7 +22,6 @@ import { UsersRepository } from '../user-accounts/infrastructure/users/usersRepo
 import { User, UserSchema } from '../user-accounts/domain/userEntity';
 import { commentsCommandHadnler } from './comments/application/useCases/comments-command-handler';
 import { CommentsRepository } from './comments/infrastructure/comments-repository';
-
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),

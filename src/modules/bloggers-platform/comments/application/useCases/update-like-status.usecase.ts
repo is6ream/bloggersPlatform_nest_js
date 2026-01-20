@@ -10,7 +10,7 @@ import { LikeModelType } from 'src/modules/bloggers-platform/likes/domain/like-e
 import { CommentDocument } from '../../domain/commentEntity';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
 @Injectable()
-export class UpdateLikeStatusCommand {
+export class UpdateCommentLikeStatusCommand {
   constructor(
     public commentId: string,
     public userId: string,
@@ -18,8 +18,8 @@ export class UpdateLikeStatusCommand {
   ) {}
 }
 
-@CommandHandler(UpdateLikeStatusCommand)
-export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatusCommand> {
+@CommandHandler(UpdateCommentLikeStatusCommand)
+export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateCommentLikeStatusCommand> {
   constructor(
     @InjectModel(Like.name)
     private LikeModel: LikeModelType,
@@ -27,7 +27,7 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
     private commentsRepository: CommentsRepository,
   ) {}
 
-  async execute(command: UpdateLikeStatusCommand): Promise<any> {
+  async execute(command: UpdateCommentLikeStatusCommand): Promise<any> {
     let comment: CommentDocument =
       await this.commentsRepository.findOrNotFoundFail(command.commentId);
     const user = await this.usersRepository.findByIdOrThrowValidationError(

@@ -28,10 +28,11 @@ import { CreatePostCommand } from '../application/useCases/create-post.usecase';
 import { UpdatePostCommand } from '../application/useCases/update-post.usecase';
 import { DeletePostCommand } from '../application/useCases/delete-post.usecase';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
-import { UpdateLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
+import { UpdatePostLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 import { CreateCommentInputDto } from './model/input/create-comment.input.dto';
 import { CreateCommentCommand } from '../../comments/application/useCases/create-comment.usecase';
+import { LikeStatus } from '../../likes/types/like-status';
 
 @Controller('posts')
 export class PostsController {
@@ -45,11 +46,11 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   async updateLikeStatus(
     @Param('id') postId: string,
-    @Body() body: string,
+    @Body() body: LikeStatus,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
     return this.commandBus.execute(
-      new UpdateLikeStatusCommand(postId, user.id, body),
+      new UpdatePostLikeStatusCommand(postId, user.id, body),
     );
   }
 

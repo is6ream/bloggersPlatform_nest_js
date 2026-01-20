@@ -8,7 +8,7 @@ import { LikeModelType } from '../../../likes/domain/like-entity';
 import { PostDocument } from '../../domain/postEntity';
 import { LikeStatus } from 'src/modules/bloggers-platform/likes/types/like-status';
 @Injectable()
-export class UpdateLikeStatusCommand {
+export class UpdatePostLikeStatusCommand {
   constructor(
     public postId: string,
     public userId: string,
@@ -16,15 +16,15 @@ export class UpdateLikeStatusCommand {
   ) {}
 }
 
-@CommandHandler(UpdateLikeStatusCommand)
-export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatusCommand> {
+@CommandHandler(UpdatePostLikeStatusCommand)
+export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeStatusCommand> {
   constructor(
     @InjectModel(Like.name)
     private LikeModel: LikeModelType,
     private postRepository: PostRepository,
     private usersRepository: UsersRepository,
   ) {}
-  async execute(command: UpdateLikeStatusCommand): Promise<any> {
+  async execute(command: UpdatePostLikeStatusCommand): Promise<any> {
     let post: PostDocument = await this.postRepository.findOrNotFoundFail(
       command.postId,
     );

@@ -11,7 +11,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { BlogsService } from '../application/blogs-service';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
 import { BlogsQueryRepository } from '../infrastructure/blogsQueryRepository';
@@ -22,7 +21,6 @@ import { PostPaginatedViewDto } from '../../posts/api/paginated/paginated.post.v
 import { PostQueryRepository } from '../../posts/infrastructure/postQueryRepository';
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
-import { PostsService } from '../../posts/application/posts-service';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { BlogDocument } from '../domain/blogEntity';
 import { PostDocument } from '../../posts/domain/postEntity';
@@ -31,8 +29,8 @@ import { UpdateBlogCommand } from '../application/useCases/update-blog-usecase';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
 import { DeleteBlogCommand } from '../application/useCases/delete-blog-by-id.usecase';
 import { CreateBlogCommand } from '../application/useCases/create-blog.usecase';
-import { CreateBlogByBlogIdCommand } from '../application/useCases/create-blog-by-blogId.usecase';
 import { GetBlogByIdQuery } from '../application/queries/get-blog-byId.query';
+import { CreatePostForSpecificBlogCommand } from '../application/useCases/create-blog-by-blogId.usecase';
 
 @Controller('blogs')
 export class BlogsController {
@@ -65,10 +63,10 @@ export class BlogsController {
     @Body() body: CreatePostByBlogIdInputDto,
   ): Promise<PostViewModel> {
     const post: PostDocument = await this.commandBus.execute(
-      new CreateBlogByBlogIdCommand(id, body),
+      new CreatePostForSpecificBlogCommand(id, body),
     );
 
-    return post.toViewModel(post._id.toString());
+    return this.postsQueryRepository.getByIdOrNotFoundFail(post._id.toString());
   }
 
   @UseGuards(BasicAuthGuard)
