@@ -19,7 +19,7 @@ export class UpdateCommentLikeStatusCommand {
 }
 
 @CommandHandler(UpdateCommentLikeStatusCommand)
-export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateCommentLikeStatusCommand> {
+export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCommentLikeStatusCommand> {
   constructor(
     @InjectModel(Like.name)
     private LikeModel: LikeModelType,

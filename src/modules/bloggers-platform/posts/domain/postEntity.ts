@@ -14,7 +14,6 @@ import { CreatePostDomainDto } from '../application/types/create-post-domain.dto
     updatedAt: false,
   },
 })
-export class PostMethods {}
 
 export class PostEntity {
   @Prop({ type: String, required: true })
@@ -41,21 +40,26 @@ export class PostEntity {
   @Prop({ type: LikesInfoSchema, required: true })
   likesInfo: LikesInfo;
 
-  static createInstance(dto: CreatePostDomainDto) {
-    const post = new this();
-
-    post.title = dto.title;
-    post.shortDescription = dto.shortDescription;
-    post.content = dto.content;
-    post.blogId = dto.blogId;
-    post.blogName = dto.blogName;
-    post.deleteAt = null;
-    post.likesInfo = {
-      likesCount: 0,
-      dislikesCount: 0,
-      status: 'None',
+  static createInstance(
+    this: PostModelType,
+    dto: CreatePostDomainDto,
+  ): PostDocument {
+    const postData = {
+      title: dto.title,
+      shortDescription: dto.shortDescription,
+      content: dto.content,
+      blogId: dto.blogId,
+      blogName: dto.blogName,
+      deleteAt: null,
+      likesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+        status: 'None',
+      },
     };
-    return post as PostDocument;
+
+    // Создай с данными сразу
+    return new this(postData);
   }
 
   updatePost(dto: UpdatePostDto): void {
@@ -119,4 +123,3 @@ PostSchema.loadClass(PostEntity);
 export type PostDocument = HydratedDocument<PostEntity>;
 
 export type PostModelType = Model<PostDocument> & typeof PostEntity;
-

@@ -24,17 +24,25 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     const blog = await this.blogsRepository.findByIdOrThrowValidationError(
       command.dto.blogId,
     );
-    const createData = {
+
+    // Создай документ напрямую
+    const post = new this.PostModel({
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,
       blogId: command.dto.blogId,
       blogName: blog.name,
-    };
+      deleteAt: null,
+      likesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+        status: 'None',
+      },
+    });
 
-    const post1 = this.PostModel.createInstance(createData);
-    post1.title = createData.title;
-    await this.postRepository.save(post1);
-    return post1._id.toString();
+    console.log('Post before save:', post.toObject());
+
+    await post.save();
+    return post._id.toString();
   }
 }
