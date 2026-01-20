@@ -38,7 +38,6 @@ export class AuthController {
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
-    console.log(user, 'user check in handler');
     return this.authService.loginUser(user);
   }
 

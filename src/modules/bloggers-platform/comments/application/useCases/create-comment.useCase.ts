@@ -30,7 +30,6 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
   async execute(command: CreateCommentCommand): Promise<string> {
     await this.postRepository.findOrNotFoundFail(command.postId);
     const user = await this.usersRepository.findOrNotFoundFail(command.user.id);
-    console.log(command.user.id, 'command user id check in usecase');
     const comment = this.CommentModel.createInstance({
       content: command.content.content,
       commentatorInfo: {
@@ -38,8 +37,6 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
         userLogin: user.login,
       },
     });
-
-    console.log(comment, 'comment check in usecase');
     await this.commentsRepository.save(comment);
     return comment._id.toString();
   }

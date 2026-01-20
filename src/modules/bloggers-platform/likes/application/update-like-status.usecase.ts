@@ -27,8 +27,6 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
     let post: PostDocument = await this.postRepository.findOrNotFoundFail(
       command.postId,
     );
-    console.log(post, 'post check');
-    console.log(command.userId, 'command userId check');
     const user = await this.usersRepository.findByIdOrThrowValidationError(
       command.userId,
     );
@@ -45,10 +43,8 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdateLikeStatus
         postId: command.postId,
         parentType: 'Post',
       });
-      console.log(newLike, 'newLike check');
       post.updateLikeCounter('None', command.likeStatus);
 
-      console.log(post, 'post after updateLikeCounter');
       await this.postRepository.likeStatusSave(newLike); //некорретно сохраняется likeEntity
       await this.postRepository.save(post); //нет полей extendedLikeInfo в postEntity после обновления
       return;

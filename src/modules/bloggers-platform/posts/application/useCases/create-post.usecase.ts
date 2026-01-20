@@ -32,10 +32,8 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
       blogName: blog.name,
     };
 
-    console.log(createData, 'dto checl');
     const post1 = this.PostModel.createInstance(createData);
     post1.title = createData.title;
-    console.log(post1, 'post1 check');
     await this.postRepository.save(post1);
     return post1._id.toString();
   }

@@ -40,11 +40,9 @@ export class PostEntity {
   extendedLikesInfo: LikesInfo;
 
   static createInstance(dto: CreatePostDomainDto) {
-    console.log(dto, 'dto check');
     const post = new this();
 
     post.title = dto.title;
-    console.log(post, 'пост после замены тайтла');
     post.shortDescription = dto.shortDescription;
     post.content = dto.content;
     post.blogId = dto.blogId;
@@ -56,7 +54,6 @@ export class PostEntity {
       status: 'None',
       newestLikes: [],
     };
-    console.log(post, 'post in static method check');
     return post as PostDocument;
   }
 

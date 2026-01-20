@@ -111,7 +111,6 @@ export class AuthService {
       secret: process.env.JWT_SECRET,
     });
 
-    console.log(accessToken, 'accessToken check in loginUser');
     return {
       accessToken,
     };
