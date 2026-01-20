@@ -6,12 +6,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Like, LikeDocument } from '../../../likes/domain/like-entity';
 import { LikeModelType } from '../../../likes/domain/like-entity';
 import { PostDocument } from '../../domain/postEntity';
+import { LikeStatus } from 'src/modules/bloggers-platform/likes/types/like-status';
 @Injectable()
 export class UpdateLikeStatusCommand {
   constructor(
     public postId: string,
     public userId: string,
-    public likeStatus: string,
+    public likeStatus: LikeStatus,
   ) {}
 }
 
