@@ -5,6 +5,7 @@ import {
   CommentModelType,
 } from '../domain/commentEntity';
 import { PostRepository } from '../../posts/infrastructure/postRepository';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
 export class CommentsRepository {
   constructor(
     @InjectModel(Comment.name)
@@ -14,5 +15,14 @@ export class CommentsRepository {
 
   async save(comment: CommentDocument) {
     await comment.save();
+  }
+
+  async findOrNotFoundFail(id: string): Promise<CommentDocument> {
+    const comment: CommentDocument | null =
+      await this.CommentModel.findById(id);
+    if (!comment) {
+      throw new DomainException({ code: 1, message: 'Comment not found' });
+    }
+    return comment;
   }
 }
