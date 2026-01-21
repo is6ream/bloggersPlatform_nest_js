@@ -20,9 +20,6 @@ import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 import { PostViewModel } from './model/output/postViewModel';
 import { PostQueryRepository } from '../infrastructure/postQueryRepository';
 import { UpdatePostInputDto } from '../dto/input/updatePostInputDto';
-import { CommentViewModel } from './model/output/commentViewModel';
-import { CommentsQueryRepository } from '../../comments/infrastructure/comments-queryRepository';
-import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
 import { CreatePostCommand } from '../application/useCases/create-post.usecase';
 import { UpdatePostCommand } from '../application/useCases/update-post.usecase';
@@ -36,7 +33,6 @@ import { LikeStatus } from '../../likes/types/like-status';
 export class PostsController {
   constructor(
     private postQueryRepository: PostQueryRepository,
-    private commentsQueryRepository: CommentsQueryRepository,
     private commandBus: CommandBus,
   ) {}
 
