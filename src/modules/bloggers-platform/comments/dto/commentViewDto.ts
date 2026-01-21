@@ -5,9 +5,28 @@ import { CommentDocument } from '../domain/commentEntity';
 export class CommentViewDto extends CommentViewModel {
   static mapToView(
     comment: CommentDocument,
-    like: LikeDocument,
+    like: LikeDocument | null,
   ): CommentViewDto {
-    const dto = {
+    let dto;
+
+    if (like) {
+      dto = {
+        id: comment._id.toString(),
+        content: comment.content,
+        commentatorInfo: {
+          userId: comment.commentatorInfo.userId,
+          userLogin: comment.commentatorInfo.userLogin,
+        },
+        createdAt: comment.createdAt,
+        likesInfo: {
+          likesCount: comment.likesInfo.likesCount,
+          dislikesCount: comment.likesInfo.dislikesCount,
+          myStatus: like.status,
+        },
+      };
+    }
+
+    dto = {
       id: comment._id.toString(),
       content: comment.content,
       commentatorInfo: {
@@ -18,7 +37,7 @@ export class CommentViewDto extends CommentViewModel {
       likesInfo: {
         likesCount: comment.likesInfo.likesCount,
         dislikesCount: comment.likesInfo.dislikesCount,
-        myStatus: comment.likesInfo.status,
+        myStatus: 'None',
       },
     };
 

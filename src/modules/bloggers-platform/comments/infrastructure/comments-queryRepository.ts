@@ -12,6 +12,7 @@ import { PostRepository } from '../../posts/infrastructure/postRepository';
 import { CommentPaginatedViewDto } from '../../posts/api/paginated/paginated.comment.view-dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { LikeDocument } from '../../likes/domain/like-entity';
 
 @Injectable()
 export class CommentsQueryRepository {
@@ -36,6 +37,9 @@ export class CommentsQueryRepository {
     }
 
     const like = await this.likesRepository.findByUserId(userId);
+
+    if (!like) return CommentViewDto.mapToView(comment, null);
+
     return CommentViewDto.mapToView(comment, like);
   }
 
