@@ -8,6 +8,8 @@ import {
   Param,
   Put,
   UseGuards,
+  UseInterceptors,
+  Req,
 } from '@nestjs/common';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
 import { CommentsQueryRepository } from '../infrastructure/comments-queryRepository';
@@ -20,7 +22,8 @@ import { CreateCommentInputDto } from '../../posts/api/model/input/create-commen
 import { CreateCommentCommand } from '../application/useCases/create-comment.usecase';
 import { GetCommentsQueryParams } from '../../posts/api/query/qet-comments-query-params';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
-
+import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
+import { Request } from 'express';
 @Controller('comments')
 export class CommentsController {
   constructor(
@@ -29,6 +32,7 @@ export class CommentsController {
   ) {}
 
   @Get(':id')
+  @UseInterceptors(UserExtractorInterceptor)
   async getById(@Param('id') id: string): Promise<CommentViewModel> {
     return this.commentsQueryRepository.getByIdOrNotFoundFail(id);
   }
@@ -37,8 +41,13 @@ export class CommentsController {
   async getCommentByPostId(
     @Param('id') postId: string,
     @Query() query: GetCommentsQueryParams,
+    @Req() req: Request,
   ): Promise<PaginatedViewDto<CommentViewModel>> {
-    return this.commentsQueryRepository.getCommentByPostId(postId, query);
+    return this.commentsQueryRepository.getCommentByPostId(
+      postId,
+      query,
+      req.user?.id,
+    );
   }
 
   @Post(':id/comments')

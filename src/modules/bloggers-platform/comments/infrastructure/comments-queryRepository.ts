@@ -25,7 +25,6 @@ export class CommentsQueryRepository {
       deleteAt: null,
     });
 
-
     if (!comment) {
       throw new NotFoundException('comment not found');
     }
@@ -35,6 +34,7 @@ export class CommentsQueryRepository {
   async getCommentByPostId(
     postId: string,
     query: GetCommentsQueryParams,
+    userId?: string,
   ): Promise<PaginatedViewDto<CommentViewDto>> {
     const skip = query.calculateSkip();
 
