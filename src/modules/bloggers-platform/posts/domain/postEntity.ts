@@ -52,13 +52,10 @@ export class PostEntity {
       blogName: dto.blogName,
       deleteAt: null,
       likesInfo: {
-        likesCount: 0,
-        dislikesCount: 0,
-        status: 'None',
+        likesCount: 
       },
     };
 
-    // Создай с данными сразу
     return new this(postData);
   }
 

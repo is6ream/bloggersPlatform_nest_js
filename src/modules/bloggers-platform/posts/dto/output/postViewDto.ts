@@ -27,8 +27,13 @@ export class PostViewDto {
     dto.blogId = post.blogId;
     dto.blogName = post.blogName;
     dto.createdAt = post.createdAt;
-    //@ts-ignore
-    dto.extendedLikesInfo = post.likesInfo;
+
+    dto.extendedLikesInfo = {
+      likesCount: post.likesInfo.likesCount,
+      dislikesCount: post.likesInfo.dislikesCount,
+      myStatus: post.likesInfo.status,
+      newestLikes: post.likesInfo.newestLikes,
+    };
 
     return dto;
   }

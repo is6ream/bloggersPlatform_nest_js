@@ -30,8 +30,6 @@ import { DeletePostCommand } from '../application/useCases/delete-post.usecase';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
 import { UpdatePostLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
-import { CreateCommentInputDto } from './model/input/create-comment.input.dto';
-import { CreateCommentCommand } from '../../comments/application/useCases/create-comment.usecase';
 import { LikeStatus } from '../../likes/types/like-status';
 
 @Controller('posts')
@@ -52,28 +50,6 @@ export class PostsController {
     return this.commandBus.execute(
       new UpdatePostLikeStatusCommand(postId, user.id, body),
     );
-  }
-
-  @Get(':id/comments')
-  async getCommentByPostId(
-    @Param('id') postId: string,
-    @Query() query: GetCommentsQueryParams,
-  ): Promise<PaginatedViewDto<CommentViewModel>> {
-    return this.commentsQueryRepository.getCommentByPostId(postId, query);
-  }
-
-  @Post(':id/comments')
-  @UseGuards(JwtAuthGuard)
-  async createComment(
-    @Param('id') postId: string,
-    @Body() content: CreateCommentInputDto,
-    @ExtractUserFromRequest() user: UserContextDto,
-  ): Promise<CommentViewModel> {
-    const commentId = await this.commandBus.execute(
-      new CreateCommentCommand(postId, user, content),
-    );
-
-    return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);
   }
 
   @Get()

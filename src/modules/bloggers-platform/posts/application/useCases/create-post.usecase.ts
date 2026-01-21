@@ -17,30 +17,22 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     @InjectModel(PostEntity.name)
     private PostModel: PostModelType,
     private blogsRepository: BlogsRepository,
-    private postRepository: PostRepository,
   ) {}
 
   async execute(command: CreatePostCommand): Promise<string> {
     const blog = await this.blogsRepository.findByIdOrThrowValidationError(
       command.dto.blogId,
     );
-
-    // Создай документ напрямую
-    const post = new this.PostModel({
+    //todo прописать автоматическое создание статуса None с датой создания поста
+    const post = this.PostModel.createInstance({
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,
-      blogId: command.dto.blogId,
+      blogId: blog._id.toString(),
       blogName: blog.name,
-      deleteAt: null,
-      likesInfo: {
-        likesCount: 0,
-        dislikesCount: 0,
-        status: 'None',
-      },
     });
 
-    console.log('Post before save:', post.toObject());
+    
 
     await post.save();
     return post._id.toString();
