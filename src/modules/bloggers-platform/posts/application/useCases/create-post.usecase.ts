@@ -23,7 +23,6 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     const blog = await this.blogsRepository.findByIdOrThrowValidationError(
       command.dto.blogId,
     );
-    //todo прописать автоматическое создание статуса None с датой создания поста
     const post = this.PostModel.createInstance({
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
@@ -31,9 +30,6 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
       blogId: blog._id.toString(),
       blogName: blog.name,
     });
-
-    
-
     await post.save();
     return post._id.toString();
   }

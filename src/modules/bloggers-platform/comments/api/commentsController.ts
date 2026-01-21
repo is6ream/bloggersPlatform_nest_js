@@ -33,22 +33,14 @@ export class CommentsController {
 
   @Get(':id')
   @UseInterceptors(UserExtractorInterceptor)
-  async getById(@Param('id') id: string): Promise<CommentViewModel> {
-    return this.commentsQueryRepository.getByIdOrNotFoundFail(id);
+  async getById(
+    @Param('id') commentId: string,
+    @Req() req: Request
+  ): Promise<CommentViewModel> {
+    return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId, req.user?.id);
   }
 
-  @Get(':id/comments')
-  async getCommentByPostId(
-    @Param('id') postId: string,
-    @Query() query: GetCommentsQueryParams,
-    @Req() req: Request,
-  ): Promise<PaginatedViewDto<CommentViewModel>> {
-    return this.commentsQueryRepository.getCommentByPostId(
-      postId,
-      query,
-      req.user?.id,
-    );
-  }
+
 
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)

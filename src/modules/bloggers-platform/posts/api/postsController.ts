@@ -1,3 +1,4 @@
+import { CommentsQueryRepository } from './../../comments/infrastructure/comments-queryRepository';
 import { ExtractUserFromRequest } from './../../../user-accounts/guards/decorators/param/extract-user-from-request.decorator';
 import { CommandBus } from '@nestjs/cqrs';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
@@ -7,12 +8,14 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Body,
   Param,
   HttpCode,
   HttpStatus,
   Delete,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { GetPostsQueryParams } from './query/get-posts-query-params';
 import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
@@ -28,12 +31,16 @@ import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guar
 import { UpdatePostLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 import { LikeStatus } from '../../likes/types/like-status';
+import { GetCommentsQueryParams } from './query/qet-comments-query-params';
+import { CommentViewModel } from './model/output/commentViewModel';
+import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
 
 @Controller('posts')
 export class PostsController {
   constructor(
     private postQueryRepository: PostQueryRepository,
     private commandBus: CommandBus,
+    private commentsQueryRepository: CommentsQueryRepository,
   ) {}
 
   @Put(':id/like-status')
@@ -65,6 +72,20 @@ export class PostsController {
   @Get(':id')
   async getById(@Param('id') id: string): Promise<PostViewModel> {
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
+  }
+
+  @Get(':id/comments')
+  @UseInterceptors(UserExtractorInterceptor)
+  async getCommentByPostId(
+    @Param('id') postId: string,
+    @Query() query: GetCommentsQueryParams,
+    @Req() req: Request,
+  ): Promise<PaginatedViewDto<CommentViewModel>> {
+    return this.commentsQueryRepository.getCommentByPostId(
+      postId,
+      query,
+      req.user?.id,
+    );
   }
 
   @UseGuards(BasicAuthGuard)

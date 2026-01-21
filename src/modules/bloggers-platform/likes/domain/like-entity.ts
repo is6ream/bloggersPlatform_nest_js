@@ -1,7 +1,14 @@
-import { Prop, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, SchemaFactory, Schema } from '@nestjs/mongoose';
 import { LikeStatus } from '../types/like-status';
 import { HydratedDocument, Model } from 'mongoose';
 import { CreateLikeDto } from '../types/input/create-like.dto';
+
+@Schema({
+  timestamps: {
+    createdAt: 'createdAt',
+    updatedAt: false,
+  },
+})
 export class Like {
   @Prop({ type: String, enum: Object.values(LikeStatus), required: true })
   status: string;
@@ -15,7 +22,6 @@ export class Like {
   @Prop({ type: String, required: true })
   parentType: string;
 
-  @Prop({ type: Date, required: true })
   createdAt: Date;
 
   static createInstance(dto: CreateLikeDto): LikeDocument {
