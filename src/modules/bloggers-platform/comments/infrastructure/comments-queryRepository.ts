@@ -39,6 +39,7 @@ export class CommentsQueryRepository {
     const skip = query.calculateSkip();
 
     await this.postsRepository.checkPostExist(postId);
+    const like = await this
 
     const filter: Record<string, any> = { postId };
 
