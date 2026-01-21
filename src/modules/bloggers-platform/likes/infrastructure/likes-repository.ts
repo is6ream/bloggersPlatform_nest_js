@@ -10,7 +10,7 @@ export class LikesRepository {
     await like.save();
   }
 
-  async findByUserId(userId: string) {
-    return this.LikeModel.find({ userId });
+  async findByUserId(userId: string): Promise<LikeDocument | null> {
+    return await this.LikeModel.findOne({ userId });
   }
 }

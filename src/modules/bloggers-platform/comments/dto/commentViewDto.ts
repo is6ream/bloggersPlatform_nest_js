@@ -1,8 +1,12 @@
+import { LikeDocument } from '../../likes/domain/like-entity';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
 import { CommentDocument } from '../domain/commentEntity';
 
 export class CommentViewDto extends CommentViewModel {
-  static mapToView(comment: CommentDocument): CommentViewDto {
+  static mapToView(
+    comment: CommentDocument,
+    like: LikeDocument,
+  ): CommentViewDto {
     const dto = {
       id: comment._id.toString(),
       content: comment.content,

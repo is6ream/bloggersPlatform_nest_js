@@ -36,7 +36,7 @@ export class CommentsQueryRepository {
     }
 
     const like = await this.likesRepository.findByUserId(userId);
-    return CommentViewDto.mapToView(comment);
+    return CommentViewDto.mapToView(comment, like);
   }
 
   async getCommentByPostId(
