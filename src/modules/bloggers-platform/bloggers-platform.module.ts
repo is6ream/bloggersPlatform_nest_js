@@ -22,6 +22,8 @@ import { UsersRepository } from '../user-accounts/infrastructure/users/usersRepo
 import { User, UserSchema } from '../user-accounts/domain/userEntity';
 import { commentsCommandHadnler } from './comments/application/useCases/comments-command-handler';
 import { CommentsRepository } from './comments/infrastructure/comments-repository';
+import { LikesRepository } from './likes/infrastructure/likes-repository';
+import { JwtService } from '@nestjs/jwt';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
@@ -39,9 +41,11 @@ import { CommentsRepository } from './comments/infrastructure/comments-repositor
     PostQueryRepository,
     PostRepository,
     PostsService,
+    JwtService,
     CommentsQueryRepository,
     CommentsRepository,
     UsersRepository,
+    LikesRepository,
     ...blogCommandHandlers,
     ...postCommandHandlers,
     ...commentsCommandHadnler,

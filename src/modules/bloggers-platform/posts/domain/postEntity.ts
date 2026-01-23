@@ -52,7 +52,9 @@ export class PostEntity {
       blogName: dto.blogName,
       deleteAt: null,
       likesInfo: {
-        likesCount: 
+        likesCount: 0,
+        dislikesCount: 0,
+        myStatus: 'None',
       },
     };
 

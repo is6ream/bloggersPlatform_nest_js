@@ -5,7 +5,7 @@ import { CommentDocument } from '../domain/commentEntity';
 export class CommentViewDto extends CommentViewModel {
   static mapToView(
     comment: CommentDocument,
-    like: LikeDocument | null,
+    like?: LikeDocument | null,
   ): CommentViewDto {
     let dto;
 

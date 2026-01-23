@@ -20,8 +20,6 @@ import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-contex
 import { UpdateCommentLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 import { CreateCommentInputDto } from '../../posts/api/model/input/create-comment.input.dto';
 import { CreateCommentCommand } from '../application/useCases/create-comment.usecase';
-import { GetCommentsQueryParams } from '../../posts/api/query/qet-comments-query-params';
-import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
 import { Request } from 'express';
 @Controller('comments')
@@ -37,10 +35,9 @@ export class CommentsController {
     @Param('id') commentId: string,
     @Req() req: Request
   ): Promise<CommentViewModel> {
+    // @ts-ignore
     return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId, req.user?.id);
   }
-
-
 
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
@@ -52,6 +49,8 @@ export class CommentsController {
     const commentId = await this.commandBus.execute(
       new CreateCommentCommand(postId, user, content),
     );
+        // @ts-ignore
+
     return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);
   }
 

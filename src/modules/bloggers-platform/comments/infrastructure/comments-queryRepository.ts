@@ -38,7 +38,9 @@ export class CommentsQueryRepository {
 
     const like = await this.likesRepository.findByUserId(userId);
 
-    if (!like) return CommentViewDto.mapToView(comment, null);
+    if (!like) {
+      return CommentViewDto.mapToView(comment, null);
+    }
 
     return CommentViewDto.mapToView(comment, like);
   }
@@ -46,6 +48,7 @@ export class CommentsQueryRepository {
   async getCommentByPostId(
     postId: string,
     query: GetCommentsQueryParams,
+    userId: string | undefined,
   ): Promise<PaginatedViewDto<CommentViewDto>> {
     const skip = query.calculateSkip();
 

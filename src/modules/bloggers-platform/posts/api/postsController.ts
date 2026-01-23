@@ -34,6 +34,7 @@ import { LikeStatus } from '../../likes/types/like-status';
 import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { CommentViewModel } from './model/output/commentViewModel';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
+import { Request } from 'express';
 
 @Controller('posts')
 export class PostsController {
@@ -73,18 +74,18 @@ export class PostsController {
   async getById(@Param('id') id: string): Promise<PostViewModel> {
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
-
+ //остановился на этом методе
   @Get(':id/comments')
   @UseInterceptors(UserExtractorInterceptor)
   async getCommentByPostId(
     @Param('id') postId: string,
     @Query() query: GetCommentsQueryParams,
-    @Req() req: Request,
+    @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<PaginatedViewDto<CommentViewModel>> {
     return this.commentsQueryRepository.getCommentByPostId(
       postId,
       query,
-      req.user?.id,
+      user.id,
     );
   }
 

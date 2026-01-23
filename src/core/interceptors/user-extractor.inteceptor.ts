@@ -19,15 +19,13 @@ export class UserExtractorInterceptor implements NestInterceptor {
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
 
-      try {
-        const payload = this.jwtService.decode(token);
+      const payload = this.jwtService.decode(token);
 
-        if (payload && typeof payload === 'object') {
-          request.user = {
-            userId: payload.sub || payload.id,
-          };
-        }
-      } catch {}
+      if (payload && typeof payload === 'object') {
+        request.user = {
+          userId: payload.sub || payload.id,
+        };
+      }
     }
 
     return next.handle();
