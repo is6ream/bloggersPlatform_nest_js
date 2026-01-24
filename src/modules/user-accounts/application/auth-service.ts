@@ -10,6 +10,9 @@ import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 import { UserContextOutput } from '../guards/dto/user-context.output.dto';
+import dotenv from 'dotenv';
+
+dotenv.config();
 @Injectable()
 export class AuthService {
   constructor(
@@ -106,9 +109,10 @@ export class AuthService {
     const payload = {
       id: user.id,
     };
-
+    //todo решить проблему с временем жизни токена
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: process.env.JWT_SECRET,
+      expiresIn: '20m',
     });
 
     return {

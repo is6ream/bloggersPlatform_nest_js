@@ -28,8 +28,11 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
   ) {}
 
   async execute(command: CreateCommentCommand): Promise<string> {
-    await this.postRepository.findOrNotFoundFail(command.postId);
-    const user = await this.usersRepository.findOrNotFoundFail(command.user.id);
+    console.log('command check');
+    await this.postRepository.findOrThrowValidationError(command.postId);
+    const user = await this.usersRepository.findByIdOrThrowValidationError(
+      command.user.id,
+    ); //ищем пользователя, который оставляет комментарий
     const comment = this.CommentModel.createInstance({
       content: command.content.content,
       commentatorInfo: {

@@ -21,6 +21,7 @@ export class PostRepository {
   async findOrNotFoundFail(id: string): Promise<PostDocument> {
     const post = await this.findById(id);
     if (!post) {
+      console.log('post not found check');
       throw new DomainException({ code: 1, message: 'Post not found' });
     }
     return post;
@@ -31,6 +32,17 @@ export class PostRepository {
     if (!post) {
       throw new NotFoundException(`post with id: ${id} not found `);
     }
+  }
+
+  async findOrThrowValidationError(id: string): Promise<PostDocument> {
+    const post = await this.findById(id);
+    if (!post) {
+      throw new DomainException({
+        code: 2,
+        message: 'Post not found',
+      });
+    }
+    return post;
   }
 
   async likeStatusSave(like: LikeDocument): Promise<void> {

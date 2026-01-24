@@ -37,6 +37,8 @@ describe('Comments E2E Tests', () => {
     await app.init();
 
     userModel = moduleFixture.get(getModelToken(User.name));
+    await userModel.deleteMany({});
+
     const postModel = moduleFixture.get(getModelToken(PostEntity.name));
     commentModel = moduleFixture.get(getModelToken('Comment'));
 
@@ -77,18 +79,14 @@ describe('Comments E2E Tests', () => {
     testPostId = testPost._id.toString();
   });
 
-  afterAll(async () => {
-    await mongoConnection.close();
-    await mongoServer.stop();
-    await app.close();
-  });
-
   beforeEach(async () => {
     await commentModel.deleteMany({});
   });
 
-  beforeAll(async () => {
-    await userModel.deleteMany({});
+  afterAll(async () => {
+    await mongoConnection.close();
+    await mongoServer.stop();
+    await app.close();
   });
 
   it('should reject invalid content - too short (400)', async () => {

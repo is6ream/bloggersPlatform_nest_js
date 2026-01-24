@@ -38,9 +38,7 @@ import { Request } from 'express';
 import { LikeStatusInputDto } from 'src/modules/bloggers-platform/likes/types/input/like-status.input.dto';
 import { UpdateCommentLikeStatusCommand } from 'src/modules/bloggers-platform/comments/application/useCases/update-like-status.usecase';
 import { CreateCommentInputDto } from 'src/modules/bloggers-platform/posts/api/model/input/create-comment.input.dto';
-import {
-  CreateCommentCommand
-} from 'src/modules/bloggers-platform/comments/application/useCases/create-comment.usecase';
+import { CreateCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/create-comment.usecase';
 
 @Controller('posts')
 export class PostsController {
@@ -104,9 +102,10 @@ export class PostsController {
     const commentId = await this.commandBus.execute(
       new CreateCommentCommand(postId, user, content),
     );
-    // @ts-ignore
-
-    return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);
+    return this.commentsQueryRepository.getByIdOrNotFoundFail(
+      commentId,
+      user.id,
+    );
   }
 
   @UseGuards(BasicAuthGuard)
