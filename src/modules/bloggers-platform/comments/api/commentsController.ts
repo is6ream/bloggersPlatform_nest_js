@@ -39,21 +39,6 @@ export class CommentsController {
     return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId, req.user?.id);
   }
 
-  @Post(':id/comments')
-  @UseGuards(JwtAuthGuard)
-  async createComment(
-    @Param('id') postId: string,
-    @Body() content: CreateCommentInputDto,
-    @ExtractUserFromRequest() user: UserContextDto,
-  ): Promise<CommentViewModel> {
-    const commentId = await this.commandBus.execute(
-      new CreateCommentCommand(postId, user, content),
-    );
-        // @ts-ignore
-
-    return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);
-  }
-
   @Put(':id/like-status')
   @UseGuards(JwtAuthGuard)
   async updateLikeStatus(

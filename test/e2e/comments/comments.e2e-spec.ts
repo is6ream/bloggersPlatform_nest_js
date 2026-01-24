@@ -7,6 +7,7 @@ import { User } from 'src/modules/user-accounts/domain/userEntity';
 import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import { AppModule } from 'src/modules/app-module/appModule';
 import request from 'supertest';
+import { BcryptService } from 'src/modules/user-accounts/application/bcrypt-service';
 
 describe('Comments E2E Tests', () => {
   let app: INestApplication;
@@ -14,6 +15,7 @@ describe('Comments E2E Tests', () => {
   let mongoConnection: Connection;
   let moduleFixture: TestingModule;
   let commentModel: any;
+  let userModel: any;
   let authToken: string;
   let testPostId: string;
   let testUserId: string;
@@ -34,22 +36,27 @@ describe('Comments E2E Tests', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    const userModel = moduleFixture.get(getModelToken(User.name));
+    userModel = moduleFixture.get(getModelToken(User.name));
     const postModel = moduleFixture.get(getModelToken(PostEntity.name));
     commentModel = moduleFixture.get(getModelToken('Comment'));
 
+    const password: string = 'passwordHash';
+    const passwordHash: string = await new BcryptService().generateHash(
+      password,
+    );
+
     const testUser = await userModel.create({
-      login: 'testuser',
-      email: 'test@example.com',
-      passwordHash: 'hashedpassword',
+      login: 'danil2002',
+      email: 'danil@email.com',
+      passwordHash: passwordHash,
     });
     testUserId = testUser._id.toString();
 
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        loginOrEmail: 'testuser',
-        password: 'testpassword',
+        loginOrEmail: 'danil2002',
+        password: 'passwordHash',
       });
 
     authToken = loginResponse.body.accessToken;
@@ -80,9 +87,13 @@ describe('Comments E2E Tests', () => {
     await commentModel.deleteMany({});
   });
 
-  it('should reject invalid content - too short (400)', async () => { 
+  beforeAll(async () => {
+    await userModel.deleteMany({});
+  });
+
+  it('should reject invalid content - too short (400)', async () => {
     const invalidData = {
-      content: 'short', // Меньше минимальной длины
+      content: 'short',
     };
 
     await request(app.getHttpServer())

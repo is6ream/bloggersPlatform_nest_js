@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable, ExecutionContext, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -10,7 +10,6 @@ import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes'
 export class LocalAuthValidationGuard extends AuthGuard('local') {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-
     const dto = plainToInstance(LoginInputDto, request.body);
     const errors = await validate(dto);
 
@@ -27,6 +26,7 @@ export class LocalAuthValidationGuard extends AuthGuard('local') {
     try {
       return (await super.canActivate(context)) as boolean;
     } catch (error) {
+      console.log('invalid credentials check');
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
         message: 'Invalid credentials',

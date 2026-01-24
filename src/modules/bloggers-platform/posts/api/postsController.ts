@@ -35,6 +35,12 @@ import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { CommentViewModel } from './model/output/commentViewModel';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
 import { Request } from 'express';
+import { LikeStatusInputDto } from 'src/modules/bloggers-platform/likes/types/input/like-status.input.dto';
+import { UpdateCommentLikeStatusCommand } from 'src/modules/bloggers-platform/comments/application/useCases/update-like-status.usecase';
+import { CreateCommentInputDto } from 'src/modules/bloggers-platform/posts/api/model/input/create-comment.input.dto';
+import {
+  CreateCommentCommand
+} from 'src/modules/bloggers-platform/comments/application/useCases/create-comment.usecase';
 
 @Controller('posts')
 export class PostsController {
@@ -74,7 +80,7 @@ export class PostsController {
   async getById(@Param('id') id: string): Promise<PostViewModel> {
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
- //остановился на этом методе
+  //остановился на этом методе
   @Get(':id/comments')
   @UseInterceptors(UserExtractorInterceptor)
   async getCommentByPostId(
@@ -87,6 +93,20 @@ export class PostsController {
       query,
       user.id,
     );
+  }
+  @Post(':id/comments')
+  @UseGuards(JwtAuthGuard)
+  async createComment(
+    @Param('id') postId: string,
+    @Body() content: CreateCommentInputDto,
+    @ExtractUserFromRequest() user: UserContextDto,
+  ): Promise<CommentViewModel> {
+    const commentId = await this.commandBus.execute(
+      new CreateCommentCommand(postId, user, content),
+    );
+    // @ts-ignore
+
+    return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);
   }
 
   @UseGuards(BasicAuthGuard)

@@ -1,5 +1,5 @@
 import { CreateUserDto } from 'src/modules/user-accounts/dto/UserInputDto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
 import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { JwtService } from '@nestjs/jwt';
@@ -39,7 +39,7 @@ export class AuthService {
     if (!isPasswordValid) {
       return null;
     }
-    return { id: user._id.toString(), loginOrEmail: loginOrEmail }; //здесь в корректном формате передаем данные далее
+    return { id: user._id.toString(), loginOrEmail: loginOrEmail };
   }
   async registerUser(dto: CreateUserDto) {
     const existingUser = await this.usersRepository.findUserByLoginOrEmail({
