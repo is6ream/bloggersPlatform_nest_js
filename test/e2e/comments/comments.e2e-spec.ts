@@ -7,7 +7,9 @@ import { User } from 'src/modules/user-accounts/domain/userEntity';
 import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import { AppModule } from 'src/modules/app-module/appModule';
 import request from 'supertest';
+import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
 import { BcryptService } from 'src/modules/user-accounts/application/bcrypt-service';
+import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
 
 describe('Comments E2E Tests', () => {
   let app: INestApplication;
@@ -16,6 +18,8 @@ describe('Comments E2E Tests', () => {
   let moduleFixture: TestingModule;
   let commentModel: any;
   let userModel: any;
+  let postModel: any;
+  let blogModel: any;
   let authToken: string;
   let testPostId: string;
   let testUserId: string;
@@ -36,11 +40,13 @@ describe('Comments E2E Tests', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
+    //--------- инициализируем модели
     userModel = moduleFixture.get(getModelToken(User.name));
     await userModel.deleteMany({});
 
-    const postModel = moduleFixture.get(getModelToken(PostEntity.name));
-    commentModel = moduleFixture.get(getModelToken('Comment'));
+    postModel = moduleFixture.get(getModelToken(PostEntity.name));
+    commentModel = moduleFixture.get(getModelToken(Comment.name));
+    blogModel = moduleFixture.get(getModelToken(Blog.name));
 
     const password: string = 'passwordHash';
     const passwordHash: string = await new BcryptService().generateHash(
@@ -63,18 +69,18 @@ describe('Comments E2E Tests', () => {
 
     authToken = loginResponse.body.accessToken;
 
+    const testBlog = await blogModel.create({
+      name: 'danil2002',
+      description: 'danil2002',
+      websiteUrl: 'https://samurai.it-incubator.io/swagger?id=h15',
+      isMembership: true,
+    });
+
     const testPost = await postModel.create({
       title: 'Test Post',
       shortDescription: 'Test Description',
       content: 'Test Content',
-      blogId: 'test-blog-id',
-      blogName: 'Test Blog',
-      likesInfo: {
-        likesCount: 0,
-        dislikesCount: 0,
-        myStatus: 'None',
-        newestLikes: [],
-      },
+      blogId: testBlog.id,
     });
     testPostId = testPost._id.toString();
   });

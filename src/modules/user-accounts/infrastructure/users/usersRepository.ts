@@ -23,7 +23,6 @@ export class UsersRepository {
   async findOrNotFoundFail(id: string): Promise<UserDocument> {
     const user = await this.findById(id);
     if (!user) {
-      console.log('user not found ');
       throw new NotFoundException('user not found');
     }
     return user;

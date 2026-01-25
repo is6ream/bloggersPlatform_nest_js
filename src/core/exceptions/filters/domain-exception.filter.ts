@@ -62,8 +62,12 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
       };
     }
 
+    if (exception.code === DomainExceptionCode.Forbidden) {
+      return;
+    }
+
     if (exception.code === DomainExceptionCode.NotFound) {
-      return 
+      return;
     }
 
     return {
