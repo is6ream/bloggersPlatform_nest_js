@@ -27,12 +27,14 @@ export class AuthService {
     loginOrEmail: string,
     password: string,
   ): Promise<UserContextOutput | null> {
+    console.log('validate user check');
     const user: UserDocument | null =
       await this.usersRepository.findUserByLoginOrEmail({
         login: loginOrEmail,
         email: loginOrEmail,
       });
     if (!user) {
+      console.log('User not found check');
       return null;
     }
     const isPasswordValid = await this.bcryptService.checkPassword({

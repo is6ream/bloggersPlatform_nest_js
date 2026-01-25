@@ -14,6 +14,7 @@ export class LocalAuthValidationGuard extends AuthGuard('local') {
     const errors = await validate(dto);
 
     if (errors.length > 0) {
+      //если ошибок валидации больше одной, выбрасываем 400 ошибку
       throw new DomainException({
         code: DomainExceptionCode.ValidationError,
         message: 'Validation failed',
@@ -24,11 +25,11 @@ export class LocalAuthValidationGuard extends AuthGuard('local') {
       });
     }
     try {
-      return (await super.canActivate(context)) as boolean;
+      return (await super.canActivate(context)) as boolean; //если ошибок валидации нет, передаем запрос в контроллер
     } catch (error) {
       console.log('invalid credentials check');
       throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
+        code: DomainExceptionCode.Unauthorized, // противном случае выбрасываем 401
         message: 'Invalid credentials',
       });
     }

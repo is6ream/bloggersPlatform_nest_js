@@ -10,6 +10,7 @@ import request from 'supertest';
 import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
 import { BcryptService } from 'src/modules/user-accounts/application/bcrypt-service';
 import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
+import { createTestUser } from '../../helpers/factory/user-factory';
 
 describe('Comments E2E Tests', () => {
   let app: INestApplication;
@@ -48,23 +49,15 @@ describe('Comments E2E Tests', () => {
     commentModel = moduleFixture.get(getModelToken(Comment.name));
     blogModel = moduleFixture.get(getModelToken(Blog.name));
 
-    const password: string = 'passwordHash';
-    const passwordHash: string = await new BcryptService().generateHash(
-      password,
-    );
 
-    const testUser = await userModel.create({
-      login: 'danil2002',
-      email: 'danil@email.com',
-      passwordHash: passwordHash,
-    });
+    const testUser = await createTestUser(userModel);
     testUserId = testUser._id.toString();
 
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        loginOrEmail: 'danil2002',
-        password: 'passwordHash',
+        loginOrEmail: 'testuser',
+        password: 'testpassword',
       });
 
     authToken = loginResponse.body.accessToken;
