@@ -1,13 +1,18 @@
-import { Length } from 'class-validator';
-import { IsString } from 'class-validator';
+import { Length, Matches, IsString } from 'class-validator';
+
 export class CreateBlogInputDto {
+  @IsString()
   @Length(1, 15)
-  @IsString()
   name: string;
+
+  @IsString()
   @Length(1, 500)
-  @IsString()
   description: string;
-  @Length(1, 100)
+
   @IsString()
+  @Matches(
+    /^https:\/\/([a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)*\/?$/,
+  )
+  @Length(1, 100)
   websiteUrl: string;
 }

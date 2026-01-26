@@ -14,6 +14,7 @@ import {
 import { createTestBlog } from '../../helpers/factory/blog-factory';
 import request from 'supertest';
 import { createTestBlogs } from '../../helpers/blogs/create-blogs-helper';
+import { UpdateBlogDto } from 'src/modules/bloggers-platform/blogs/dto/input/updateBlogDto';
 describe('Blogs E2E Tests', () => {
   let app: INestApplication;
   let mongoServer: MongoMemoryServer;
@@ -108,6 +109,24 @@ describe('Blogs E2E Tests', () => {
       );
       expect(deletedBlogInResponse).toEqual(undefined);
     });
+
+    it('should create blog and return it', async () => {
+      const blog = await createTestBlog(blogModel);
+      const blogId = blog._id.toString();
+      console.log(blogId, 'blogId check');
+
+      console.log(blog, 'blog after creating check');
+
+      const response = await request(app.getHttpServer())
+        .get(`/hometask_15/api/blogs/${blogId}`)
+        .expect(200);
+
+      console.log(response.body, 'response body check');
+
+      expect(response.body).toHaveProperty('id', blogId);
+      expect(response.body).toHaveProperty('description', blog.description);
+      expect(response.body).toHaveProperty('name', blog.name);
+    });
   });
 
   const VALID_AUTH = 'Basic YWRtaW46cXdlcnR5'; // admin:qwerty
@@ -161,6 +180,50 @@ describe('Blogs E2E Tests', () => {
         .set('Authorization', VALID_AUTH)
         .send(invalidBlogData)
         .expect(400);
+    });
+  });
+
+  describe('UPDATE, DELETE /blogs/:id', () => {
+    it('delete blog by id', async () => {
+      const blog = await createTestBlog(blogModel);
+      const blogId = blog._id.toString();
+
+      await request(app.getHttpServer())
+        .delete(`/hometask_15/api/blogs/${blogId}`)
+        .set('Authorization', VALID_AUTH)
+        .expect(204);
+
+      const getResponse = await request(app.getHttpServer())
+        .get(`/hometask_15/api/blogs/${blogId}`)
+        .expect(404);
+
+      expect(getResponse.body.length).toBe(0);
+    });
+
+    it('should update blog by id', async () => {
+      const blog = await createTestBlog(blogModel);
+      const blogId = blog._id.toString();
+
+      const updateBlogData: UpdateBlogDto = {
+        name: 'string',
+        description: 'string',
+        websiteUrl:
+          'https://ii24ja59XLbIoaqneYiZ-LZsDX8Gobv6WN.kekVh_qj7DSaL.RjanKZyoVdFADg-FCgv7Ymqz3jb9SY3zI7c545.OkVX',
+      };
+
+      await request(app.getHttpServer())
+        .put(`/hometask_15/api/blogs/${blogId}`)
+        .set('Authorization', VALID_AUTH)
+        .send(updateBlogData)
+        .expect(204);
+
+      const getResponse = await request(app.getHttpServer())
+        .get(`/hometask_15/api/blogs/${blogId}`)
+        .expect(200);
+
+      expect(getResponse.body.name).toBe(updateBlogData.name);
+      expect(getResponse.body.description).toBe(updateBlogData.description);
+      expect(getResponse.body.websiteUrl).toBe(updateBlogData.websiteUrl);
     });
   });
 });
