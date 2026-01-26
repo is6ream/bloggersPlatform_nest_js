@@ -31,7 +31,9 @@ export class BlogsQueryRepository {
   ): Promise<PaginatedViewDto<BlogViewDto>> {
     const skip = query.calculateSkip();
 
-    const filter: Record<string, any> = {};
+    const filter: Record<string, any> = {
+      deleteAt: null,
+    };
 
     if (query.searchNameTerm) {
       filter['name'] = { $regex: query.searchNameTerm, $options: 'i' };
