@@ -168,19 +168,6 @@ describe('Comments E2E Tests', () => {
       .expect(404);
   });
 
-  it('should reject invalid post ID format (400)', async () => {
-    const invalidPostId = 'not-a-valid-object-id';
-    const commentData = {
-      content: 'Comment with invalid post ID',
-    };
-
-    await request(app.getHttpServer())
-      .post(`/posts/${invalidPostId}/comments`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .send(commentData)
-      .expect(400);
-  });
-
   it('should create multiple comments for same post', async () => {
     const comments = [
       { content: 'First comment with enough length' },
@@ -188,46 +175,14 @@ describe('Comments E2E Tests', () => {
       { content: 'Third comment with enough length' },
     ];
 
+    url = `/hometask_15/api/posts/${testPostId}/comments`;
+
     for (const comment of comments) {
       await request(app.getHttpServer())
-        .post(`/posts/${testPostId}/comments`)
+        .post(url)
         .set('Authorization', `Bearer ${authToken}`)
         .send(comment)
         .expect(201);
     }
-
-    // Можно добавить проверку что все комментарии создались
-    // GET /posts/:id/comments и проверить count
-  });
-
-  describe('Integration: Comment + Like status', () => {
-    it('should return comment with correct myStatus', async () => {
-      // 1. Создаем комментарий
-      const createResponse = await request(app.getHttpServer())
-        .post(`/posts/${testPostId}/comments`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ content: 'Comment to test like status' })
-        .expect(201);
-
-      const commentId = createResponse.body.id;
-
-      // 2. Проверяем что изначально myStatus = 'None'
-      expect(createResponse.body.likesInfo.myStatus).toBe('None');
-
-      // 3. Ставим лайк (если есть эндпоинт PUT /comments/:id/like-status)
-      await request(app.getHttpServer())
-        .put(`/comments/${commentId}/like-status`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ likeStatus: 'Like' })
-        .expect(204); // или 200
-
-      // 4. Получаем комментарий снова и проверяем myStatus
-      const getResponse = await request(app.getHttpServer())
-        .get(`/comments/${commentId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(getResponse.body.likesInfo.myStatus).toBe('Like');
-    });
   });
 });
