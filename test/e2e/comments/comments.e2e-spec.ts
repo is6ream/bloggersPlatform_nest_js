@@ -26,6 +26,7 @@ describe('Comments E2E Tests', () => {
   let authToken: string;
   let testPostId: string;
   let testUserId: string;
+  let url: string;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -53,28 +54,27 @@ describe('Comments E2E Tests', () => {
     blogModel = moduleFixture.get(getModelToken(Blog.name));
 
     const testUser = await createTestUser(userModel);
+
     testUserId = testUser._id.toString();
 
     const loginResponse = await request(app.getHttpServer())
-      .post('/auth/login')
+      .post('/hometask_15/api/auth/login')
       .send({
         loginOrEmail: 'testuser',
         password: 'testpassword',
       });
 
     authToken = loginResponse.body.accessToken;
+    console.log(authToken, 'authToken afrer login response check');
 
     const testBlog = await createTestBlog(blogModel);
-    console.log(testBlog, 'testBlog check');
 
     const testPost = await createTestPost(
       postModel,
       testBlog._id.toString(),
       testBlog.name,
     );
-    console.log(testPost, 'test post check');
     testPostId = testPost._id.toString();
-    console.log(testPostId, 'test post id check before test');
   });
 
   beforeEach(async () => {
@@ -91,8 +91,7 @@ describe('Comments E2E Tests', () => {
     const invalidData = {
       content: 'short',
     };
-    const url = `/hometask_15/api/posts/${testPostId}/comments`;
-    console.log('Making request to:', url);
+    url = `/hometask_15/api/posts/${testPostId}/comments`;
     console.log(authToken, 'auth token check');
     await request(app.getHttpServer())
       .post(url)
@@ -105,9 +104,10 @@ describe('Comments E2E Tests', () => {
     const invalidData = {
       content: 'a'.repeat(401),
     };
+    url = `/hometask_15/api/posts/${testPostId}/comments`;
 
     await request(app.getHttpServer())
-      .post(`/posts/${testPostId}/comments`)
+      .post(url)
       .set('Authorization', `Bearer ${authToken}`)
       .send(invalidData)
       .expect(400);
@@ -118,12 +118,16 @@ describe('Comments E2E Tests', () => {
       content: 23,
     };
 
+    url = `/hometask_15/api/posts/${testPostId}/comments`;
+
     await request(app.getHttpServer())
-      .post(`/posts/${testPostId}/comments`)
+      .post(url)
       .set('Authorization', `Bearer ${authToken}`)
       .send(invalidData)
       .expect(400);
   });
+
+  //-------------------------//----------------------------------------------------//
 
   it('should reject without authorization (401)', async () => {
     const commentData = {
