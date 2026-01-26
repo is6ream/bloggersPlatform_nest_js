@@ -134,10 +134,9 @@ describe('Comments E2E Tests', () => {
       content: 'Comment without auth',
     };
 
-    await request(app.getHttpServer())
-      .post(`/posts/${testPostId}/comments`)
-      .send(commentData)
-      .expect(401);
+    url = `/hometask_15/api/posts/${testPostId}/comments`;
+
+    await request(app.getHttpServer()).post(url).send(commentData).expect(401);
   });
 
   it('should reject with invalid token (401)', async () => {
@@ -145,12 +144,16 @@ describe('Comments E2E Tests', () => {
       content: 'Comment with invalid token',
     };
 
+    url = `/hometask_15/api/posts/${testPostId}/comments`;
+
     await request(app.getHttpServer())
-      .post(`/posts/${testPostId}/comments`)
+      .post(url)
       .set('Authorization', 'Bearer invalid_token_here')
       .send(commentData)
       .expect(401);
   });
+
+  //-------------------------//----------------------------------------------------//
 
   it('should reject for non-existent post (404)', async () => {
     const nonExistentPostId = '507f1f77bcf86cd799439011'; // Valid ObjectId
