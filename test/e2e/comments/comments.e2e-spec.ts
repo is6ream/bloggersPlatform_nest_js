@@ -8,9 +8,11 @@ import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntit
 import { AppModule } from 'src/modules/app-module/appModule';
 import request from 'supertest';
 import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
-import { BcryptService } from 'src/modules/user-accounts/application/bcrypt-service';
 import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
 import { createTestUser } from '../../helpers/factory/user-factory';
+import { createTestBlog } from '../../helpers/factory/blog-factory';
+import { createTestPost } from '../../helpers/factory/post-factory';
+import { appSetup } from 'src/setup/app.setup';
 
 describe('Comments E2E Tests', () => {
   let app: INestApplication;
@@ -39,6 +41,7 @@ describe('Comments E2E Tests', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    appSetup(app);
     await app.init();
 
     //--------- инициализируем модели
@@ -48,7 +51,6 @@ describe('Comments E2E Tests', () => {
     postModel = moduleFixture.get(getModelToken(PostEntity.name));
     commentModel = moduleFixture.get(getModelToken(Comment.name));
     blogModel = moduleFixture.get(getModelToken(Blog.name));
-
 
     const testUser = await createTestUser(userModel);
     testUserId = testUser._id.toString();
@@ -62,20 +64,17 @@ describe('Comments E2E Tests', () => {
 
     authToken = loginResponse.body.accessToken;
 
-    const testBlog = await blogModel.create({
-      name: 'danil2002',
-      description: 'danil2002',
-      websiteUrl: 'https://samurai.it-incubator.io/swagger?id=h15',
-      isMembership: true,
-    });
+    const testBlog = await createTestBlog(blogModel);
+    console.log(testBlog, 'testBlog check');
 
-    const testPost = await postModel.create({
-      title: 'Test Post',
-      shortDescription: 'Test Description',
-      content: 'Test Content',
-      blogId: testBlog.id,
-    });
+    const testPost = await createTestPost(
+      postModel,
+      testBlog._id.toString(),
+      testBlog.name,
+    );
+    console.log(testPost, 'test post check');
     testPostId = testPost._id.toString();
+    console.log(testPostId, 'test post id check before test');
   });
 
   beforeEach(async () => {
@@ -92,6 +91,20 @@ describe('Comments E2E Tests', () => {
     const invalidData = {
       content: 'short',
     };
+    const url = `/hometask_15/api/posts/${testPostId}/comments`;
+    console.log('Making request to:', url);
+    console.log(authToken, 'auth token check');
+    await request(app.getHttpServer())
+      .post(url)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(invalidData)
+      .expect(400);
+  });
+
+  it('should reject invalid content - too long (400)', async () => {
+    const invalidData = {
+      content: 'a'.repeat(401),
+    };
 
     await request(app.getHttpServer())
       .post(`/posts/${testPostId}/comments`)
@@ -100,9 +113,9 @@ describe('Comments E2E Tests', () => {
       .expect(400);
   });
 
-  it('should reject invalid content - too long (400)', async () => {
+  it('should reject invalid content - is not string', async () => {
     const invalidData = {
-      content: 'a'.repeat(401), // Допустим максимум 400 символов
+      content: 23,
     };
 
     await request(app.getHttpServer())

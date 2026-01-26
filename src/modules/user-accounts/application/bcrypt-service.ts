@@ -8,7 +8,6 @@ export class BcryptService {
   }
 
   async checkPassword(args: { password: string; hash: string }) {
-    console.log('bcryptService check');
     const { password, hash } = args;
     return bcrypt.compare(password, hash);
   }

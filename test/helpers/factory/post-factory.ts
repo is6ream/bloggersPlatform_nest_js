@@ -9,6 +9,11 @@ export async function createTestPost(
     shortDescription: string;
     content: string;
     deleteAt: Date | null;
+    likesInfo: {
+      likesCount: number;
+      dislikesCount: number;
+      myStatus: 'None' | 'Like' | 'Dislike';
+    };
   }> = {},
 ) {
   const defaultData = {
@@ -24,59 +29,10 @@ export async function createTestPost(
       dislikesCount: 0,
       myStatus: 'None' as const,
     },
+    createdAt: new Date(),
   };
 
-  const postData = { ...defaultData, ...overrides };
+  const mergedData = { ...defaultData, ...overrides };
 
-  // Если у модели есть статический метод createInstance
-  if (postModel.createInstance) {
-    return postModel.createInstance({
-      title: postData.title,
-      shortDescription: postData.shortDescription,
-      content: postData.content,
-      blogId: postData.blogId,
-      blogName: postData.blogName,
-    });
-  }
-
-  return postModel.create(postData);
-}
-
-// Специализированные методы для постов
-export async function createTestPostWithLongTitle(
-  postModel: PostModelType,
-  blogId: string,
-  blogName: string,
-  overrides: Partial<any> = {},
-) {
-  return createTestPost(postModel, blogId, blogName, {
-    title: 'A'.repeat(100), // Для тестирования валидации максимальной длины
-    ...overrides,
-  });
-}
-
-export async function createTestPostWithShortContent(
-  postModel: PostModelType,
-  blogId: string,
-  blogName: string,
-  overrides: Partial<any> = {},
-) {
-  return createTestPost(postModel, blogId, blogName, {
-    content: 'Short', // Для тестирования валидации минимальной длины
-    ...overrides,
-  });
-}
-
-export async function createTestPostForComments(
-  postModel: PostModelType,
-  blogId: string,
-  blogName: string,
-  overrides: Partial<any> = {},
-) {
-  return createTestPost(postModel, blogId, blogName, {
-    title: 'Post for Comments Testing',
-    content:
-      'This post is specifically created for testing comments functionality.',
-    ...overrides,
-  });
+  return postModel.create(mergedData);
 }

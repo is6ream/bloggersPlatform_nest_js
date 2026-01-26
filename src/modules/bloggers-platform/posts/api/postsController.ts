@@ -78,7 +78,7 @@ export class PostsController {
   async getById(@Param('id') id: string): Promise<PostViewModel> {
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
-  //остановился на этом методе
+
   @Get(':id/comments')
   @UseInterceptors(UserExtractorInterceptor)
   async getCommentByPostId(
@@ -99,6 +99,7 @@ export class PostsController {
     @Body() content: CreateCommentInputDto,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<CommentViewModel> {
+    console.log('comment create API check');
     const commentId = await this.commandBus.execute(
       new CreateCommentCommand(postId, user, content),
     );

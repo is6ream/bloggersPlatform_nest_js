@@ -28,8 +28,7 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
   ) {}
 
   async execute(command: CreateCommentCommand): Promise<string> {
-    console.log('command check');
-    //todo прописать корректную отработку программы при запросе с корректным accessToken
+    console.log('comment command execute check');
     await this.postRepository.findOrThrowValidationError(command.postId);
     const user = await this.usersRepository.findByIdOrThrowValidationError(
       command.user.id,

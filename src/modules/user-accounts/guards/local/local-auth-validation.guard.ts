@@ -27,7 +27,6 @@ export class LocalAuthValidationGuard extends AuthGuard('local') {
     try {
       return (await super.canActivate(context)) as boolean; //если ошибок валидации нет, передаем запрос в контроллер
     } catch (error) {
-      console.log('invalid credentials check');
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized, // противном случае выбрасываем 401
         message: 'Invalid credentials',

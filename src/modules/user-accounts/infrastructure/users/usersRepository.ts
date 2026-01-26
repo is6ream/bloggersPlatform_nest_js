@@ -63,7 +63,6 @@ export class UsersRepository {
   async findUserByLoginOrEmail(
     loginOrEmail: LoginOrEmailDto,
   ): Promise<UserDocument | null> {
-    console.log(loginOrEmail, 'loginOr emaicl check in DAL');
     return this.UserModel.findOne({
       $or: [{ login: loginOrEmail.login }, { email: loginOrEmail.email }],
       deleteAt: null,
