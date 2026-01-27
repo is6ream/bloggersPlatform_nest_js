@@ -28,6 +28,7 @@ export class CommentsRepository {
   }
 
   async likeStatusSave(like: LikeDocument): Promise<void> {
+    console.log('like status save method check');
     await like.save();
   }
 }

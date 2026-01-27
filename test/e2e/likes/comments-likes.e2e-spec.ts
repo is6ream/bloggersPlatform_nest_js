@@ -15,6 +15,7 @@ import { createTestPost } from '../../helpers/factory/post-factory';
 import { createTestCommentForLikes } from '../../helpers/factory/comments-factory';
 import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
 import { expect } from '@jest/globals';
+import { Like } from 'src/modules/bloggers-platform/likes/domain/like-entity';
 
 describe('Comments Likes E2E Tests', () => {
   let app: INestApplication;
@@ -25,13 +26,13 @@ describe('Comments Likes E2E Tests', () => {
   let postModel: any;
   let blogModel: any;
   let userModel: any;
+  let likeModel: any;
   let authToken: string;
   let testUserId: string;
   let testPostId: string;
   let testCommentId: string;
 
   beforeAll(async () => {
-    console.log('first log check');
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
 
@@ -52,6 +53,7 @@ describe('Comments Likes E2E Tests', () => {
     postModel = moduleFixture.get(getModelToken(PostEntity.name));
     blogModel = moduleFixture.get(getModelToken(Blog.name));
     userModel = moduleFixture.get(getModelToken(User.name));
+    likeModel = moduleFixture.get(getModelToken(Like.name));
     // Очищаем базу
     await userModel.deleteMany({});
     await blogModel.deleteMany({});
@@ -98,6 +100,11 @@ describe('Comments Likes E2E Tests', () => {
     await app.close();
   });
 
+  beforeEach(async () => {
+    await commentModel.deleteMany({});
+    await likeModel.deleteMany({});
+  });
+
   it('should create like for comment - 204 No Content', async () => {
     // Отправляем запрос на создание лайка
     await request(app.getHttpServer())
@@ -106,26 +113,24 @@ describe('Comments Likes E2E Tests', () => {
       .send({
         likeStatus: 'Like',
       })
-      .expect(204); // Ожидаем статус 204 No Content
+      .expect(204);
 
-    //не понятно где дергается эндпонит /get/comment by id
+    // Проверяем, что статус лайка изменился в комментарии
+    const commentResponse = await request(app.getHttpServer())
+      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
 
-    // // Проверяем, что статус лайка изменился в комментарии
-    // const commentResponse = await request(app.getHttpServer())
-    //   .get(`/hometask_15/api/comments/${testCommentId}`)
-    //   .set('Authorization', `Bearer ${authToken}`)
-    //   .expect(200);
-    //
-    // // Проверяем структуру ответа
-    // expect(commentResponse.body).toHaveProperty('likesInfo');
-    // expect(commentResponse.body.likesInfo).toHaveProperty('myStatus');
-    // expect(commentResponse.body.likesInfo).toHaveProperty('likesCount');
-    // expect(commentResponse.body.likesInfo).toHaveProperty('dislikesCount');
-    //
-    // // Проверяем значения
-    // expect(commentResponse.body.likesInfo.myStatus).toBe('Like');
-    // expect(commentResponse.body.likesInfo.likesCount).toBe(1);
-    // expect(commentResponse.body.likesInfo.dislikesCount).toBe(0);
+    // Проверяем структуру ответа
+    expect(commentResponse.body).toHaveProperty('likesInfo');
+    expect(commentResponse.body.likesInfo).toHaveProperty('myStatus');
+    expect(commentResponse.body.likesInfo).toHaveProperty('likesCount');
+    expect(commentResponse.body.likesInfo).toHaveProperty('dislikesCount');
+
+    // Проверяем значения
+    expect(commentResponse.body.likesInfo.myStatus).toBe('Like');
+    expect(commentResponse.body.likesInfo.likesCount).toBe(1);
+    expect(commentResponse.body.likesInfo.dislikesCount).toBe(0);
   });
 
   it('should return comment by id', async () => {
@@ -134,4 +139,6 @@ describe('Comments Likes E2E Tests', () => {
       .set('Authorization', `Bearer ${authToken}`);
     expect(200);
   });
+
+  it('It should likes a comment that already has a Like status', async () => {});
 });

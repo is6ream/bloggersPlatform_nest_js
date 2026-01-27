@@ -28,11 +28,11 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
   ) {}
 
   async execute(command: UpdateCommentLikeStatusCommand): Promise<any> {
-    let comment: CommentDocument =
+    console.log(command.commentId, 'comment id chekc in use case');
+    const comment: CommentDocument =
       await this.commentsRepository.findOrNotFoundFail(command.commentId);
-    const user = await this.usersRepository.findByIdOrThrowValidationError(
-      command.userId,
-    );
+
+    console.log('parentId check', command.commentId);
 
     const like = await this.LikeModel.findOne({
       userId: command.userId,
@@ -44,7 +44,7 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
         likeStatus: command.likeStatus,
         userId: command.userId,
         parentId: command.commentId,
-        parentType: 'Comment',
+        parentType: 'Comment', //сохраняется некорректный parentType
       });
       comment.updateLikeCounter('None', command.likeStatus);
 

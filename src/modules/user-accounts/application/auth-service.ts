@@ -109,7 +109,6 @@ export class AuthService {
     const payload = {
       id: user.id,
     };
-    //todo решить проблему с временем жизни токена
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: process.env.JWT_SECRET,
       expiresIn: '20m',
