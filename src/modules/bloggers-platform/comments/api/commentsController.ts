@@ -23,6 +23,7 @@ import { CreateCommentInputDto } from '../../posts/api/model/input/create-commen
 import { CreateCommentCommand } from '../application/useCases/create-comment.usecase';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
 import { Request } from 'express';
+import { UserId } from 'src/core/decorators/user-id.decorator';
 @Controller('comments')
 export class CommentsController {
   constructor(
@@ -30,17 +31,17 @@ export class CommentsController {
     private commandBus: CommandBus,
   ) {}
 
+  //todo передать userId из интерцептора в контроллер
   @Get(':id')
   @UseInterceptors(UserExtractorInterceptor)
   async getById(
     @Param('id') commentId: string,
-    @Req() req: Request,
+    @UserId() userId?: string,
   ): Promise<CommentViewModel> {
-    console.log('get comment by id check');
-    // @ts-ignore
+
     return this.commentsQueryRepository.getByIdOrNotFoundFail(
       commentId,
-      req.user?.id,
+      userId,
     );
   }
 

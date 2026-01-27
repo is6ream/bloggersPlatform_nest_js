@@ -13,7 +13,8 @@ import request from 'supertest';
 import { createTestBlog } from '../../helpers/factory/blog-factory';
 import { createTestPost } from '../../helpers/factory/post-factory';
 import { createTestCommentForLikes } from '../../helpers/factory/comments-factory';
-import { Comment} from 'src/modules/bloggers-platform/comments/domain/commentEntity';
+import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
+import { expect } from '@jest/globals';
 
 describe('Comments Likes E2E Tests', () => {
   let app: INestApplication;
@@ -30,6 +31,7 @@ describe('Comments Likes E2E Tests', () => {
   let testCommentId: string;
 
   beforeAll(async () => {
+    console.log('first log check');
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
 
@@ -50,16 +52,16 @@ describe('Comments Likes E2E Tests', () => {
     postModel = moduleFixture.get(getModelToken(PostEntity.name));
     blogModel = moduleFixture.get(getModelToken(Blog.name));
     userModel = moduleFixture.get(getModelToken(User.name));
-
     // Очищаем базу
     await userModel.deleteMany({});
     await blogModel.deleteMany({});
     await postModel.deleteMany({});
     await commentModel.deleteMany({});
-
     // Создаем тестовые данные
     const testUser = await createTestUser(userModel);
-    const testUserId = testUser._id.toString();
+    testUserId = testUser._id.toString();
+
+    console.log(testUserId, 'test userId check');
     // Получаем токен
     const loginResponse = await request(app.getHttpServer())
       .post('/hometask_15/api/auth/login')
@@ -68,7 +70,6 @@ describe('Comments Likes E2E Tests', () => {
         password: 'testpassword',
       });
     authToken = loginResponse.body.accessToken;
-
     // Создаем блог и пост
     const testBlog = await createTestBlog(blogModel);
     const testPost = await createTestPost(
@@ -77,7 +78,6 @@ describe('Comments Likes E2E Tests', () => {
       testBlog.name,
     );
     testPostId = testPost._id.toString();
-
     // Создаем комментарий для тестирования лайков
     const testComment = await createTestCommentForLikes(
       commentModel,
@@ -89,6 +89,7 @@ describe('Comments Likes E2E Tests', () => {
       },
     );
     testCommentId = testComment._id.toString();
+    console.log('check5');
   });
 
   afterAll(async () => {
@@ -107,6 +108,8 @@ describe('Comments Likes E2E Tests', () => {
       })
       .expect(204); // Ожидаем статус 204 No Content
 
+    //не понятно где дергается эндпонит /get/comment by id
+
     // // Проверяем, что статус лайка изменился в комментарии
     // const commentResponse = await request(app.getHttpServer())
     //   .get(`/hometask_15/api/comments/${testCommentId}`)
@@ -123,5 +126,12 @@ describe('Comments Likes E2E Tests', () => {
     // expect(commentResponse.body.likesInfo.myStatus).toBe('Like');
     // expect(commentResponse.body.likesInfo.likesCount).toBe(1);
     // expect(commentResponse.body.likesInfo.dislikesCount).toBe(0);
+  });
+
+  it('should return comment by id', async () => {
+    await request(app.getHttpServer())
+      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .set('Authorization', `Bearer ${authToken}`);
+    expect(200);
   });
 });

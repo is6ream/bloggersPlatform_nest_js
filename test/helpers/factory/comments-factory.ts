@@ -1,4 +1,3 @@
-
 import { CommentModelType } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
 
 export async function createTestCommentForLikes(
@@ -10,6 +9,7 @@ export async function createTestCommentForLikes(
     content: string;
   }> = {},
 ) {
+  console.log('createTestComment check method');
   const defaultData = {
     content: 'Test comment for like operations',
     commentatorInfo: {

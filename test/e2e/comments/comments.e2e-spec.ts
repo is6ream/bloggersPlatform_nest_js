@@ -13,6 +13,7 @@ import { createTestUser } from '../../helpers/factory/user-factory';
 import { createTestBlog } from '../../helpers/factory/blog-factory';
 import { createTestPost } from '../../helpers/factory/post-factory';
 import { appSetup } from 'src/setup/app.setup';
+import { createTestCommentForLikes } from '../../helpers/factory/comments-factory';
 
 describe('Comments E2E Tests', () => {
   let app: INestApplication;
@@ -86,6 +87,7 @@ describe('Comments E2E Tests', () => {
     await mongoServer.stop();
     await app.close();
   });
+
 
   it('should reject invalid content - too short (400)', async () => {
     const invalidData = {
@@ -185,5 +187,4 @@ describe('Comments E2E Tests', () => {
         .expect(201);
     }
   });
-
 });

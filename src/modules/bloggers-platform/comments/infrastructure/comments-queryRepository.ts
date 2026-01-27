@@ -25,12 +25,14 @@ export class CommentsQueryRepository {
 
   async getByIdOrNotFoundFail(
     id: string,
-    userId: string,
+    userId?: string,
   ): Promise<CommentViewDto> {
     const comment: CommentDocument | null = await this.CommentModel.findOne({
       _id: id,
       deleteAt: null,
     });
+
+    console.log(userId, 'userId check');
 
     if (!comment) {
       throw new DomainException({ code: 1, message: 'Comment not found' });
