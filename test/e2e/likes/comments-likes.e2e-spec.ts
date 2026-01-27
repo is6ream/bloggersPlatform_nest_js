@@ -13,7 +13,7 @@ import request from 'supertest';
 import { createTestBlog } from '../../helpers/factory/blog-factory';
 import { createTestPost } from '../../helpers/factory/post-factory';
 import { createTestCommentForLikes } from '../../helpers/factory/comments-factory';
-
+import { Comment} from 'src/modules/bloggers-platform/comments/domain/commentEntity';
 
 describe('Comments Likes E2E Tests', () => {
   let app: INestApplication;
@@ -86,7 +86,7 @@ describe('Comments Likes E2E Tests', () => {
       testUser.login,
       {
         content: 'Test comment for like operations',
-      }
+      },
     );
     testCommentId = testComment._id.toString();
   });
@@ -95,4 +95,33 @@ describe('Comments Likes E2E Tests', () => {
     await mongoConnection.close();
     await mongoServer.stop();
     await app.close();
-  })})
+  });
+
+  it('should create like for comment - 204 No Content', async () => {
+    // Отправляем запрос на создание лайка
+    await request(app.getHttpServer())
+      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        likeStatus: 'Like',
+      })
+      .expect(204); // Ожидаем статус 204 No Content
+
+    // // Проверяем, что статус лайка изменился в комментарии
+    // const commentResponse = await request(app.getHttpServer())
+    //   .get(`/hometask_15/api/comments/${testCommentId}`)
+    //   .set('Authorization', `Bearer ${authToken}`)
+    //   .expect(200);
+    //
+    // // Проверяем структуру ответа
+    // expect(commentResponse.body).toHaveProperty('likesInfo');
+    // expect(commentResponse.body.likesInfo).toHaveProperty('myStatus');
+    // expect(commentResponse.body.likesInfo).toHaveProperty('likesCount');
+    // expect(commentResponse.body.likesInfo).toHaveProperty('dislikesCount');
+    //
+    // // Проверяем значения
+    // expect(commentResponse.body.likesInfo.myStatus).toBe('Like');
+    // expect(commentResponse.body.likesInfo.likesCount).toBe(1);
+    // expect(commentResponse.body.likesInfo.dislikesCount).toBe(0);
+  });
+});

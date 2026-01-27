@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
   Req,
+  HttpCode,
 } from '@nestjs/common';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
 import { CommentsQueryRepository } from '../infrastructure/comments-queryRepository';
@@ -33,13 +34,18 @@ export class CommentsController {
   @UseInterceptors(UserExtractorInterceptor)
   async getById(
     @Param('id') commentId: string,
-    @Req() req: Request
+    @Req() req: Request,
   ): Promise<CommentViewModel> {
+    console.log('get comment by id check');
     // @ts-ignore
-    return this.commentsQueryRepository.getByIdOrNotFoundFail(commentId, req.user?.id);
+    return this.commentsQueryRepository.getByIdOrNotFoundFail(
+      commentId,
+      req.user?.id,
+    );
   }
 
   @Put(':id/like-status')
+  @HttpCode(204)
   @UseGuards(JwtAuthGuard)
   async updateLikeStatus(
     @Param('id') commentId: string,
