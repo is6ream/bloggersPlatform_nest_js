@@ -17,7 +17,7 @@ import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEn
 import { expect } from '@jest/globals';
 import { Like } from 'src/modules/bloggers-platform/likes/domain/like-entity';
 
-describe('Comments Likes E2E Tests', () => {
+describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
   let app: INestApplication;
   let mongoServer: MongoMemoryServer;
   let mongoConnection: Connection;
@@ -27,10 +27,12 @@ describe('Comments Likes E2E Tests', () => {
   let blogModel: any;
   let userModel: any;
   let likeModel: any;
-  let authToken: string;
+
+  // Общие данные для всех тестов
+  let testUser: any;
   let testUserId: string;
   let testPostId: string;
-  let testCommentId: string;
+  let authToken: string;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -54,16 +56,18 @@ describe('Comments Likes E2E Tests', () => {
     blogModel = moduleFixture.get(getModelToken(Blog.name));
     userModel = moduleFixture.get(getModelToken(User.name));
     likeModel = moduleFixture.get(getModelToken(Like.name));
-    // Очищаем базу
+
+    // Очищаем базу перед созданием общих данных
     await userModel.deleteMany({});
     await blogModel.deleteMany({});
     await postModel.deleteMany({});
     await commentModel.deleteMany({});
-    // Создаем тестовые данные
-    const testUser = await createTestUser(userModel);
+    await likeModel.deleteMany({});
+
+    // Создаем общие данные (пользователь, блог, пост)
+    testUser = await createTestUser(userModel);
     testUserId = testUser._id.toString();
 
-    console.log(testUserId, 'test userId check');
     // Получаем токен
     const loginResponse = await request(app.getHttpServer())
       .post('/hometask_15/api/auth/login')
@@ -72,7 +76,8 @@ describe('Comments Likes E2E Tests', () => {
         password: 'testpassword',
       });
     authToken = loginResponse.body.accessToken;
-    // Создаем блог и пост
+
+    // Создаем блог и пост (один на все тесты)
     const testBlog = await createTestBlog(blogModel);
     const testPost = await createTestPost(
       postModel,
@@ -80,18 +85,6 @@ describe('Comments Likes E2E Tests', () => {
       testBlog.name,
     );
     testPostId = testPost._id.toString();
-    // Создаем комментарий для тестирования лайков
-    const testComment = await createTestCommentForLikes(
-      commentModel,
-      testPostId,
-      testUserId,
-      testUser.login,
-      {
-        content: 'Test comment for like operations',
-      },
-    );
-    testCommentId = testComment._id.toString();
-    console.log('check5');
   });
 
   afterAll(async () => {
@@ -101,12 +94,37 @@ describe('Comments Likes E2E Tests', () => {
   });
 
   beforeEach(async () => {
+    // Перед КАЖДЫМ тестом очищаем только комментарии и лайки
+    // Пользователь, блог и пост остаются (они созданы в beforeAll)
     await commentModel.deleteMany({});
     await likeModel.deleteMany({});
   });
 
-  it('should create like for comment - 204 No Content', async () => {
-    // Отправляем запрос на создание лайка
+  // Тест 1: Нет лайка → шлем Like → статус Like
+  it('1. No like → send Like → should set Like status', async () => {
+    // Создаем новый комментарий для этого теста
+    const testComment = await createTestCommentForLikes(
+      commentModel,
+      testPostId,
+      testUserId,
+      testUser.login,
+      {
+        content: 'Comment for like test 1',
+      },
+    );
+    const testCommentId = testComment._id.toString();
+
+    // 1. Проверяем начальный статус (должен быть None)
+    const initialResponse = await request(app.getHttpServer())
+      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+
+    expect(initialResponse.body.likesInfo.myStatus).toBe('None');
+    expect(initialResponse.body.likesInfo.likesCount).toBe(0);
+    expect(initialResponse.body.likesInfo.dislikesCount).toBe(0);
+
+    // 2. Шлем Like
     await request(app.getHttpServer())
       .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
       .set('Authorization', `Bearer ${authToken}`)
@@ -115,30 +133,119 @@ describe('Comments Likes E2E Tests', () => {
       })
       .expect(204);
 
-    // Проверяем, что статус лайка изменился в комментарии
-    const commentResponse = await request(app.getHttpServer())
+    // 3. Проверяем, что статус изменился на Like
+    const finalResponse = await request(app.getHttpServer())
       .get(`/hometask_15/api/comments/${testCommentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
-    // Проверяем структуру ответа
-    expect(commentResponse.body).toHaveProperty('likesInfo');
-    expect(commentResponse.body.likesInfo).toHaveProperty('myStatus');
-    expect(commentResponse.body.likesInfo).toHaveProperty('likesCount');
-    expect(commentResponse.body.likesInfo).toHaveProperty('dislikesCount');
-
-    // Проверяем значения
-    expect(commentResponse.body.likesInfo.myStatus).toBe('Like');
-    expect(commentResponse.body.likesInfo.likesCount).toBe(1);
-    expect(commentResponse.body.likesInfo.dislikesCount).toBe(0);
+    expect(finalResponse.body.likesInfo.myStatus).toBe('Like');
+    expect(finalResponse.body.likesInfo.likesCount).toBe(1);
+    expect(finalResponse.body.likesInfo.dislikesCount).toBe(0);
   });
 
-  it('should return comment by id', async () => {
+  // Тест 2: Есть Like → шлем Like → статус None
+  it('2. Has Like → send Like → should set None status (toggle)', async () => {
+    // Создаем новый комментарий для этого теста
+    const testComment = await createTestCommentForLikes(
+      commentModel,
+      testPostId,
+      testUserId,
+      testUser.login,
+      {
+        content: 'Comment for like test 2',
+      },
+    );
+    const testCommentId = testComment._id.toString();
+
+    // 1. Сначала ставим Like
     await request(app.getHttpServer())
+      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        likeStatus: 'Like',
+      })
+      .expect(204);
+
+    // 2. Проверяем, что Like установился
+    const afterFirstLike = await request(app.getHttpServer())
       .get(`/hometask_15/api/comments/${testCommentId}`)
-      .set('Authorization', `Bearer ${authToken}`);
-    expect(200);
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+
+    expect(afterFirstLike.body.likesInfo.myStatus).toBe('Like');
+    expect(afterFirstLike.body.likesInfo.likesCount).toBe(1);
+
+    // 3. Шлем Like еще раз (должен сбросить)
+    await request(app.getHttpServer())
+      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        likeStatus: 'Like',
+      })
+      .expect(204);
+
+    // 4. Проверяем, что статус сбросился на None
+    const finalResponse = await request(app.getHttpServer())
+      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+
+    expect(finalResponse.body.likesInfo.myStatus).toBe('None');
+    expect(finalResponse.body.likesInfo.likesCount).toBe(0);
+    expect(finalResponse.body.likesInfo.dislikesCount).toBe(0);
   });
 
-  it('It should likes a comment that already has a Like status', async () => {});
+  // Тест 3: Есть Like → шлем Dislike → статус Dislike
+  it('3. Has Like → send Dislike → should set Dislike status', async () => {
+    // Создаем новый комментарий для этого теста
+    const testComment = await createTestCommentForLikes(
+      commentModel,
+      testPostId,
+      testUserId,
+      testUser.login,
+      {
+        content: 'Comment for like test 3',
+      },
+    );
+    const testCommentId = testComment._id.toString();
+
+    // 1. Сначала ставим Like
+    await request(app.getHttpServer())
+      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        likeStatus: 'Like',
+      })
+      .expect(204);
+
+    // 2. Проверяем, что Like установился
+    const afterLike = await request(app.getHttpServer())
+      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+
+    expect(afterLike.body.likesInfo.myStatus).toBe('Like');
+    expect(afterLike.body.likesInfo.likesCount).toBe(1);
+    expect(afterLike.body.likesInfo.dislikesCount).toBe(0);
+
+    // 3. Шлем Dislike (должен заменить Like на Dislike)
+    await request(app.getHttpServer())
+      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        likeStatus: 'Dislike',
+      })
+      .expect(204);
+
+    // 4. Проверяем, что статус изменился на Dislike
+    const finalResponse = await request(app.getHttpServer())
+      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+
+    expect(finalResponse.body.likesInfo.myStatus).toBe('Dislike');
+    expect(finalResponse.body.likesInfo.likesCount).toBe(0);
+    expect(finalResponse.body.likesInfo.dislikesCount).toBe(1);
+  });
 });

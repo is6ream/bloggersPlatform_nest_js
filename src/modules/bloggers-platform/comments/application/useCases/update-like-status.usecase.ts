@@ -28,11 +28,8 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
   ) {}
 
   async execute(command: UpdateCommentLikeStatusCommand): Promise<any> {
-    console.log(command.commentId, 'comment id chekc in use case');
     const comment: CommentDocument =
       await this.commentsRepository.findOrNotFoundFail(command.commentId);
-
-    console.log('parentId check', command.commentId);
 
     const like = await this.LikeModel.findOne({
       userId: command.userId,
