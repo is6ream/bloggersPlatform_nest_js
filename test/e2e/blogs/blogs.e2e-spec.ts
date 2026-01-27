@@ -11,10 +11,11 @@ import {
   Blog,
   BlogDocument,
 } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
-import { createTestBlog } from '../../helpers/factory/blog-factory';
 import request from 'supertest';
 import { createTestBlogs } from '../../helpers/blogs/create-blogs-helper';
 import { UpdateBlogDto } from 'src/modules/bloggers-platform/blogs/dto/input/updateBlogDto';
+import { createTestBlog} from '../../helpers/factory/blog-factory';
+
 describe('Blogs E2E Tests', () => {
   let app: INestApplication;
   let mongoServer: MongoMemoryServer;
