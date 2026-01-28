@@ -32,7 +32,6 @@ export class Comment {
     comment.likesInfo = {
       likesCount: 0,
       dislikesCount: 0,
-      status: 'None',
     };
     return comment as CommentDocument;
   }

@@ -32,7 +32,6 @@ export class PostViewDto {
     dto.extendedLikesInfo = {
       likesCount: post.likesInfo.likesCount,
       dislikesCount: post.likesInfo.dislikesCount,
-      myStatus: post.likesInfo.status,
       // @ts-ignore
 
       newestLikes: post.likesInfo.newestLikes,

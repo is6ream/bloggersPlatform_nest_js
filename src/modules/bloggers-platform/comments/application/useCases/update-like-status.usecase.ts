@@ -17,7 +17,7 @@ export class UpdateCommentLikeStatusCommand {
     public likeStatus: string,
   ) {}
 }
-
+//todo решить задачу с сохранением нового статуса реакции пользователя для комментария
 @CommandHandler(UpdateCommentLikeStatusCommand)
 export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCommentLikeStatusCommand> {
   constructor(
@@ -28,13 +28,13 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
   ) {}
 
   async execute(command: UpdateCommentLikeStatusCommand): Promise<any> {
-    const comment: CommentDocument =
-      await this.commentsRepository.findOrNotFoundFail(command.commentId);
-
     const like = await this.LikeModel.findOne({
       userId: command.userId,
       parentId: command.commentId,
     });
+
+    const comment: CommentDocument =
+      await this.commentsRepository.findOrNotFoundFail(command.commentId);
 
     if (!like) {
       const newLike: LikeDocument = this.LikeModel.createInstance({
@@ -43,6 +43,9 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
         parentId: command.commentId,
         parentType: 'Comment', //сохраняется некорректный parentType
       });
+
+      console.log(newLike, 'like check if is not exist');
+
       comment.updateLikeCounter('None', command.likeStatus);
 
       await this.commentsRepository.likeStatusSave(newLike);

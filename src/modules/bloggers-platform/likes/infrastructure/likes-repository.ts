@@ -10,8 +10,14 @@ export class LikesRepository {
     await like.save();
   }
 
-  async findByUserId(userId?: string): Promise<LikeDocument | null> {
-    const like = await this.LikeModel.findOne({ userId });
+  async findByUserIdAndCommentdId(
+    commentId: string,
+    userId?: string,
+  ): Promise<LikeDocument | null> {
+    const like = await this.LikeModel.findOne({
+      userId: userId,
+      parentId: commentId,
+    });
     if (!like) {
       return null;
     }

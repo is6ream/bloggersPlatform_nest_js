@@ -13,6 +13,8 @@ import { CommentPaginatedViewDto } from '../../posts/api/paginated/paginated.com
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { LikeDocument } from '../../likes/domain/like-entity';
+import { BlogDocument } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
+import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
 @Injectable()
 export class CommentsQueryRepository {
@@ -23,28 +25,57 @@ export class CommentsQueryRepository {
     private likesRepository: LikesRepository,
   ) {}
 
-  async getByIdOrNotFoundFail(
-    id: string,
-    userId?: string,
-  ): Promise<CommentViewDto> {
-    const comment: CommentDocument | null = await this.CommentModel.findOne({
+  async findById(id: string): Promise<CommentDocument | null> {
+    return this.CommentModel.findOne({
       _id: id,
       deleteAt: null,
     });
+  }
 
-    console.log(userId, 'userId check');
+  async getByIdOrNotFoundFail(
+    commentId: string,
+    currentUserId?: string,
+  ): Promise<CommentViewDto> {
+    const comment = await this.findById(commentId);
 
     if (!comment) {
-      throw new DomainException({ code: 1, message: 'Comment not found' });
+      throw new DomainException({
+        code: DomainExceptionCode.NotFound,
+        message: 'Comment not found',
+      });
     }
 
-    const like = await this.likesRepository.findByUserId(userId);
+    const like: LikeDocument | null =
+      await this.likesRepository.findByUserIdAndCommentdId(
+        commentId,
+        currentUserId,
+      );
 
     if (!like) {
-      return CommentViewDto.mapToView(comment, null);
+      return {
+        id: comment._id.toString(),
+        content: comment.content,
+        commentatorInfo: comment.commentatorInfo,
+        createdAt: comment.createdAt,
+        likesInfo: {
+          likesCount: comment.likesInfo.likesCount,
+          dislikesCount: comment.likesInfo.dislikesCount,
+          myStatus: 'None',
+        },
+      };
     }
 
-    return CommentViewDto.mapToView(comment, like);
+    return {
+      id: comment._id.toString(),
+      content: comment.content,
+      commentatorInfo: comment.commentatorInfo,
+      createdAt: comment.createdAt,
+      likesInfo: {
+        likesCount: comment.likesInfo.likesCount,
+        dislikesCount: comment.likesInfo.dislikesCount,
+        myStatus: like.status,
+      },
+    };
   }
 
   async getCommentByPostId(

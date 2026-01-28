@@ -29,7 +29,7 @@ export class Like {
     like.status = dto.likeStatus;
     like.userId = dto.userId;
     like.parentId = dto.parentId;
-    like.parentType = 'Post';
+    like.parentType = dto.parentType;
     return like as LikeDocument;
   }
 }
