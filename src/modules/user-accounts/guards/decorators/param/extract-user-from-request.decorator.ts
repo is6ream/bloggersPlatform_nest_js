@@ -12,6 +12,8 @@ export const ExtractUserFromRequest = createParamDecorator(
       id: request.user.id,
     };
 
+    console.log(request.user.id, "user id check in extract decorator");
+
     if (!user) {
       throw new Error('there is no user in the request object!');
     }

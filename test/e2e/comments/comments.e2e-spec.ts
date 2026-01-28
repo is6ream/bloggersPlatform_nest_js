@@ -263,6 +263,55 @@ describe('Comments E2E Tests', () => {
         .expect(403);
     });
 
+    it('should return 404 when updating non-existent comment', async () => {
+      const nonExistentCommentId = '507f1f77bcf86cd799439011';
 
+      const validUpdateDto = {
+        content: 'This comment does not exist',
+      };
+
+      await request(app.getHttpServer())
+        .put(`${COMMENTS_BASE}/${nonExistentCommentId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(validUpdateDto)
+        .expect(404);
+    });
+
+    it('should return 204 successfully', async () => {
+      //создали пользователя
+      const testUser = await createTestUser(userModel);
+      testUserId = testUser._id.toString();
+      //авторизовались им
+      const loginResponse = await request(app.getHttpServer())
+        .post(`${BASE_URL}/auth/login`)
+        .send({
+          loginOrEmail: 'testuser',
+          password: 'testpassword',
+        });
+      authToken = loginResponse.body.accessToken;
+      //создали комментарий этим пользователем
+      const comment = await commentModel.create({
+        content: 'Original comment content',
+        commentatorInfo: {
+          userId: testUserId,
+          userLogin: 'testuser',
+        },
+        likesInfo: {
+          likesCount: 0,
+          dislikesCount: 0,
+        },
+        postId: testPostId,
+      });
+
+      const content = { content: 't'.repeat(22) };
+      const commentId = comment._id.toString();
+      const url = `${COMMENTS_BASE}/${commentId}`;
+      //обновили комментарий тем же пользователем
+      await request(app.getHttpServer())
+        .put(url)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(content)
+        .expect(204);
+    });
   });
 });

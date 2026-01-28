@@ -7,7 +7,6 @@ import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
 
-//todo прописать userCase для обновления комментария по id
 @Injectable()
 export class UpdateCommentCommand {
   constructor(
@@ -19,15 +18,15 @@ export class UpdateCommentCommand {
 
 @CommandHandler(UpdateCommentCommand)
 export class UpdateCommentUseCase implements ICommandHandler<UpdateCommentCommand> {
-  constructor(
-    @InjectModel(Comment.name)
-    private commentsRepository: CommentsRepository,
-  ) {}
+  constructor(private commentsRepository: CommentsRepository) {}
 
   async execute(command: UpdateCommentCommand): Promise<void> {
     const comment = await this.commentsRepository.findOrNotFoundFail(
-      command.userId,
+      command.commentId,
     );
+    //не в том формате поступает userID
+    console.log(comment.commentatorInfo.userId, 'user id check in comment');
+    console.log(command.userId, 'incoming to this command user id');
 
     if (comment.commentatorInfo.userId !== command.userId) {
       throw new DomainException({

@@ -11,7 +11,6 @@ export class CommentsRepository {
   constructor(
     @InjectModel(Comment.name)
     private CommentModel: CommentModelType,
-    private postRepository: PostRepository,
   ) {}
 
   async save(comment: CommentDocument) {
