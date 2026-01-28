@@ -11,8 +11,8 @@ import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEn
 export class UpdateCommentCommand {
   constructor(
     public commentId: string,
-    public userId: string,
     public updateContentDto: CommentInputDto,
+    public userId?: string,
   ) {}
 }
 
@@ -35,7 +35,7 @@ export class UpdateCommentUseCase implements ICommandHandler<UpdateCommentComman
       });
     }
 
-    comment.content = command.updateContentDto as unknown as string;
+    comment.content = command.updateContentDto.content as unknown as string;
     await this.commentsRepository.save(comment);
   }
 }

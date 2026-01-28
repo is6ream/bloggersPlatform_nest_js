@@ -20,9 +20,12 @@ import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorat
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 import { UpdateCommentLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
-import { UserId } from 'src/core/decorators/user-id.required.decorator';
+import {
+  UserIdRequired,
+} from 'src/core/decorators/user-id.required.decorator';
 import { CommentInputDto } from 'src/modules/bloggers-platform/comments/dto/comment-input.dto';
 import { UpdateCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/update-comment.usecase';
+import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 
 @Controller('comments')
 export class CommentsController {
@@ -35,7 +38,7 @@ export class CommentsController {
   @UseInterceptors(UserExtractorInterceptor)
   async getById(
     @Param('id') commentId: string,
-    @UserId() userId?: string,
+    @UserIdOptional() userId?: string,
   ): Promise<CommentViewModel> {
     return this.commentsQueryRepository.getByIdOrNotFoundFail(
       commentId,
@@ -49,10 +52,10 @@ export class CommentsController {
   async updateComment(
     @Param('id') commentId: string,
     @Body() updateCommentDto: CommentInputDto,
-    @ExtractUserFromRequest() userId: string,
+    @UserIdRequired() userId?: string,
   ): Promise<void> {
     return this.commandBus.execute(
-      new UpdateCommentCommand(commentId, userId, updateCommentDto),
+      new UpdateCommentCommand(commentId, updateCommentDto, userId),
     );
   }
 
