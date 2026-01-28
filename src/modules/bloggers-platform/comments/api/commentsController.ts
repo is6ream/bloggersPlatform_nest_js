@@ -19,12 +19,11 @@ import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guar
 import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorators/param/extract-user-from-request.decorator';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 import { UpdateCommentLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
-import { CreateCommentInputDto } from '../../posts/api/model/input/create-comment.input.dto';
-import { CreateCommentCommand } from '../application/useCases/create-comment.usecase';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
-import { Request } from 'express';
 import { UserId } from 'src/core/decorators/user-id.decorator';
 import { CommentInputDto } from 'src/modules/bloggers-platform/comments/dto/comment-input.dto';
+import { UpdateCommentCommand} from 'src/modules/bloggers-platform/comments/application/useCases/update-comment.usecase';
+
 @Controller('comments')
 export class CommentsController {
   constructor(
@@ -50,9 +49,9 @@ export class CommentsController {
   async updateComment(
     @Param('id') commentId: string,
     @Body() updateCommentDto: CommentInputDto,
-    @ExtractUserFromRequest() userId?: string,
+    @ExtractUserFromRequest() userId: string,
   ): Promise<void> {
-    return this.commandBus.execute(new UpdateCommentCommand());
+    return this.commandBus.execute(new UpdateCommentCommand(commentId, userId, updateCommentDto));
   };
 
   @Put(':id/like-status')

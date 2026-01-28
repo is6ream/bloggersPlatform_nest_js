@@ -13,7 +13,6 @@ import { createTestUser } from '../../helpers/factory/user-factory';
 import { createTestBlog } from '../../helpers/factory/blog-factory';
 import { createTestPost } from '../../helpers/factory/post-factory';
 import { appSetup } from 'src/setup/app.setup';
-import { createTestCommentForLikes } from '../../helpers/factory/comments-factory';
 
 describe('Comments E2E Tests', () => {
   let app: INestApplication;
@@ -27,12 +26,15 @@ describe('Comments E2E Tests', () => {
   let authToken: string;
   let testPostId: string;
   let testUserId: string;
-  let url: string;
+
+  // Константы для URL
+  const BASE_URL = '/hometask_15/api';
+  const POSTS_BASE = `${BASE_URL}/posts`;
+  const COMMENTS_BASE = `${BASE_URL}/comments`;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
-
     mongoConnection = (await connect(mongoUri)).connection;
 
     moduleFixture = await Test.createTestingModule({
@@ -46,30 +48,30 @@ describe('Comments E2E Tests', () => {
     appSetup(app);
     await app.init();
 
-    //--------- инициализируем модели
+    // Инициализируем модели
     userModel = moduleFixture.get(getModelToken(User.name));
-    await userModel.deleteMany({});
-
     postModel = moduleFixture.get(getModelToken(PostEntity.name));
     commentModel = moduleFixture.get(getModelToken(Comment.name));
     blogModel = moduleFixture.get(getModelToken(Blog.name));
 
-    const testUser = await createTestUser(userModel);
+    // Очищаем базу пользователей
+    await userModel.deleteMany({});
 
+    // Создаем тестовые данные
+    const testUser = await createTestUser(userModel);
     testUserId = testUser._id.toString();
 
+    // Получаем токен авторизации
     const loginResponse = await request(app.getHttpServer())
-      .post('/hometask_15/api/auth/login')
+      .post(`${BASE_URL}/auth/login`)
       .send({
         loginOrEmail: 'testuser',
         password: 'testpassword',
       });
-
     authToken = loginResponse.body.accessToken;
-    console.log(authToken, 'authToken afrer login response check');
 
+    // Создаем блог и пост
     const testBlog = await createTestBlog(blogModel);
-
     const testPost = await createTestPost(
       postModel,
       testBlog._id.toString(),
@@ -88,103 +90,125 @@ describe('Comments E2E Tests', () => {
     await app.close();
   });
 
+  // --------------------- Группа 1: Валидация контента (400 ошибки) ---------------------
+  describe('POST /posts/:postId/comments - Content validation', () => {
+    const getCommentUrl = (postId = testPostId) =>
+      `${POSTS_BASE}/${postId}/comments`;
 
-  it('should reject invalid content - too short (400)', async () => {
-    const invalidData = {
-      content: 'short',
-    };
-    url = `/hometask_15/api/posts/${testPostId}/comments`;
-    console.log(authToken, 'auth token check');
-    await request(app.getHttpServer())
-      .post(url)
-      .set('Authorization', `Bearer ${authToken}`)
-      .send(invalidData)
-      .expect(400);
-  });
-
-  it('should reject invalid content - too long (400)', async () => {
-    const invalidData = {
-      content: 'a'.repeat(401),
-    };
-    url = `/hometask_15/api/posts/${testPostId}/comments`;
-
-    await request(app.getHttpServer())
-      .post(url)
-      .set('Authorization', `Bearer ${authToken}`)
-      .send(invalidData)
-      .expect(400);
-  });
-
-  it('should reject invalid content - is not string', async () => {
-    const invalidData = {
-      content: 23,
-    };
-
-    url = `/hometask_15/api/posts/${testPostId}/comments`;
-
-    await request(app.getHttpServer())
-      .post(url)
-      .set('Authorization', `Bearer ${authToken}`)
-      .send(invalidData)
-      .expect(400);
-  });
-
-  //-------------------------//----------------------------------------------------//
-
-  it('should reject without authorization (401)', async () => {
-    const commentData = {
-      content: 'Comment without auth',
-    };
-
-    url = `/hometask_15/api/posts/${testPostId}/comments`;
-
-    await request(app.getHttpServer()).post(url).send(commentData).expect(401);
-  });
-
-  it('should reject with invalid token (401)', async () => {
-    const commentData = {
-      content: 'Comment with invalid token',
-    };
-
-    url = `/hometask_15/api/posts/${testPostId}/comments`;
-
-    await request(app.getHttpServer())
-      .post(url)
-      .set('Authorization', 'Bearer invalid_token_here')
-      .send(commentData)
-      .expect(401);
-  });
-
-  //-------------------------//----------------------------------------------------//
-
-  it('should reject for non-existent post (404)', async () => {
-    const nonExistentPostId = '507f1f77bcf86cd799439011'; // Valid ObjectId
-    const commentData = {
-      content: 'Comment for non-existent post',
-    };
-
-    await request(app.getHttpServer())
-      .post(`/posts/${nonExistentPostId}/comments`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .send(commentData)
-      .expect(404);
-  });
-
-  it('should create multiple comments for same post', async () => {
-    const comments = [
-      { content: 'First comment with enough length' },
-      { content: 'Second comment with enough length' },
-      { content: 'Third comment with enough length' },
-    ];
-
-    url = `/hometask_15/api/posts/${testPostId}/comments`;
-
-    for (const comment of comments) {
+    it('should reject content that is too short (400)', async () => {
       await request(app.getHttpServer())
-        .post(url)
+        .post(getCommentUrl())
         .set('Authorization', `Bearer ${authToken}`)
-        .send(comment)
-        .expect(201);
-    }
+        .send({ content: 'short' })
+        .expect(400);
+    });
+
+    it('should reject content that is too long (400)', async () => {
+      await request(app.getHttpServer())
+        .post(getCommentUrl())
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ content: 'a'.repeat(401) })
+        .expect(400);
+    });
+
+    it('should reject content that is not a string (400)', async () => {
+      await request(app.getHttpServer())
+        .post(getCommentUrl())
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ content: 23 })
+        .expect(400);
+    });
+  });
+
+  // --------------------- Группа 2: Авторизация (401 ошибки) ---------------------
+  describe('POST /posts/:postId/comments - Authorization', () => {
+    const getCommentUrl = () => `${POSTS_BASE}/${testPostId}/comments`;
+    const validCommentData = {
+      content: 'Valid comment content with enough length',
+    };
+
+    it('should reject request without authorization header (401)', async () => {
+      await request(app.getHttpServer())
+        .post(getCommentUrl())
+        .send(validCommentData)
+        .expect(401);
+    });
+
+    it('should reject request with invalid token (401)', async () => {
+      await request(app.getHttpServer())
+        .post(getCommentUrl())
+        .set('Authorization', 'Bearer invalid_token_here')
+        .send(validCommentData)
+        .expect(401);
+    });
+  });
+
+  // --------------------- Группа 3: Валидация поста (404 ошибки) ---------------------
+  describe('POST /posts/:postId/comments - Post validation', () => {
+    const validCommentData = {
+      content: 'Valid comment content with enough length',
+    };
+
+    it('should reject comment for non-existent post (404)', async () => {
+      const nonExistentPostId = '507f1f77bcf86cd799439011';
+
+      await request(app.getHttpServer())
+        .post(`${POSTS_BASE}/${nonExistentPostId}/comments`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(validCommentData)
+        .expect(404);
+    });
+  });
+
+  // --------------------- Группа 4: Успешные операции ---------------------
+  describe('POST /posts/:postId/comments - Success cases', () => {
+    const getCommentUrl = () => `${POSTS_BASE}/${testPostId}/comments`;
+
+    it('should create multiple comments for the same post', async () => {
+      const comments = [
+        { content: 'First comment with enough length' },
+        { content: 'Second comment with enough length' },
+        { content: 'Third comment with enough length' },
+      ];
+
+      for (const comment of comments) {
+        await request(app.getHttpServer())
+          .post(getCommentUrl())
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(comment)
+          .expect(201);
+      }
+
+      // Опционально: проверить что все создались
+      const allComments = await commentModel.find({});
+      expect(allComments).toHaveLength(3);
+    });
+  });
+
+  // --------------------- Группа 5: Обновление комментариев ---------------------
+  describe('PUT /comments/:id - Update operations', () => {
+    it('should require authorization for updating comment (401)', async () => {
+      // Создаем тестовый комментарий
+      const comment = await commentModel.create({
+        content: 'testtestttesttesttesttest',
+        commentatorInfo: {
+          userId: 'testuserId',
+          userLogin: 'testuserLogin',
+        },
+        likesInfo: {
+          likesCount: 0,
+          dislikesCount: 0,
+        },
+      });
+
+      const commentUrl = `${COMMENTS_BASE}/${comment._id.toString()}`;
+      const updateCommentDto = { content: '12345678910111213141515616' };
+
+      // Пытаемся обновить без авторизации
+      await request(app.getHttpServer())
+        .put(commentUrl)
+        .send(updateCommentDto)
+        .expect(401);
+    });
   });
 });

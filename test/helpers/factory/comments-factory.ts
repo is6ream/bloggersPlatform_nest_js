@@ -9,7 +9,6 @@ export async function createTestCommentForLikes(
     content: string;
   }> = {},
 ) {
-  console.log('createTestComment check method');
   const defaultData = {
     content: 'Test comment for like operations',
     commentatorInfo: {
