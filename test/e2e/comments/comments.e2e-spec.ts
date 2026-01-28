@@ -187,6 +187,33 @@ describe('Comments E2E Tests', () => {
 
   // --------------------- Группа 5: Обновление комментариев ---------------------
   describe('PUT /comments/:id - Update operations', () => {
+    it('should reject update when content is not a string (400)', async () => {
+      // Создаем тестовый комментарий
+      const comment = await commentModel.create({
+        content: 'Original comment content',
+        commentatorInfo: {
+          userId: testUserId,
+          userLogin: 'testuser',
+        },
+        likesInfo: {
+          likesCount: 0,
+          dislikesCount: 0,
+        },
+        postId: testPostId,
+      });
+
+      const commentUrl = `${COMMENTS_BASE}/${comment._id.toString()}`;
+
+      // Пытаемся обновить с контентом типа number вместо string
+      const invalidUpdateDto = { content: 123456789 }; // number вместо string
+
+      await request(app.getHttpServer())
+        .put(commentUrl)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(invalidUpdateDto)
+        .expect(400);
+    });
+
     it('should require authorization for updating comment (401)', async () => {
       // Создаем тестовый комментарий
       const comment = await commentModel.create({
@@ -210,5 +237,32 @@ describe('Comments E2E Tests', () => {
         .send(updateCommentDto)
         .expect(401);
     });
+
+    it("should return 403 Forbidden when updating another user's comment", async () => {
+      // Создаем отдельного пользователя с его комментарием
+      const anotherUser = await createTestUser(userModel, {
+        login: 'another',
+        email: 'another@example.com',
+      });
+
+      const anotherUserComment = await commentModel.create({
+        content: 'Comment from another user',
+        commentatorInfo: {
+          userId: anotherUser._id.toString(),
+          userLogin: 'another',
+        },
+        likesInfo: { likesCount: 0, dislikesCount: 0 },
+        postId: testPostId,
+      });
+
+      // Основной пользователь пытается обновить чужой комментарий
+      await request(app.getHttpServer())
+        .put(`${COMMENTS_BASE}/${anotherUserComment._id.toString()}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ content: "Trying to update someone else's comment" })
+        .expect(403);
+    });
+
+
   });
 });
