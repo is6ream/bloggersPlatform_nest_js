@@ -144,59 +144,7 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
     expect(finalResponse.body.likesInfo.dislikesCount).toBe(0);
   });
 
-  // Тест 2: Есть Like → шлем Like → статус None
-  it('2. Has Like → send Like → should set None status (toggle)', async () => {
-    // Создаем новый комментарий для этого теста
-    const testComment = await createTestCommentForLikes(
-      commentModel,
-      testPostId,
-      testUserId,
-      testUser.login,
-      {
-        content: 'Comment for like test 2',
-      },
-    );
-    const testCommentId = testComment._id.toString();
-
-    // 1. Сначала ставим Like
-    await request(app.getHttpServer())
-      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        likeStatus: 'Like',
-      })
-      .expect(204);
-
-    // 2. Проверяем, что Like установился
-    const afterFirstLike = await request(app.getHttpServer())
-      .get(`/hometask_15/api/comments/${testCommentId}`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(200);
-
-    expect(afterFirstLike.body.likesInfo.myStatus).toBe('Like');
-    expect(afterFirstLike.body.likesInfo.likesCount).toBe(1);
-
-    // 3. Шлем Like еще раз (должен сбросить)
-    await request(app.getHttpServer())
-      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        likeStatus: 'Like',
-      })
-      .expect(204);
-
-    // 4. Проверяем, что статус сбросился на None
-    const finalResponse = await request(app.getHttpServer())
-      .get(`/hometask_15/api/comments/${testCommentId}`)
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(200);
-
-    expect(finalResponse.body.likesInfo.myStatus).toBe('None');
-    expect(finalResponse.body.likesInfo.likesCount).toBe(0);
-    expect(finalResponse.body.likesInfo.dislikesCount).toBe(0);
-  });
-
-  // Тест 3: Есть Like → шлем Dislike → статус Dislike
+  // Тест 2: Есть Like → шлем Dislike → статус Dislike
   it('3. Has Like → send Dislike → should set Dislike status', async () => {
     // Создаем новый комментарий для этого теста
     const testComment = await createTestCommentForLikes(

@@ -24,6 +24,7 @@ import { CreateCommentCommand } from '../application/useCases/create-comment.use
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
 import { Request } from 'express';
 import { UserId } from 'src/core/decorators/user-id.decorator';
+import { CommentInputDto } from 'src/modules/bloggers-platform/comments/dto/comment-input.dto';
 @Controller('comments')
 export class CommentsController {
   constructor(
@@ -31,19 +32,28 @@ export class CommentsController {
     private commandBus: CommandBus,
   ) {}
 
-  //todo передать userId из интерцептора в контроллер
   @Get(':id')
   @UseInterceptors(UserExtractorInterceptor)
   async getById(
     @Param('id') commentId: string,
     @UserId() userId?: string,
   ): Promise<CommentViewModel> {
-
     return this.commentsQueryRepository.getByIdOrNotFoundFail(
       commentId,
       userId,
     );
   }
+
+  @Put('/:id')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard)
+  async updateComment(
+    @Param('id') commentId: string,
+    @Body() updateCommentDto: CommentInputDto,
+    @ExtractUserFromRequest() userId?: string,
+  ): Promise<void> {
+    return this.commandBus.execute(new UpdateCommentCommand());
+  };
 
   @Put(':id/like-status')
   @HttpCode(204)
