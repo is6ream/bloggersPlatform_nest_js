@@ -36,6 +36,13 @@ export class Comment {
     return comment as CommentDocument;
   }
 
+  makeDeleted() {
+    if (this.deleteAt !== null) {
+      throw new Error('Comment already deleted');
+    }
+    this.deleteAt = new Date();
+  }
+
   updateLikeCounter(oldLikeStatus: string, newLikeStatus: string) {
     if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
       this.likesInfo.likesCount--;
