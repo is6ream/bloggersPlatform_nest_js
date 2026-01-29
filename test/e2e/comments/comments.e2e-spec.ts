@@ -318,6 +318,9 @@ describe('Comments E2E Tests', () => {
   });
 
   describe('DELETE /comments/:id', () => {
+    beforeEach(async () => {
+      commentModel.deleteMany({});
+    });
     describe('Success cases', () => {
       it('should delete own comment - 204 No Content', async () => {
         // Создаем комментарий текущего пользователя
@@ -438,6 +441,7 @@ describe('Comments E2E Tests', () => {
     });
 
     describe('Not found errors', () => {
+      beforeEach;
       it('should return 404 for non-existent comment', async () => {
         const nonExistentId = '507f1f77bcf86cd799439011';
 

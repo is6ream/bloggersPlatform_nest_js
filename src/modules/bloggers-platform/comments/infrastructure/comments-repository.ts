@@ -20,7 +20,7 @@ export class CommentsRepository {
   async findOrNotFoundFail(id: string): Promise<CommentDocument> {
     const comment: CommentDocument | null =
       await this.CommentModel.findById(id);
-    if (!comment) {
+    if (!comment || comment.deleteAt !== null ) {
       throw new DomainException({ code: 1, message: 'Comment not found' });
     }
     return comment;
