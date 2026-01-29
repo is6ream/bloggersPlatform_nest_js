@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   Req,
   HttpCode,
+  Delete,
 } from '@nestjs/common';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
 import { CommentsQueryRepository } from '../infrastructure/comments-queryRepository';
@@ -20,12 +21,11 @@ import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorat
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 import { UpdateCommentLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
-import {
-  UserIdRequired,
-} from 'src/core/decorators/user-id.required.decorator';
+import { UserIdRequired } from 'src/core/decorators/user-id.required.decorator';
 import { CommentInputDto } from 'src/modules/bloggers-platform/comments/dto/comment-input.dto';
 import { UpdateCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/update-comment.usecase';
 import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
+import { DeleteCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/delete-comment.usecase';
 
 @Controller('comments')
 export class CommentsController {
@@ -70,5 +70,15 @@ export class CommentsController {
     return this.commandBus.execute(
       new UpdateCommentLikeStatusCommand(commentId, user.id, body.likeStatus),
     );
+  }
+
+  @Delete('/:id')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard)
+  async deleteComment(
+    @Param('id') commentId: string,
+    @UserIdRequired() userId?: string,
+  ): Promise<void> {
+    return this.commandBus.execute(new DeleteCommentCommand(commentId, userId));
   }
 }

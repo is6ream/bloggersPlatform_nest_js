@@ -289,6 +289,7 @@ describe('Comments E2E Tests', () => {
           password: 'testpassword',
         });
       authToken = loginResponse.body.accessToken;
+      console.log(authToken, 'auth token before comment created');
       //создали комментарий этим пользователем
       const comment = await commentModel.create({
         content: 'Original comment content',
@@ -307,6 +308,7 @@ describe('Comments E2E Tests', () => {
       const commentId = comment._id.toString();
       const url = `${COMMENTS_BASE}/${commentId}`;
       //обновили комментарий тем же пользователем
+      console.log(authToken, 'auth token before comment updated');
       await request(app.getHttpServer())
         .put(url)
         .set('Authorization', `Bearer ${authToken}`)
