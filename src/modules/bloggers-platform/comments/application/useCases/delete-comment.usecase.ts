@@ -8,7 +8,7 @@ import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes'
 export class DeleteCommentCommand {
   constructor(
     public commentId: string,
-    public userId: string,
+    public userId?: string,
   ) {}
 }
 

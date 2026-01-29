@@ -316,4 +316,212 @@ describe('Comments E2E Tests', () => {
         .expect(204);
     });
   });
+
+  describe('DELETE /comments/:id', () => {
+    describe('Success cases', () => {
+      it('should delete own comment - 204 No Content', async () => {
+        // Создаем комментарий текущего пользователя
+        const comment = await commentModel.create({
+          content: 'Comment to be deleted',
+          commentatorInfo: {
+            userId: testUserId,
+            userLogin: 'testuser',
+          },
+          likesInfo: {
+            likesCount: 0,
+            dislikesCount: 0,
+          },
+          postId: testPostId,
+        });
+
+        const commentUrl = `${COMMENTS_BASE}/${comment._id.toString()}`;
+
+        // Удаляем свой комментарий
+        await request(app.getHttpServer())
+          .delete(commentUrl)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(204);
+
+        // Проверяем, что комментарий помечен как удаленный (soft delete)
+        const deletedComment = await commentModel.findById(comment._id);
+        expect(deletedComment.deleteAt).not.toBeNull();
+        expect(deletedComment.deleteAt).toBeInstanceOf(Date);
+      });
+    });
+
+    describe('Authorization errors', () => {
+      it('should return 401 Unauthorized without token', async () => {
+        const comment = await commentModel.create({
+          content: 'Comment',
+          commentatorInfo: {
+            userId: testUserId,
+            userLogin: 'testuser',
+          },
+          likesInfo: { likesCount: 0, dislikesCount: 0 },
+          postId: testPostId,
+        });
+
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          // Нет Authorization header
+          .expect(401);
+      });
+
+      it('should return 401 Unauthorized with invalid token', async () => {
+        const comment = await commentModel.create({
+          content: 'Comment',
+          commentatorInfo: {
+            userId: testUserId,
+            userLogin: 'testuser',
+          },
+          likesInfo: { likesCount: 0, dislikesCount: 0 },
+          postId: testPostId,
+        });
+
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .set('Authorization', 'Bearer invalid_token_here')
+          .expect(401);
+      });
+    });
+
+    describe('Ownership errors', () => {
+      let otherUserToken: string;
+      let otherUserComment: any;
+
+      beforeAll(async () => {
+        // Создаем второго пользователя
+        const otherUser = await createTestUser(userModel, {
+          login: 'otheruser',
+          email: 'other@example.com',
+        });
+
+        // Логинимся вторым пользователем
+        const loginResponse = await request(app.getHttpServer())
+          .post('/hometask_15/api/auth/login')
+          .send({
+            loginOrEmail: 'otheruser',
+            password: 'testpassword',
+          });
+        otherUserToken = loginResponse.body.accessToken;
+      });
+
+      beforeEach(async () => {
+        // Второй пользователь создает комментарий
+        const otherUser = await userModel.findOne({ login: 'otheruser' });
+        otherUserComment = await commentModel.create({
+          content: 'Comment from other user',
+          commentatorInfo: {
+            userId: otherUser._id.toString(),
+            userLogin: 'otheruser',
+          },
+          likesInfo: { likesCount: 0, dislikesCount: 0 },
+          postId: testPostId,
+        });
+      });
+
+      it("should return 403 Forbidden when deleting someone else's comment", async () => {
+        // Первый пользователь пытается удалить чужой комментарий
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${otherUserComment._id.toString()}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(403);
+      });
+
+      it('should allow owner to delete their own comment', async () => {
+        // Владелец удаляет свой комментарий
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${otherUserComment._id.toString()}`)
+          .set('Authorization', `Bearer ${otherUserToken}`)
+          .expect(204);
+      });
+    });
+
+    describe('Not found errors', () => {
+      it('should return 404 for non-existent comment', async () => {
+        const nonExistentId = '507f1f77bcf86cd799439011';
+
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${nonExistentId}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(404);
+      });
+
+      it('should return 404 for already deleted comment', async () => {
+        const comment = await commentModel.create({
+          content: 'Already deleted comment',
+          commentatorInfo: {
+            userId: testUserId,
+            userLogin: 'testuser',
+          },
+          likesInfo: { likesCount: 0, dislikesCount: 0 },
+          postId: testPostId,
+          deleteAt: new Date(), // уже удален
+        });
+
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(404);
+      });
+
+      it('should return 404 for invalid comment ID format', async () => {
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/invalid-id-format`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(404); // или 400, зависит от валидации
+      });
+    });
+
+    describe('Edge cases', () => {
+      it('should handle deleting comment with likes', async () => {
+        // Создаем комментарий с лайками
+        const comment = await commentModel.create({
+          content: 'Popular comment',
+          commentatorInfo: {
+            userId: testUserId,
+            userLogin: 'testuser',
+          },
+          likesInfo: {
+            likesCount: 10,
+            dislikesCount: 3,
+          },
+          postId: testPostId,
+        });
+
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(204);
+
+        // Проверяем что удалился
+        const deletedComment = await commentModel.findById(comment._id);
+        expect(deletedComment.deleteAt).not.toBeNull();
+      });
+
+      it('should not delete comment twice', async () => {
+        const comment = await commentModel.create({
+          content: 'Comment for double delete',
+          commentatorInfo: {
+            userId: testUserId,
+            userLogin: 'testuser',
+          },
+          likesInfo: { likesCount: 0, dislikesCount: 0 },
+          postId: testPostId,
+        });
+
+        // Первое удаление - успешно
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(204);
+
+        // Второе удаление - 404 (уже удален)
+        await request(app.getHttpServer())
+          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(404);
+      });
+    });
+  });
 });
