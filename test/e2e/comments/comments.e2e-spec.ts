@@ -469,11 +469,11 @@ describe('Comments E2E Tests', () => {
           .expect(404);
       });
 
-      it('should return 404 for invalid comment ID format', async () => {
+      it('should return 400 for invalid comment ID format', async () => {
         await request(app.getHttpServer())
           .delete(`${COMMENTS_BASE}/invalid-id-format`)
           .set('Authorization', `Bearer ${authToken}`)
-          .expect(404); // или 400, зависит от валидации
+          .expect(400);
       });
     });
 
