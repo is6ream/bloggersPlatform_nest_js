@@ -1,48 +1,41 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { PostEntity } from '../domain/postEntity';
-import { PostModelType } from '../domain/postEntity';
-import { GetPostsQueryParams } from '../api/query/get-posts-query-params';
-import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
-import { PostPaginatedViewDto } from '../api/paginated/paginated.post.view-dto';
-import { PostViewDto } from '../dto/output/postViewDto';
-import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
-import { PaginatedPostsDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/paginated-post.dto';
+import { Model, Types } from 'mongoose';
+import {
+  PostEntity,
+  PostDocument,
+} from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import {
   Like,
-  LikeModelType,
+  LikeDocument,
 } from 'src/modules/bloggers-platform/likes/domain/like-entity';
+import { PaginatedPostsDto} from 'src/modules/bloggers-platform/posts/infrastructure/dto/paginated-post.dto';
 import { PostQueryDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-query.dto';
 
 @Injectable()
-export class PostQueryRepository {
+export class PostsQueryRepository {
   constructor(
-    @InjectModel(PostEntity.name)
-    private postModel: PostModelType,
-    @InjectModel(Like.name)
-    private likeModel: LikeModelType,
-    private blogsRepository: BlogsRepository,
+    @InjectModel(PostEntity.name) private postModel: Model<PostDocument>,
+    @InjectModel(Like.name) private likeModel: Model<LikeDocument>,
   ) {}
 
-  //todo закинул нейронке просьбу прописать метод возврата всех постов
-  async findAll(
+  async findAllWithLikes(
     queryDto: PostQueryDto,
     userId?: string,
   ): Promise<PaginatedPostsDto> {
-    const { pageNumber, pageSize, sortBy, sortDirection } =
+    const { pageNumber, pageSize, sortBy, sortDirection, searchPostNameTerm } =
       queryDto;
 
-    // 1. Создаем фильтр
-    const filter: any = { deleteAt: null }; // Только неудаленные посты
-
+    // 1. Создаем фильтр для постов
+    const filter: any = { deleteAt: null };
     if (searchPostNameTerm) {
       filter.title = { $regex: searchPostNameTerm, $options: 'i' };
     }
 
-    // 2. Вычисляем пагинацию
+    // 2. Рассчитываем пагинацию
     const skip = (pageNumber - 1) * pageSize;
 
-    // 3. Получаем посты с пагинацией
+    // 3. Получаем посты
     const posts = await this.postModel
       .find(filter)
       .sort({ [sortBy]: sortDirection === 'asc' ? 1 : -1 })
@@ -51,67 +44,203 @@ export class PostQueryRepository {
       .lean()
       .exec();
 
+    // 4. Если постов нет - возвращаем пустой результат
     if (!posts.length) {
-      return this.createEmptyResponse(pageNumber, pageSize);
+      return {
+        pagesCount: 0,
+        page: pageNumber,
+        pageSize,
+        totalCount: 0,
+        items: [],
+      };
     }
 
-    // 4. Собираем ID постов
+    // 5. Собираем ID постов для агрегации
     const postIds = posts.map((post) => post._id.toString());
 
-    // 5. Получаем агрегированные данные о лайках
+    // 6. Получаем агрегированные данные о лайках
     const likesAggregation = await this.getLikesAggregation(postIds, userId);
 
-    // 6. Преобразуем в мапу для быстрого доступа
-    const likesMap = this.createLikesMap(likesAggregation);
+    // 7. Создаем мапу лайков для быстрого доступа
+    const likesMap = likesAggregation.reduce((acc, item) => {
+      acc[item.postId] = {
+        userReaction: item.userReaction || 'None',
+        newestLikes: item.newestLikes || [],
+        likesCount: item.likesCount || 0,
+        dislikesCount: item.dislikesCount || 0,
+      };
+      return acc;
+    }, {});
 
-    // 7. Преобразуем посты в DTO
-    const items = await Promise.all(
-      posts.map(async (post) => this.mapToPostViewDto(post, likesMap, userId)),
-    );
+    // 8. Преобразуем посты в нужный формат
+    const items = posts.map((post) => {
+      const postId = post._id.toString();
+      const postLikes = likesMap[postId] || {
+        userReaction: 'None',
+        newestLikes: [],
+        likesCount: 0,
+        dislikesCount: 0,
+      };
 
-    // 8. Получаем общее количество
+      // Получаем 3 последних лайка, отсортированных по дате
+      const newestLikes = [...postLikes.newestLikes]
+        .sort(
+          (a, b) =>
+            new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+        )
+        .slice(0, 3);
+
+      return {
+        id: postId,
+        title: post.title,
+        shortDescription: post.shortDescription,
+        content: post.content,
+        blogId: post.blogId,
+        blogName: post.blogName,
+        createdAt: post.createdAt,
+        extendedLikesInfo: {
+          likesCount: postLikes.likesCount,
+          dislikesCount: postLikes.dislikesCount,
+          myStatus: userId ? postLikes.userReaction : 'None',
+          newestLikes: newestLikes.map((like) => ({
+            addedAt: like.addedAt,
+            userId: like.userId,
+            login: like.login || `user${like.userId.slice(0, 4)}`, // заглушка если нет логина
+          })),
+        },
+      };
+    });
+
+    // 9. Получаем общее количество постов
     const totalCount = await this.postModel.countDocuments(filter);
 
-    // 9. Рассчитываем pagesCount
+    // 10. Рассчитываем количество страниц
     const pagesCount = Math.ceil(totalCount / pageSize);
 
-    return new PaginatedPostsDto(
+    return {
       pagesCount,
-      pageNumber,
+      page: pageNumber,
       pageSize,
       totalCount,
       items,
-    );
+    };
   }
 
-  async getAllPostsForBlog(
-    id: string,
-    query: GetPostsQueryParams,
-  ): Promise<PaginatedViewDto<PostViewDto>> {
-    const skip = query.calculateSkip();
+  private async getLikesAggregation(
+    postIds: string[],
+    userId?: string,
+  ): Promise<any[]> {
+    const pipeline: any[] = [
+      {
+        $match: {
+          parentId: { $in: postIds },
+          parentType: 'post',
+        },
+      },
+      {
+        $facet: {
+          // Статистика по лайкам/дизлайкам
+          stats: [
+            {
+              $group: {
+                _id: '$parentId',
+                likesCount: {
+                  $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
+                },
+                dislikesCount: {
+                  $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
+                },
+              },
+            },
+          ],
+          // Последние лайки
+          newestLikes: [
+            {
+              $match: {
+                status: 'Like',
+              },
+            },
+            {
+              $sort: { createdAt: -1 },
+            },
+            {
+              $group: {
+                _id: '$parentId',
+                likes: { $push: '$$ROOT' },
+              },
+            },
+            {
+              $project: {
+                newestLikes: { $slice: ['$likes', 3] },
+              },
+            },
+          ],
+          // Реакция текущего пользователя
+          ...(userId
+            ? {
+                userReaction: [
+                  {
+                    $match: {
+                      userId: userId,
+                    },
+                  },
+                  {
+                    $group: {
+                      _id: '$parentId',
+                      userReaction: { $first: '$status' },
+                    },
+                  },
+                ],
+              }
+            : {}),
+        },
+      },
+      {
+        $project: {
+          combined: {
+            $concatArrays: [
+              '$stats',
+              '$newestLikes',
+              ...(userId ? ['$userReaction'] : []),
+            ],
+          },
+        },
+      },
+      {
+        $unwind: '$combined',
+      },
+      {
+        $group: {
+          _id: '$combined._id',
+          data: { $mergeObjects: '$combined' },
+        },
+      },
+      {
+        $project: {
+          postId: '$_id',
+          likesCount: { $ifNull: ['$data.likesCount', 0] },
+          dislikesCount: { $ifNull: ['$data.dislikesCount', 0] },
+          newestLikes: {
+            $ifNull: [
+              {
+                $map: {
+                  input: '$data.newestLikes',
+                  as: 'like',
+                  in: {
+                    addedAt: '$$like.createdAt',
+                    userId: '$$like.userId',
+                    login: '$$like.login', // добавьте логин через $lookup если нужно
+                  },
+                },
+              },
+              [],
+            ],
+          },
+          userReaction: { $ifNull: ['$data.userReaction', 'None'] },
+        },
+      },
+    ];
 
-    await this.blogsRepository.checkBlogExist(id);
-
-    const filter: Record<string, string> = {
-      blogId: id,
-    };
-
-    const [posts, totalCount] = await Promise.all([
-      this.PostModel.find(filter)
-        .skip(skip)
-        .limit(query.pageSize)
-        .sort({ createdAt: query.sortDirection }),
-
-      this.PostModel.countDocuments(filter),
-    ]);
-
-    const result = PostPaginatedViewDto.mapToView({
-      items: posts.map((p) => PostViewDto.mapToView(p)),
-      page: query.pageNumber,
-      size: query.pageSize,
-      totalCount: totalCount,
-    });
-
-    return result;
+    return await this.likeModel.aggregate(pipeline).exec();
   }
 }

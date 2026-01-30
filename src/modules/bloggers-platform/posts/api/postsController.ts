@@ -19,7 +19,6 @@ import {
 } from '@nestjs/common';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 import { PostViewModel } from './model/output/postViewModel';
-import { PostQueryRepository } from '../infrastructure/postQueryRepository';
 import { UpdatePostInputDto } from '../dto/input/updatePostInputDto';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
 import { CreatePostCommand } from '../application/useCases/create-post.usecase';
@@ -37,11 +36,12 @@ import { CreateCommentCommand } from 'src/modules/bloggers-platform/comments/app
 import { GetPostsQueryParams } from 'src/modules/bloggers-platform/posts/api/query/get-posts-query-params';
 import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 import { PostQueryDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-query.dto';
+import { PostsQueryRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postQueryRepository';
 
 @Controller('posts')
 export class PostsController {
   constructor(
-    private postQueryRepository: PostQueryRepository,
+    private postQueryRepository: PostsQueryRepository,
     private commandBus: CommandBus,
     private commentsQueryRepository: CommentsQueryRepository,
   ) {}
@@ -88,25 +88,28 @@ export class PostsController {
     );
   }
 
-  //todo прописать метод возврата всех постов
   @Get()
   @UseInterceptors(UserExtractorInterceptor)
   async getAllPosts(
     @Query() query: GetPostsQueryParams,
     @UserIdOptional() userId: string,
-  ): Promise<PostViewModel[]> {
-    return this.postQueryRepository.getAll(query);
+  ) {
+    return this.postQueryRepository.findAllWithLikes(query);
   }
 
   @UseGuards(BasicAuthGuard)
   @Post()
   async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
     const postId = await this.commandBus.execute(new CreatePostCommand(body));
+    //@ts-ignore
+
     return this.postQueryRepository.getByIdOrNotFoundFail(postId);
   }
 
   @Get(':id')
   async getById(@Param('id') id: string): Promise<PostViewModel> {
+    //@ts-ignore
+
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
 

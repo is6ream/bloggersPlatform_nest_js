@@ -6,7 +6,7 @@ import { BlogsController } from './blogs/api/blogs-controller';
 import { BlogsQueryRepository } from './blogs/infrastructure/blogsQueryRepository';
 import { BlogsRepository } from './blogs/infrastructure/blogsRepository';
 import { BlogsService } from './blogs/application/blogs-service';
-import { PostQueryRepository } from './posts/infrastructure/postQueryRepository';
+import { PostsQueryRepository } from './posts/infrastructure/postQueryRepository';
 import { PostRepository } from './posts/infrastructure/postRepository';
 import { PostsService } from './posts/application/posts-service';
 import { PostsController } from './posts/api/postsController';
@@ -38,7 +38,7 @@ import { JwtService } from '@nestjs/jwt';
     BlogsQueryRepository,
     BlogsRepository,
     BlogsService,
-    PostQueryRepository,
+    PostsQueryRepository,
     PostRepository,
     PostsService,
     JwtService,

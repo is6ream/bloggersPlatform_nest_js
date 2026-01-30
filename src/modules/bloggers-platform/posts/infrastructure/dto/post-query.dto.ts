@@ -1,6 +1,7 @@
-export class PostQueryDto {
-  pageNumber: number = 1;
-  pageSize: number = 10;
-  sortBy: string = 'createdAt';
-  sortDirection: 'asc' | 'desc' = 'desc';
+export interface PostQueryDto {
+  pageNumber: number;
+  pageSize: number;
+  sortBy: string;
+  sortDirection: 'asc' | 'desc';
+  searchPostNameTerm?: string;
 }
