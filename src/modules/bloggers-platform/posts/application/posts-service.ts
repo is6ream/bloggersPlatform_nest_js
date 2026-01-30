@@ -6,7 +6,7 @@ import { BlogDocument } from '../../blogs/domain/blogEntity';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
 import { PostRepository } from '../infrastructure/postRepository';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
-import { UpdatePostDto } from '../domain/dto/updatePostDto';
+import { UpdatePostDto } from '../domain/dto/input/updatePostDto';
 import { CreatePostForBlogInputDto } from '../../blogs/dto/input/createPostForBlogInputDto';
 
 @Injectable()

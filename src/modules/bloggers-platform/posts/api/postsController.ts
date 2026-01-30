@@ -17,8 +17,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { GetPostsQueryParams } from './query/get-posts-query-params';
-import { PostPaginatedViewDto } from './paginated/paginated.post.view-dto';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 import { PostViewModel } from './model/output/postViewModel';
 import { PostQueryRepository } from '../infrastructure/postQueryRepository';
@@ -34,11 +32,11 @@ import { LikeStatus } from '../../likes/types/like-status';
 import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { CommentViewModel } from './model/output/commentViewModel';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
-import { Request } from 'express';
-import { LikeStatusInputDto } from 'src/modules/bloggers-platform/likes/types/input/like-status.input.dto';
-import { UpdateCommentLikeStatusCommand } from 'src/modules/bloggers-platform/comments/application/useCases/update-like-status.usecase';
 import { CreateCommentInputDto } from 'src/modules/bloggers-platform/posts/api/model/input/create-comment.input.dto';
 import { CreateCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/create-comment.usecase';
+import { GetPostsQueryParams } from 'src/modules/bloggers-platform/posts/api/query/get-posts-query-params';
+import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
+import { PostQueryDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-query.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -60,25 +58,6 @@ export class PostsController {
     );
   }
 
-  @Get()
-  async getAll(
-    @Query() query: GetPostsQueryParams,
-  ): Promise<PostPaginatedViewDto> {
-    return this.postQueryRepository.getAll(query);
-  }
-
-  @UseGuards(BasicAuthGuard)
-  @Post()
-  async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
-    const postId = await this.commandBus.execute(new CreatePostCommand(body));
-    return this.postQueryRepository.getByIdOrNotFoundFail(postId);
-  }
-
-  @Get(':id')
-  async getById(@Param('id') id: string): Promise<PostViewModel> {
-    return this.postQueryRepository.getByIdOrNotFoundFail(id);
-  }
-
   @Get(':id/comments')
   @UseInterceptors(UserExtractorInterceptor)
   async getCommentByPostId(
@@ -92,6 +71,7 @@ export class PostsController {
       user.id,
     );
   }
+
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
   async createComment(
@@ -99,7 +79,6 @@ export class PostsController {
     @Body() content: CreateCommentInputDto,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<CommentViewModel> {
-    console.log('comment create API check');
     const commentId = await this.commandBus.execute(
       new CreateCommentCommand(postId, user, content),
     );
@@ -107,6 +86,28 @@ export class PostsController {
       commentId,
       user.id,
     );
+  }
+
+  //todo прописать метод возврата всех постов
+  @Get()
+  @UseInterceptors(UserExtractorInterceptor)
+  async getAllPosts(
+    @Query() query: GetPostsQueryParams,
+    @UserIdOptional() userId: string,
+  ): Promise<PostViewModel[]> {
+    return this.postQueryRepository.getAll(query);
+  }
+
+  @UseGuards(BasicAuthGuard)
+  @Post()
+  async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
+    const postId = await this.commandBus.execute(new CreatePostCommand(body));
+    return this.postQueryRepository.getByIdOrNotFoundFail(postId);
+  }
+
+  @Get(':id')
+  async getById(@Param('id') id: string): Promise<PostViewModel> {
+    return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
 
   @UseGuards(BasicAuthGuard)

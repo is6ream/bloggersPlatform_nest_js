@@ -32,15 +32,16 @@ export class CommentsController {
     private commandBus: CommandBus,
   ) {}
 
-  @Get(':id')
-  @UseInterceptors(UserExtractorInterceptor)
-  async getById(
+  @Put(':id/like-status')
+  @HttpCode(204)
+  @UseGuards(JwtAuthGuard)
+  async updateLikeStatus(
     @Param('id') commentId: string,
-    @UserIdOptional() userId?: string,
-  ): Promise<CommentViewModel> {
-    return this.commentsQueryRepository.getByIdOrNotFoundFail(
-      commentId,
-      userId,
+    @Body() body: LikeStatusInputDto,
+    @ExtractUserFromRequest() user: UserContextDto,
+  ): Promise<void> {
+    return this.commandBus.execute(
+      new UpdateCommentLikeStatusCommand(commentId, user.id, body.likeStatus),
     );
   }
 
@@ -57,19 +58,6 @@ export class CommentsController {
     );
   }
 
-  @Put(':id/like-status')
-  @HttpCode(204)
-  @UseGuards(JwtAuthGuard)
-  async updateLikeStatus(
-    @Param('id') commentId: string,
-    @Body() body: LikeStatusInputDto,
-    @ExtractUserFromRequest() user: UserContextDto,
-  ): Promise<void> {
-    return this.commandBus.execute(
-      new UpdateCommentLikeStatusCommand(commentId, user.id, body.likeStatus),
-    );
-  }
-
   @Delete('/:id')
   @HttpCode(204)
   @UseGuards(JwtAuthGuard)
@@ -78,5 +66,17 @@ export class CommentsController {
     @UserIdRequired() userId?: string,
   ): Promise<void> {
     return this.commandBus.execute(new DeleteCommentCommand(commentId, userId));
+  }
+
+  @Get(':id')
+  @UseInterceptors(UserExtractorInterceptor)
+  async getById(
+    @Param('id') commentId: string,
+    @UserIdOptional() userId?: string,
+  ): Promise<CommentViewModel> {
+    return this.commentsQueryRepository.getByIdOrNotFoundFail(
+      commentId,
+      userId,
+    );
   }
 }

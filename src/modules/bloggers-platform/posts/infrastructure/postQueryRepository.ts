@@ -1,58 +1,87 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { PostEntity } from '../domain/postEntity';
-import { PostDocument, PostModelType } from '../domain/postEntity';
+import { PostModelType } from '../domain/postEntity';
 import { GetPostsQueryParams } from '../api/query/get-posts-query-params';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { PostPaginatedViewDto } from '../api/paginated/paginated.post.view-dto';
 import { PostViewDto } from '../dto/output/postViewDto';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
-import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { PaginatedPostsDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/paginated-post.dto';
+import {
+  Like,
+  LikeModelType,
+} from 'src/modules/bloggers-platform/likes/domain/like-entity';
+import { PostQueryDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-query.dto';
 
 @Injectable()
 export class PostQueryRepository {
   constructor(
     @InjectModel(PostEntity.name)
-    private PostModel: PostModelType,
+    private postModel: PostModelType,
+    @InjectModel(Like.name)
+    private likeModel: LikeModelType,
     private blogsRepository: BlogsRepository,
   ) {}
 
-  async getByIdOrNotFoundFail(id: string): Promise<PostViewDto> {
-    const post: PostDocument | null = await this.PostModel.findOne({
-      _id: id,
-      deleteAt: null,
-    });
+  //todo закинул нейронке просьбу прописать метод возврата всех постов
+  async findAll(
+    queryDto: PostQueryDto,
+    userId?: string,
+  ): Promise<PaginatedPostsDto> {
+    const { pageNumber, pageSize, sortBy, sortDirection } =
+      queryDto;
 
-    if (!post) {
-      throw new DomainException({ code: 1, message: 'Post not found' });
+    // 1. Создаем фильтр
+    const filter: any = { deleteAt: null }; // Только неудаленные посты
+
+    if (searchPostNameTerm) {
+      filter.title = { $regex: searchPostNameTerm, $options: 'i' };
     }
-    return PostViewDto.mapToView(post);
-  }
 
-  async getAll(
-    query: GetPostsQueryParams,
-  ): Promise<PaginatedViewDto<PostViewDto>> {
-    const skip = query.calculateSkip();
+    // 2. Вычисляем пагинацию
+    const skip = (pageNumber - 1) * pageSize;
 
-    const filter: Record<string, any> = {};
+    // 3. Получаем посты с пагинацией
+    const posts = await this.postModel
+      .find(filter)
+      .sort({ [sortBy]: sortDirection === 'asc' ? 1 : -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .lean()
+      .exec();
 
-    const [posts, totalCount] = await Promise.all([
-      this.PostModel.find(filter)
-        .skip(skip)
-        .limit(query.pageSize)
-        .sort({ [query.sortBy]: query.sortDirection }),
+    if (!posts.length) {
+      return this.createEmptyResponse(pageNumber, pageSize);
+    }
 
-      this.PostModel.countDocuments(filter),
-    ]);
+    // 4. Собираем ID постов
+    const postIds = posts.map((post) => post._id.toString());
 
-    const result = PostPaginatedViewDto.mapToView({
-      items: posts.map((p) => PostViewDto.mapToView(p)),
-      page: query.pageNumber,
-      size: query.pageSize,
-      totalCount: totalCount,
-    });
+    // 5. Получаем агрегированные данные о лайках
+    const likesAggregation = await this.getLikesAggregation(postIds, userId);
 
-    return result;
+    // 6. Преобразуем в мапу для быстрого доступа
+    const likesMap = this.createLikesMap(likesAggregation);
+
+    // 7. Преобразуем посты в DTO
+    const items = await Promise.all(
+      posts.map(async (post) => this.mapToPostViewDto(post, likesMap, userId)),
+    );
+
+    // 8. Получаем общее количество
+    const totalCount = await this.postModel.countDocuments(filter);
+
+    // 9. Рассчитываем pagesCount
+    const pagesCount = Math.ceil(totalCount / pageSize);
+
+    return new PaginatedPostsDto(
+      pagesCount,
+      pageNumber,
+      pageSize,
+      totalCount,
+      items,
+    );
   }
 
   async getAllPostsForBlog(
