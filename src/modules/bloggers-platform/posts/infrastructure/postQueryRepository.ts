@@ -11,8 +11,11 @@ import {
 } from 'src/modules/bloggers-platform/likes/domain/like-entity';
 import { PaginatedPostsDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/paginated-post.dto';
 import { PostQueryDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-query.dto';
+import { PostViewDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-view.dto';
+import { ExtendedLikesInfoDto } from 'src/modules/bloggers-platform/likes/types/output/extended-likes.dto';
+import { NewestLikeDto } from 'src/modules/bloggers-platform/likes/types/output/newest-likes.dto';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
 
-//ии выдавала полную чушь 
 @Injectable()
 export class PostsQueryRepository {
   constructor(
@@ -20,41 +23,115 @@ export class PostsQueryRepository {
     @InjectModel(Like.name) private likeModel: Model<LikeDocument>,
   ) {}
 
-  // ==================== ПУБЛИЧНЫЕ МЕТОДЫ ====================
+  async getCreatedPost(id: string): Promise<PostViewDto> {
+    const post: PostDocument | null = await this.postModel.findById(id);
 
-  /**
-   * Получить все посты с пагинацией и информацией о лайках
-   */
+    if (!post) {
+      throw new DomainException({ code: 1, message: 'Post not found' });
+    }
+    return {
+      id: post._id.toString(),
+      title: post.title,
+      shortDescription: post.shortDescription,
+      content: post.content,
+      blogId: post.blogId,
+      blogName: post.blogName,
+      createdAt: post.createdAt,
+      extendedLikesInfo: {
+        likesCount: post.likesInfo.likesCount,
+        dislikesCount: post.likesInfo.dislikesCount,
+        myStatus: 'None',
+        newestLikes: [],
+      },
+    };
+  }
+
   async findAllWithLikes(
     queryDto: PostQueryDto,
     userId?: string,
   ): Promise<PaginatedPostsDto> {
-    const { pageNumber, pageSize, sortBy, sortDirection } =
+    const { pageNumber, pageSize, sortBy, sortDirection, searchPostNameTerm } =
       queryDto;
 
-    // 1. Создаем фильтр и получаем посты
-    const { posts, totalCount } = await this.getPostsWithPagination(
-      queryDto,
-    );
-
-    // 2. Если постов нет - возвращаем пустой результат
-    if (!posts.length) {
-      return this.createEmptyPaginatedResponse(pageNumber, pageSize);
+    // 1. Создаем фильтр для постов
+    const filter: any = { deleteAt: null };
+    if (searchPostNameTerm) {
+      filter.title = { $regex: searchPostNameTerm, $options: 'i' };
     }
 
-    // 3. Получаем агрегированные данные о лайках
+    // 2. Рассчитываем пагинацию
+    const skip = (pageNumber - 1) * pageSize;
+
+    // 3. Получаем посты
+    const posts = await this.postModel
+      .find(filter)
+      .sort({ [sortBy]: sortDirection === 'asc' ? 1 : -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .lean()
+      .exec();
+
+    // 4. Если постов нет - возвращаем пустой результат
+    if (!posts.length) {
+      return new PaginatedPostsDto(0, pageNumber, pageSize, 0, []);
+    }
+
+    // 5. Собираем ID постов для агрегации
     const postIds = posts.map((post) => post._id.toString());
+
+    // 6. Получаем агрегированные данные о лайках
     const likesAggregation = await this.getLikesAggregation(postIds, userId);
 
-    // 4. Создаем мапу лайков для быстрого доступа
+    // 7. Создаем мапу лайков для быстрого доступа
     const likesMap = this.createLikesMap(likesAggregation);
 
-    // 5. Преобразуем посты в DTO
-    const items = posts.map((post) =>
-      this.mapToPostViewDto(post, likesMap, userId),
-    );
+    // 8. Преобразуем посты в DTO
+    const items: PostViewDto[] = posts.map((post) => {
+      const postId = post._id.toString();
+      const postLikes = likesMap[postId] || {
+        userReaction: 'None',
+        newestLikes: [],
+        likesCount: 0,
+        dislikesCount: 0,
+      };
 
-    // 6. Рассчитываем количество страниц
+      // Получаем 3 последних лайка, отсортированных по дате
+      const newestLikes = [...postLikes.newestLikes]
+        .sort(
+          (a, b) =>
+            new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+        )
+        .slice(0, 3)
+        .map(
+          (like) =>
+            new NewestLikeDto(
+              like.addedAt,
+              like.userId,
+              like.login || `user${like.userId.slice(0, 4)}`,
+            ),
+        );
+
+      return new PostViewDto(
+        postId,
+        post.title,
+        post.shortDescription,
+        post.content,
+        post.blogId,
+        post.blogName,
+        post.createdAt,
+        new ExtendedLikesInfoDto(
+          postLikes.likesCount,
+          postLikes.dislikesCount,
+          userId ? postLikes.userReaction : 'None',
+          newestLikes,
+        ),
+      );
+    });
+
+    // 9. Получаем общее количество постов
+    const totalCount = await this.postModel.countDocuments(filter);
+
+    // 10. Рассчитываем количество страниц
     const pagesCount = Math.ceil(totalCount / pageSize);
 
     return new PaginatedPostsDto(
@@ -65,306 +142,132 @@ export class PostsQueryRepository {
       items,
     );
   }
-
-  /**
-   * Получить пост по ID с информацией о лайках
-   * @throws NotFoundException если пост не найден
-   */
-  async findByIdOrNotFoundFail(
-    id: string,
-    userId?: string,
-  ): Promise<PostViewDto> {
-    // 1. Валидация ID
-    if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException(`Post with id ${id} not found`);
-    }
-
-    // 2. Поиск поста
-    const post = await this.postModel
-      .findOne({
-        _id: new Types.ObjectId(id),
-        deleteAt: null,
-      })
-      .lean()
-      .exec();
-
-    if (!post) {
-      throw new NotFoundException(`Post with id ${id} not found`);
-    }
-
-    // 3. Получаем агрегированные данные о лайках для одного поста
-    const likesAggregation = await this.getLikesForSinglePost(id, userId);
-    const postLikes = likesAggregation[0] || {
-      userReaction: 'None',
-      newestLikes: [],
-      likesCount: 0,
-      dislikesCount: 0,
-    };
-
-    // 4. Формируем DTO
-    return this.mapToPostViewDto(post, { [id]: postLikes }, userId);
-  }
-
-  // ==================== ПРИВАТНЫЕ ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
-
-  /**
-   * Получить посты с пагинацией
-   */
-  private async getPostsWithPagination(
-    queryDto: PostQueryDto,
-  ): Promise<{ posts: any[]; totalCount: number }> {
-    const { pageNumber, pageSize, sortBy, sortDirection } = queryDto;
-    const skip = (pageNumber - 1) * pageSize;
-
-    // Создаем фильтр
-    const filter: any = { deleteAt: null };
-
-    // Параллельно получаем посты и общее количество
-    const [posts, totalCount] = await Promise.all([
-      this.postModel
-        .find(filter)
-        .sort({ [sortBy]: sortDirection === 'asc' ? 1 : -1 })
-        .skip(skip)
-        .limit(pageSize)
-        .lean()
-        .exec(),
-      this.postModel.countDocuments(filter),
-    ]);
-
-    return { posts, totalCount };
-  }
-
-  /**
-   * Агрегация лайков для нескольких постов
-   */
+  //
+  // async findByIdOrNotFoundFail(
+  //   id: string,
+  //   userId?: string,
+  // ): Promise<PostViewDto> {
+  //   // Валидация ID
+  //   if (!Types.ObjectId.isValid(id)) {
+  //     throw new NotFoundException(`Post with id ${id} not found`);
+  //   }
+  //
+  //   // Поиск поста
+  //   const post = await this.postModel
+  //     .findOne({
+  //       _id: new Types.ObjectId(id),
+  //       deleteAt: null,
+  //     })
+  //     .lean()
+  //     .exec();
+  //
+  //   if (!post) {
+  //     throw new NotFoundException(`Post with id ${id} not found`);
+  //   }
+  //
+  //   // Получаем агрегированные данные о лайках для одного поста
+  //   const likesAggregation = await this.getLikesForSinglePost(id, userId);
+  //   const postLikes = likesAggregation[0] || {
+  //     userReaction: 'None',
+  //     newestLikes: [],
+  //     likesCount: 0,
+  //     dislikesCount: 0,
+  //   };
+  //
+  //   // Формируем newestLikes
+  //   const newestLikes = [...postLikes.newestLikes]
+  //     .sort(
+  //       (a, b) =>
+  //         new Date(b.addedAt || b.createdAt).getTime() -
+  //         new Date(a.addedAt || a.createdAt).getTime(),
+  //     )
+  //     .slice(0, 3)
+  //     .map(
+  //       (like) =>
+  //         new NewestLikeDto(
+  //           like.addedAt || like.createdAt,
+  //           like.userId,
+  //           like.login || `user${like.userId?.slice(0, 4) || 'unknown'}`,
+  //         ),
+  //     );
+  //
+  //   // Возвращаем DTO
+  //   return new PostViewDto(
+  //     post._id.toString(),
+  //     post.title,
+  //     post.shortDescription,
+  //     post.content,
+  //     post.blogId,
+  //     post.blogName,
+  //     post.createdAt,
+  //     new ExtendedLikesInfoDto(
+  //       postLikes.likesCount,
+  //       postLikes.dislikesCount,
+  //       userId ? postLikes.userReaction : 'None',
+  //       newestLikes,
+  //     ),
+  //   );
+  // }
   private async getLikesAggregation(
     postIds: string[],
     userId?: string,
-  ): Promise<any[]> {
-    const pipeline: any[] = [
-      {
-        $match: {
-          parentId: { $in: postIds },
-          parentType: 'post',
-        },
+  ): Promise<LikesAggregationResult[]> {
+    const pipeline: any[] = [];
+
+    // 1. Фильтрация по postIds и типу "post"
+    pipeline.push({
+      $match: {
+        parentId: { $in: postIds },
+        parentType: 'post',
       },
-    ];
+    });
 
-    // Если есть userId, добавляем логику для его реакции
-    if (userId) {
-      pipeline.push(
-        {
-          $facet: {
-            stats: [
-              {
-                $group: {
-                  _id: '$parentId',
-                  likesCount: {
-                    $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
-                  },
-                  dislikesCount: {
-                    $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
-                  },
-                },
-              },
-            ],
-            newestLikes: [
-              {
-                $match: {
-                  status: 'Like',
-                },
-              },
-              {
-                $sort: { createdAt: -1 },
-              },
-              {
-                $group: {
-                  _id: '$parentId',
-                  likes: { $push: '$$ROOT' },
-                },
-              },
-              {
-                $project: {
-                  newestLikes: { $slice: ['$likes', 3] },
-                },
-              },
-            ],
-            userReaction: [
-              {
-                $match: {
-                  userId: userId,
-                },
-              },
-              {
-                $group: {
-                  _id: '$parentId',
-                  userReaction: { $first: '$status' },
-                },
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            combined: {
-              $concatArrays: ['$stats', '$newestLikes', '$userReaction'],
-            },
-          },
-        },
-        {
-          $unwind: '$combined',
-        },
-        {
-          $group: {
-            _id: '$combined._id',
-            data: { $mergeObjects: '$combined' },
-          },
-        },
-        {
-          $project: {
-            postId: '$_id',
-            likesCount: { $ifNull: ['$data.likesCount', 0] },
-            dislikesCount: { $ifNull: ['$data.dislikesCount', 0] },
-            newestLikes: {
-              $ifNull: [
-                {
-                  $map: {
-                    input: '$data.newestLikes',
-                    as: 'like',
-                    in: {
-                      addedAt: '$$like.createdAt',
-                      userId: '$$like.userId',
-                      // Здесь можно добавить $lookup для получения логина
-                    },
-                  },
-                },
-                [],
-              ],
-            },
-            userReaction: { $ifNull: ['$data.userReaction', 'None'] },
-          },
-        },
-      );
-    } else {
-      // Без userId - только статистика и последние лайки
-      pipeline.push(
-        {
-          $facet: {
-            stats: [
-              {
-                $group: {
-                  _id: '$parentId',
-                  likesCount: {
-                    $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
-                  },
-                  dislikesCount: {
-                    $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
-                  },
-                },
-              },
-            ],
-            newestLikes: [
-              {
-                $match: {
-                  status: 'Like',
-                },
-              },
-              {
-                $sort: { createdAt: -1 },
-              },
-              {
-                $group: {
-                  _id: '$parentId',
-                  likes: { $push: '$$ROOT' },
-                },
-              },
-              {
-                $project: {
-                  newestLikes: { $slice: ['$likes', 3] },
-                },
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            combined: {
-              $concatArrays: ['$stats', '$newestLikes'],
-            },
-          },
-        },
-        {
-          $unwind: '$combined',
-        },
-        {
-          $group: {
-            _id: '$combined._id',
-            data: { $mergeObjects: '$combined' },
-          },
-        },
-        {
-          $project: {
-            postId: '$_id',
-            likesCount: { $ifNull: ['$data.likesCount', 0] },
-            dislikesCount: { $ifNull: ['$data.dislikesCount', 0] },
-            newestLikes: {
-              $ifNull: [
-                {
-                  $map: {
-                    input: '$data.newestLikes',
-                    as: 'like',
-                    in: {
-                      addedAt: '$$like.createdAt',
-                      userId: '$$like.userId',
-                    },
-                  },
-                },
-                [],
-              ],
-            },
-            userReaction: 'None',
-          },
-        },
-      );
-    }
+    // 2. Сортировка по дате для получения последних лайков
+    pipeline.push({
+      $sort: { createdAt: -1 },
+    });
 
-    return await this.likeModel.aggregate(pipeline).exec();
-  }
-
-  /**
-   * Агрегация лайков для одного поста (оптимизированная версия)
-   */
-  private async getLikesForSinglePost(
-    postId: string,
-    userId?: string,
-  ): Promise<any[]> {
-    const pipeline: any[] = [
-      {
-        $match: {
-          parentId: postId,
-          parentType: 'post',
-        },
+    // 3. Добавляем $lookup для получения данных пользователя (если нужно логины)
+    // Если у вас есть коллекция users с логинами
+    pipeline.push({
+      $lookup: {
+        from: 'users', // название коллекции пользователей
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'userData',
       },
-    ];
+    });
 
-    // Основные этапы агрегации
-    const groupStage = {
+    pipeline.push({
+      $unwind: {
+        path: '$userData',
+        preserveNullAndEmptyArrays: true, // если пользователь не найден
+      },
+    });
+
+    // 4. Группировка по postId
+    const groupStage: any = {
       $group: {
         _id: '$parentId',
+        // Собираем все реакции для подсчета
+        allReactions: { $push: '$$ROOT' },
+        // Счетчики лайков и дизлайков
         likesCount: {
           $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
         },
         dislikesCount: {
           $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
         },
+        // Собираем только лайки для newestLikes
         allLikes: {
           $push: {
             $cond: [
               { $eq: ['$status', 'Like'] },
               {
                 userId: '$userId',
+                login: '$userData.login', // предполагаем поле login в userData
                 createdAt: '$createdAt',
-                status: '$status',
+                userData: '$userData',
               },
               null,
             ],
@@ -373,9 +276,9 @@ export class PostsQueryRepository {
       },
     };
 
-    // Добавляем логику для пользователя, если указан
+    // 5. Добавляем реакцию текущего пользователя, если userId передан
     if (userId) {
-      groupStage.$group['userReaction'] = {
+      groupStage.$group.currentUserReaction = {
         $push: {
           $cond: [{ $eq: ['$userId', userId] }, '$status', null],
         },
@@ -384,12 +287,13 @@ export class PostsQueryRepository {
 
     pipeline.push(groupStage);
 
-    // Проекция результата
+    // 6. Проекция результата
     const projectStage: any = {
       $project: {
         postId: '$_id',
         likesCount: 1,
         dislikesCount: 1,
+        // Фильтруем null значения из allLikes и берем 3 последних
         newestLikes: {
           $slice: [
             {
@@ -400,18 +304,19 @@ export class PostsQueryRepository {
               },
             },
             0,
-            3,
+            3, // только 3 последних лайка
           ],
         },
       },
     };
 
+    // 7. Добавляем userReaction в проекцию если userId был передан
     if (userId) {
       projectStage.$project.userReaction = {
         $arrayElemAt: [
           {
             $filter: {
-              input: '$userReaction',
+              input: '$currentUserReaction',
               as: 'reaction',
               cond: { $ne: ['$$reaction', null] },
             },
@@ -420,17 +325,185 @@ export class PostsQueryRepository {
         ],
       };
     } else {
+      projectStage.$project.userReaction = { $literal: 'None' };
+    }
+
+    pipeline.push(projectStage);
+
+    // 8. Форматируем newestLikes в нужную структуру
+    pipeline.push({
+      $addFields: {
+        newestLikes: {
+          $map: {
+            input: '$newestLikes',
+            as: 'like',
+            in: {
+              addedAt: '$$like.createdAt',
+              userId: '$$like.userId',
+              login: '$$like.login', // или '$$like.userData.login'
+            },
+          },
+        },
+      },
+    });
+
+    // 9. Сортировка результата (опционально)
+    pipeline.push({
+      $sort: { postId: 1 },
+    });
+
+    try {
+      const result = await this.likeModel.aggregate(pipeline).exec();
+      return result;
+    } catch (error) {
+      console.error('Aggregation error:', error);
+      return [];
+    }
+  }
+
+  private async getLikesForSinglePost(
+    postId: string,
+    userId?: string,
+  ): Promise<LikesAggregationResult[]> {
+    const pipeline: any[] = [
+      // 1. Match only for this post
+      {
+        $match: {
+          parentId: postId,
+          parentType: 'post',
+        },
+      },
+      // 2. Sort for newest likes
+      {
+        $sort: { createdAt: -1 },
+      },
+      // 3. Get user data in parallel
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      {
+        $unwind: {
+          path: '$user',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+
+    // 4. Group with conditional aggregation
+    const groupStage: any = {
+      $group: {
+        _id: '$parentId',
+        // Counters
+        likesCount: {
+          $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
+        },
+        dislikesCount: {
+          $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
+        },
+        // Collect likes for newest
+        likesData: {
+          $push: {
+            $cond: [
+              { $eq: ['$status', 'Like'] },
+              {
+                userId: '$userId',
+                createdAt: '$createdAt',
+                login: '$user.login',
+              },
+              '$$REMOVE', // Remove non-likes completely
+            ],
+          },
+        },
+      },
+    };
+
+    // Add user reaction if userId provided
+    if (userId) {
+      groupStage.$group.userReactions = {
+        $push: {
+          $cond: [{ $eq: ['$userId', userId] }, '$status', '$$REMOVE'],
+        },
+      };
+    }
+
+    pipeline.push(groupStage);
+
+    // 5. Project with transformations
+    const projectStage: any = {
+      $project: {
+        postId: '$_id',
+        likesCount: 1,
+        dislikesCount: 1,
+        // Take first 3 likes (already sorted)
+        newestLikes: {
+          $slice: ['$likesData', 3],
+        },
+      },
+    };
+
+    // Add userReaction if we have userId
+    if (userId) {
+      projectStage.$project.userReaction = {
+        $cond: [
+          { $gt: [{ $size: '$userReactions' }, 0] },
+          { $arrayElemAt: ['$userReactions', 0] },
+          'None',
+        ],
+      };
+    } else {
       projectStage.$project.userReaction = 'None';
     }
 
     pipeline.push(projectStage);
 
-    return await this.likeModel.aggregate(pipeline).exec();
-  }
+    // 6. Map to final structure
+    pipeline.push({
+      $project: {
+        postId: 1,
+        likesCount: 1,
+        dislikesCount: 1,
+        userReaction: 1,
+        newestLikes: {
+          $map: {
+            input: '$newestLikes',
+            as: 'like',
+            in: {
+              addedAt: '$$like.createdAt',
+              userId: '$$like.userId',
+              login: {
+                $ifNull: [
+                  '$$like.login',
+                  { $concat: ['user', { $substr: ['$$like.userId', 0, 4] }] },
+                ],
+              },
+            },
+          },
+        },
+      },
+    });
 
-  /**
-   * Создать мапу лайков для быстрого доступа
-   */
+    try {
+      const result = await this.likeModel.aggregate(pipeline).exec();
+      return result;
+    } catch (error) {
+      console.error('Single post aggregation error:', error);
+      // Return default structure if aggregation fails
+      return [
+        {
+          postId,
+          likesCount: 0,
+          dislikesCount: 0,
+          userReaction: 'None',
+          newestLikes: [],
+        },
+      ];
+    }
+  }
   private createLikesMap(aggregationResult: any[]): Record<string, any> {
     return aggregationResult.reduce((acc, item) => {
       acc[item.postId] = {
@@ -442,64 +515,16 @@ export class PostsQueryRepository {
       return acc;
     }, {});
   }
+}
 
-  /**
-   * Преобразовать документ поста в DTO
-   */
-  private mapToPostViewDto(
-    post: any,
-    likesMap: Record<string, any>,
-    userId?: string,
-  ): PostViewDto {
-    const postId = post._id.toString();
-    const postLikes = likesMap[postId] || {
-      userReaction: 'None',
-      newestLikes: [],
-      likesCount: 0,
-      dislikesCount: 0,
-    };
-
-    // Получаем 3 последних лайка, отсортированных по дате
-    const newestLikes = [...postLikes.newestLikes]
-      .sort(
-        (a, b) =>
-          new Date(b.addedAt || b.createdAt).getTime() -
-          new Date(a.addedAt || a.createdAt).getTime(),
-      )
-      .slice(0, 3)
-      .map(
-        (like) =>
-          new NewestLikeDto(
-            like.addedAt || like.createdAt,
-            like.userId,
-            like.login || `user${like.userId?.slice(0, 4) || 'unknown'}`,
-          ),
-      );
-
-    return new PostViewDto(
-      postId,
-      post.title,
-      post.shortDescription,
-      post.content,
-      post.blogId,
-      post.blogName,
-      post.createdAt,
-      new ExtendedLikesInfoDto(
-        postLikes.likesCount,
-        postLikes.dislikesCount,
-        userId ? postLikes.userReaction : 'None',
-        newestLikes,
-      ),
-    );
-  }
-
-  /**
-   * Создать пустой пагинированный ответ
-   */
-  private createEmptyPaginatedResponse(
-    pageNumber: number,
-    pageSize: number,
-  ): PaginatedPostsDto {
-    return new PaginatedPostsDto(0, pageNumber, pageSize, 0, []);
-  }
+export interface LikesAggregationResult {
+  postId: string;
+  likesCount: number;
+  dislikesCount: number;
+  userReaction: string; // 'Like' | 'Dislike' | 'None'
+  newestLikes: Array<{
+    addedAt: Date;
+    userId: string;
+    login: string;
+  }>;
 }

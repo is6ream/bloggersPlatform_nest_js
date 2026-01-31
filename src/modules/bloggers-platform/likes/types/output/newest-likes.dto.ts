@@ -1,5 +1,7 @@
-export interface NewestLike {
-  addedAt: Date;
-  userId: string;
-  login: string;
+export class NewestLikeDto {
+  constructor(
+    public addedAt: Date,
+    public userId: string,
+    public login: string,
+  ) {}
 }

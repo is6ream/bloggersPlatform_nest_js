@@ -1,8 +1,10 @@
-import { NewestLike } from 'src/modules/bloggers-platform/likes/types/output/newest-likes.dto';
+import { NewestLikeDto } from 'src/modules/bloggers-platform/likes/types/output/newest-likes.dto';
 
-export interface ExtendedLikesInfo {
-  likesCount: number;
-  dislikesCount: number;
-  myStatus: string;
-  newestLikes: NewestLike[];
+export class ExtendedLikesInfoDto {
+  constructor(
+    public likesCount: number,
+    public dislikesCount: number,
+    public myStatus: string,
+    public newestLikes: NewestLikeDto[],
+  ) {}
 }

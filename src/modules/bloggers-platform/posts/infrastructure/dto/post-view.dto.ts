@@ -1,3 +1,5 @@
+import { ExtendedLikesInfoDto } from 'src/modules/bloggers-platform/likes/types/output/extended-likes.dto';
+
 export class PostViewDto {
   constructor(
     public id: string,

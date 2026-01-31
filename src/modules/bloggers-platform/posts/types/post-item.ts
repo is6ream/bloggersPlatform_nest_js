@@ -1,4 +1,4 @@
-import { ExtendedLikesInfo } from 'src/modules/bloggers-platform/likes/types/output/extended-likes.dto';
+import { ExtendedLikesInfoDto} from 'src/modules/bloggers-platform/likes/types/output/extended-likes.dto';
 
 export interface PostItem {
   id: string;
@@ -8,5 +8,5 @@ export interface PostItem {
   blogId: string;
   blogName: string;
   createdAt: Date;
-  extendedLikesInfo: ExtendedLikesInfo;
+  extendedLikesInfo: ExtendedLikesInfoDto;
 }
