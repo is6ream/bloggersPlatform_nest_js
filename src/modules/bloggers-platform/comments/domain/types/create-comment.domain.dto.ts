@@ -4,4 +4,5 @@ export class CreateCommentDomainDto {
     userId: string;
     userLogin: string;
   };
+  postId: string;
 }

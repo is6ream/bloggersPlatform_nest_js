@@ -88,15 +88,13 @@ export class CommentsQueryRepository {
     query: GetCommentsQueryParams,
     userId?: string, // Делаем необязательным
   ): Promise<PaginatedViewDto<CommentViewDto>> {
-    console.log('getCommentByPostId check');
+    console.log(userId, 'user id check in DAL');
 
     const skip = query.calculateSkip();
 
     await this.postsRepository.checkPostExist(postId);
 
     const filter: Record<string, any> = { postId };
-
-    console.log(postId, 'post id check in query repo');
 
     // 1. Получаем комментарии
     const comments = await this.CommentModel.find(filter)
@@ -106,9 +104,6 @@ export class CommentsQueryRepository {
       .lean()
       .exec();
 
-    console.log(comments, 'comments check');
-
-    // 2. Если нет комментариев - возвращаем пустой результат
     if (!comments.length) {
       return CommentPaginatedViewDto.mapToView({
         items: [],
@@ -118,16 +113,13 @@ export class CommentsQueryRepository {
       });
     }
 
-    // 3. Собираем ID комментариев для агрегации
     const commentIds = comments.map((c) => c._id.toString());
 
-    // 4. Агрегация лайков для комментариев
     const likesAggregation = await this.getCommentsLikesAggregation(
       commentIds,
       userId,
     );
 
-    // 5. Создаем мапу для быстрого доступа
     const likesMap = likesAggregation.reduce((acc, item) => {
       acc[item.commentId] = {
         likesCount: item.likesCount || 0,
@@ -137,10 +129,8 @@ export class CommentsQueryRepository {
       return acc;
     }, {});
 
-    // 6. Получаем общее количество комментариев
     const totalCount = await this.CommentModel.countDocuments(filter);
 
-    // 7. Формируем ответ с информацией о лайках
     const items = comments.map((comment) => {
       const commentLikes = likesMap[comment._id.toString()] || {
         likesCount: 0,
@@ -152,7 +142,7 @@ export class CommentsQueryRepository {
         id: comment._id.toString(),
         content: comment.content,
         commentatorInfo: {
-          userId: comment.commentatorInfo.userId, // или comment.commentatorId - смотри свою модель
+          userId: comment.commentatorInfo.userId,
           userLogin: comment.commentatorInfo.userLogin,
         },
         createdAt: comment.createdAt,
@@ -180,17 +170,15 @@ export class CommentsQueryRepository {
       {
         $match: {
           parentId: { $in: commentIds },
-          parentType: 'comment', // Важно: тип 'comment', а не 'post'
+          parentType: 'Comment',
         },
       },
     ];
 
-    // Если есть userId, добавляем логику для его реакции
     if (userId) {
       pipeline.push(
         {
           $facet: {
-            // Статистика по лайкам/дизлайкам
             stats: [
               {
                 $group: {
@@ -204,7 +192,6 @@ export class CommentsQueryRepository {
                 },
               },
             ],
-            // Реакция текущего пользователя
             userReaction: [
               {
                 $match: {
@@ -246,7 +233,6 @@ export class CommentsQueryRepository {
         },
       );
     } else {
-      // Без userId - только статистика
       pipeline.push(
         {
           $group: {

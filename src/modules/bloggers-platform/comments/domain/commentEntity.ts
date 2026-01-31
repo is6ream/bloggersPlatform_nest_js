@@ -32,6 +32,7 @@ export class Comment {
     comment.content = dto.content;
     comment.commentatorInfo = dto.commentatorInfo;
     comment.createdAt = new Date();
+    comment.postId = dto.postId
     comment.likesInfo = {
       likesCount: 0,
       dislikesCount: 0,

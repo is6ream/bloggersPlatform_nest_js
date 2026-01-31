@@ -56,7 +56,7 @@ export class PostsController {
       new UpdatePostLikeStatusCommand(postId, user.id, body.likeStatus),
     );
   }
-
+  //не передаеься userId
   @Get(':id/comments')
   @UseInterceptors(UserExtractorInterceptor)
   async getCommentsByPostId(
