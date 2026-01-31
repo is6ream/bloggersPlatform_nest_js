@@ -1,5 +1,5 @@
 import { LikesRepository } from './../../likes/infrastructure/likes-repository';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   Comment,
@@ -13,7 +13,6 @@ import { CommentPaginatedViewDto } from '../../posts/api/paginated/paginated.com
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { LikeDocument } from '../../likes/domain/like-entity';
-import { BlogDocument } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
 @Injectable()

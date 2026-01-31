@@ -1,9 +1,11 @@
-import { PostItem } from 'src/modules/bloggers-platform/posts/types/post-item';
+import { PostViewDto} from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-view.dto';
 
-export interface PaginatedPostsDto {
-  pagesCount: number;
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  items: PostItem[];
+export class PaginatedPostsDto {
+  constructor(
+    public pagesCount: number,
+    public page: number,
+    public pageSize: number,
+    public totalCount: number,
+    public items: PostViewDto[],
+  ) {}
 }

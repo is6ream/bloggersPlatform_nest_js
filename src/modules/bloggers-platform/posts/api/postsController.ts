@@ -35,7 +35,6 @@ import { CreateCommentInputDto } from 'src/modules/bloggers-platform/posts/api/m
 import { CreateCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/create-comment.usecase';
 import { GetPostsQueryParams } from 'src/modules/bloggers-platform/posts/api/query/get-posts-query-params';
 import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
-import { PostQueryDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-query.dto';
 import { PostsQueryRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postQueryRepository';
 
 @Controller('posts')
@@ -101,8 +100,6 @@ export class PostsController {
   @Post()
   async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
     const postId = await this.commandBus.execute(new CreatePostCommand(body));
-    //@ts-ignore
-
     return this.postQueryRepository.getByIdOrNotFoundFail(postId);
   }
 
