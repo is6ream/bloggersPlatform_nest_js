@@ -56,7 +56,7 @@ export class PostsController {
       new UpdatePostLikeStatusCommand(postId, user.id, body.likeStatus),
     );
   }
-  //тут не коррректно отрабатывается возврат всех комментов по пост ид
+
   @Get(':id/comments')
   @UseInterceptors(UserExtractorInterceptor)
   async getCommentsByPostId(

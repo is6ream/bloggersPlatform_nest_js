@@ -12,7 +12,11 @@ import { PostRepository } from '../../posts/infrastructure/postRepository';
 import { CommentPaginatedViewDto } from '../../posts/api/paginated/paginated.comment.view-dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
-import { LikeDocument } from '../../likes/domain/like-entity';
+import {
+  Like,
+  LikeDocument,
+  LikeModelType,
+} from '../../likes/domain/like-entity';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
 @Injectable()
@@ -20,6 +24,8 @@ export class CommentsQueryRepository {
   constructor(
     @InjectModel(Comment.name)
     private CommentModel: CommentModelType,
+    @InjectModel(Like.name)
+    private likeModel: LikeModelType,
     private postsRepository: PostRepository,
     private likesRepository: LikesRepository,
   ) {}
@@ -80,32 +86,190 @@ export class CommentsQueryRepository {
   async getCommentByPostId(
     postId: string,
     query: GetCommentsQueryParams,
-    userId: string | undefined,
+    userId?: string, // Делаем необязательным
   ): Promise<PaginatedViewDto<CommentViewDto>> {
+    console.log('getCommentByPostId check');
+
     const skip = query.calculateSkip();
 
     await this.postsRepository.checkPostExist(postId);
-    const like = await this;
 
     const filter: Record<string, any> = { postId };
 
-    const [comments, totalCount] = await Promise.all([
-      this.CommentModel.find(filter)
-        .skip(skip)
-        .limit(query.pageSize)
-        .sort({ createdAt: query.sortDirection }),
+    console.log(postId, 'post id check in query repo');
 
-      this.CommentModel.countDocuments(filter),
-    ]);
+    // 1. Получаем комментарии
+    const comments = await this.CommentModel.find(filter)
+      .skip(skip)
+      .limit(query.pageSize)
+      .sort({ createdAt: query.sortDirection })
+      .lean()
+      .exec();
 
-    const result: PaginatedViewDto<CommentViewDto> =
-      CommentPaginatedViewDto.mapToView({
-        items: comments.map((c) => CommentViewDto.mapToView(c)),
+    console.log(comments, 'comments check');
+
+    // 2. Если нет комментариев - возвращаем пустой результат
+    if (!comments.length) {
+      return CommentPaginatedViewDto.mapToView({
+        items: [],
         page: query.pageNumber,
         size: query.pageSize,
-        totalCount: totalCount,
+        totalCount: 0,
       });
+    }
 
-    return result;
+    // 3. Собираем ID комментариев для агрегации
+    const commentIds = comments.map((c) => c._id.toString());
+
+    // 4. Агрегация лайков для комментариев
+    const likesAggregation = await this.getCommentsLikesAggregation(
+      commentIds,
+      userId,
+    );
+
+    // 5. Создаем мапу для быстрого доступа
+    const likesMap = likesAggregation.reduce((acc, item) => {
+      acc[item.commentId] = {
+        likesCount: item.likesCount || 0,
+        dislikesCount: item.dislikesCount || 0,
+        myStatus: userId ? item.userReaction || 'None' : 'None',
+      };
+      return acc;
+    }, {});
+
+    // 6. Получаем общее количество комментариев
+    const totalCount = await this.CommentModel.countDocuments(filter);
+
+    // 7. Формируем ответ с информацией о лайках
+    const items = comments.map((comment) => {
+      const commentLikes = likesMap[comment._id.toString()] || {
+        likesCount: 0,
+        dislikesCount: 0,
+        myStatus: 'None',
+      };
+
+      return {
+        id: comment._id.toString(),
+        content: comment.content,
+        commentatorInfo: {
+          userId: comment.commentatorInfo.userId, // или comment.commentatorId - смотри свою модель
+          userLogin: comment.commentatorInfo.userLogin,
+        },
+        createdAt: comment.createdAt,
+        likesInfo: {
+          likesCount: commentLikes.likesCount,
+          dislikesCount: commentLikes.dislikesCount,
+          myStatus: commentLikes.myStatus,
+        },
+      };
+    });
+
+    return CommentPaginatedViewDto.mapToView({
+      items,
+      page: query.pageNumber,
+      size: query.pageSize,
+      totalCount,
+    });
+  }
+
+  private async getCommentsLikesAggregation(
+    commentIds: string[],
+    userId?: string,
+  ): Promise<any[]> {
+    const pipeline: any[] = [
+      {
+        $match: {
+          parentId: { $in: commentIds },
+          parentType: 'comment', // Важно: тип 'comment', а не 'post'
+        },
+      },
+    ];
+
+    // Если есть userId, добавляем логику для его реакции
+    if (userId) {
+      pipeline.push(
+        {
+          $facet: {
+            // Статистика по лайкам/дизлайкам
+            stats: [
+              {
+                $group: {
+                  _id: '$parentId',
+                  likesCount: {
+                    $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
+                  },
+                  dislikesCount: {
+                    $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
+                  },
+                },
+              },
+            ],
+            // Реакция текущего пользователя
+            userReaction: [
+              {
+                $match: {
+                  userId: userId,
+                },
+              },
+              {
+                $group: {
+                  _id: '$parentId',
+                  userReaction: { $first: '$status' },
+                },
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            combined: {
+              $concatArrays: ['$stats', '$userReaction'],
+            },
+          },
+        },
+        {
+          $unwind: '$combined',
+        },
+        {
+          $group: {
+            _id: '$combined._id',
+            data: { $mergeObjects: '$combined' },
+          },
+        },
+        {
+          $project: {
+            commentId: '$_id',
+            likesCount: { $ifNull: ['$data.likesCount', 0] },
+            dislikesCount: { $ifNull: ['$data.dislikesCount', 0] },
+            userReaction: { $ifNull: ['$data.userReaction', 'None'] },
+          },
+        },
+      );
+    } else {
+      // Без userId - только статистика
+      pipeline.push(
+        {
+          $group: {
+            _id: '$parentId',
+            likesCount: {
+              $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
+            },
+            dislikesCount: {
+              $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
+            },
+          },
+        },
+        {
+          $project: {
+            commentId: '$_id',
+            likesCount: 1,
+            dislikesCount: 1,
+            userReaction: 'None',
+          },
+        },
+      );
+    }
+
+    return await this.likeModel.aggregate(pipeline).exec();
   }
 }

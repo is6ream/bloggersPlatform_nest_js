@@ -21,6 +21,9 @@ export class Comment {
 
   createdAt: Date;
 
+  @Prop({ type: String, required: true })
+  postId: string;
+
   @Prop({ type: LikesInfo, required: true })
   likesInfo: LikesInfo;
 
