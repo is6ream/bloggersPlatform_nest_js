@@ -12,7 +12,7 @@ import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/
 export class CreateCommentCommand {
   constructor(
     public postId: string,
-    public user: UserContextDto,
+    public userId: string,
     public content: CreateCommentInputDto,
   ) {}
 }
@@ -30,12 +30,12 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
   async execute(command: CreateCommentCommand): Promise<string> {
     await this.postRepository.findOrNotFoundFail(command.postId);
     const user = await this.usersRepository.findByIdOrThrowValidationError(
-      command.user.id,
+      command.userId,
     ); //ищем пользователя, который оставляет комментарий
     const comment = this.CommentModel.createInstance({
       content: command.content.content,
       commentatorInfo: {
-        userId: command.user.id,
+        userId: command.userId,
         userLogin: user.login,
       },
     });

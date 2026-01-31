@@ -27,7 +27,6 @@ import { DeletePostCommand } from '../application/useCases/delete-post.usecase';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
 import { UpdatePostLikeStatusCommand } from '../application/useCases/update-like-status.usecase';
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
-import { LikeStatus } from '../../likes/types/like-status';
 import { GetCommentsQueryParams } from './query/qet-comments-query-params';
 import { CommentViewModel } from './model/output/commentViewModel';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
@@ -57,18 +56,18 @@ export class PostsController {
       new UpdatePostLikeStatusCommand(postId, user.id, body.likeStatus),
     );
   }
-
+  //тут не коррректно отрабатывается возврат всех комментов по пост ид
   @Get(':id/comments')
   @UseInterceptors(UserExtractorInterceptor)
-  async getCommentByPostId(
+  async getCommentsByPostId(
     @Param('id') postId: string,
     @Query() query: GetCommentsQueryParams,
-    @ExtractUserFromRequest() user: UserContextDto,
+    @UserIdOptional() userId: string,
   ): Promise<PaginatedViewDto<CommentViewModel>> {
     return this.commentsQueryRepository.getCommentByPostId(
       postId,
       query,
-      user.id,
+      userId,
     );
   }
 
@@ -77,14 +76,14 @@ export class PostsController {
   async createComment(
     @Param('id') postId: string,
     @Body() content: CreateCommentInputDto,
-    @ExtractUserFromRequest() user: UserContextDto,
+    @UserIdOptional() userId: string,
   ): Promise<CommentViewModel> {
     const commentId = await this.commandBus.execute(
-      new CreateCommentCommand(postId, user, content),
+      new CreateCommentCommand(postId, userId, content),
     );
     return this.commentsQueryRepository.getByIdOrNotFoundFail(
       commentId,
-      user.id,
+      userId,
     );
   }
 
