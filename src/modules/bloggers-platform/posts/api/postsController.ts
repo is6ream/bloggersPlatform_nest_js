@@ -105,9 +105,12 @@ export class PostsController {
   }
 
   @Get(':id')
-  async getById(@Param('id') id: string): Promise<PostViewModel> {
-    // @ts-ignore
-    return this.postQueryRepository.getByIdOrNotFoundFail(id);
+  @UseInterceptors(UserExtractorInterceptor)
+  async getById(
+    @Param('id') id: string,
+    @UserIdOptional() userId: string,
+  ): Promise<PostViewModel> {
+    return this.postQueryRepository.getPostById(id, userId);
   }
 
   @UseGuards(BasicAuthGuard)

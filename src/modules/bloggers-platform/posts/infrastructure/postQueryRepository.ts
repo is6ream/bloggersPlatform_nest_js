@@ -23,6 +23,41 @@ export class PostsQueryRepository {
     @InjectModel(Like.name) private likeModel: Model<LikeDocument>,
   ) {}
 
+  async getPostById(id: string, userId: string): Promise<PostViewDto> {
+    const post: PostDocument | null = await this.postModel.findById(id);
+    if (!post) {
+      throw new DomainException({ code: 1, message: 'Post not Found' });
+    }
+
+    const likesAggregation = await this.getLikesForSinglePost(id, userId);
+    const likesInfo = likesAggregation[0] || {
+      likesCount: 0,
+      dislikesCount: 0,
+      userReaction: 'None',
+      newestLikes: [],
+    };
+
+    return {
+      id: post._id.toString(),
+      title: post.title,
+      shortDescription: post.shortDescription,
+      content: post.content,
+      blogId: post.blogId,
+      blogName: post.blogName,
+      createdAt: post.createdAt,
+      extendedLikesInfo: {
+        likesCount: likesInfo.likesCount,
+        dislikesCount: likesInfo.dislikesCount,
+        myStatus: userId ? likesInfo.userReaction : 'None',
+        newestLikes: likesInfo.newestLikes.map((like) => ({
+          addedAt: like.addedAt,
+          userId: like.userId,
+          login: like.login || `user${like.userId.slice(0, 4)}`,
+        })),
+      },
+    };
+  }
+
   async getCreatedPost(id: string): Promise<PostViewDto> {
     const post: PostDocument | null = await this.postModel.findById(id);
 
