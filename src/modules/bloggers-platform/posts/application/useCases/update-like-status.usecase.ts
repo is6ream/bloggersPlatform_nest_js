@@ -25,9 +25,11 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
     private usersRepository: UsersRepository,
   ) {}
   async execute(command: UpdatePostLikeStatusCommand): Promise<any> {
+
     let post: PostDocument = await this.postRepository.findOrNotFoundFail(
       command.postId,
     );
+
     const user = await this.usersRepository.findByIdOrThrowValidationError(
       command.userId,
     );

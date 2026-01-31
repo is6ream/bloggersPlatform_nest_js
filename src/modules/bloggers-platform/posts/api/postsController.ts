@@ -36,6 +36,7 @@ import { CreateCommentCommand } from 'src/modules/bloggers-platform/comments/app
 import { GetPostsQueryParams } from 'src/modules/bloggers-platform/posts/api/query/get-posts-query-params';
 import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 import { PostsQueryRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postQueryRepository';
+import { LikeStatusInputDto } from 'src/modules/bloggers-platform/likes/types/input/like-status.input.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -49,11 +50,11 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   async updateLikeStatus(
     @Param('id') postId: string,
-    @Body() body: LikeStatus,
+    @Body() body: LikeStatusInputDto,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
     return this.commandBus.execute(
-      new UpdatePostLikeStatusCommand(postId, user.id, body),
+      new UpdatePostLikeStatusCommand(postId, user.id, body.likeStatus),
     );
   }
 
@@ -100,13 +101,12 @@ export class PostsController {
   @Post()
   async createPost(@Body() body: CreatePostInputDto): Promise<PostViewModel> {
     const postId = await this.commandBus.execute(new CreatePostCommand(body));
-    return this.postQueryRepository.getByIdOrNotFoundFail(postId);
+    return this.postQueryRepository.getCreatedPost(postId);
   }
 
   @Get(':id')
   async getById(@Param('id') id: string): Promise<PostViewModel> {
-    //@ts-ignore
-
+    // @ts-ignore
     return this.postQueryRepository.getByIdOrNotFoundFail(id);
   }
 

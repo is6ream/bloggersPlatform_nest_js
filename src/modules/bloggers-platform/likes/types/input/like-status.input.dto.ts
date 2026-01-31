@@ -1,8 +1,9 @@
 import { LikeStatus } from './../like-status';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class LikeStatusInputDto {
-  @IsNotEmpty()
+  @ApiProperty({ enum: LikeStatus, enumName: 'LikeStatus' })
   @IsEnum(LikeStatus)
   likeStatus: LikeStatus;
 }
