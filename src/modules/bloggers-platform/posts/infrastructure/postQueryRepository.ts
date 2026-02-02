@@ -25,7 +25,7 @@ export class PostsQueryRepository {
 
   async getPostById(id: string, userId: string): Promise<PostViewDto> {
     const post: PostDocument | null = await this.postModel.findById(id);
-    if (!post) {
+    if (!post || post.deleteAt !== null) {
       throw new DomainException({ code: 1, message: 'Post not Found' });
     }
     const likesAggregation = await this.getLikesForSinglePost(id, userId);
