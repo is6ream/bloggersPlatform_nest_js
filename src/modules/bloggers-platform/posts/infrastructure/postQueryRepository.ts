@@ -28,10 +28,7 @@ export class PostsQueryRepository {
     if (!post) {
       throw new DomainException({ code: 1, message: 'Post not Found' });
     }
-    //не работает агрегационная функция
     const likesAggregation = await this.getLikesForSinglePost(id, userId);
-
-    console.log(likesAggregation, 'likes aggregation check');
 
     const likesInfo = likesAggregation[0] || {
       likesCount: 0,
@@ -96,6 +93,8 @@ export class PostsQueryRepository {
     if (searchPostNameTerm) {
       filter.title = { $regex: searchPostNameTerm, $options: 'i' };
     }
+
+    console.log(userId, 'userId check in DAL');
 
     // 2. Рассчитываем пагинацию
     const skip = (pageNumber - 1) * pageSize;
@@ -246,7 +245,6 @@ export class PostsQueryRepository {
   //     ),
   //   );
   // }
-
 
   private async getLikesAggregation(
     postIds: string[],

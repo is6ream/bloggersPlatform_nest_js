@@ -56,7 +56,6 @@ export class PostsController {
       new UpdatePostLikeStatusCommand(postId, user.id, body.likeStatus),
     );
   }
-  //не передаеься userId
   @Get(':id/comments')
   @UseInterceptors(UserExtractorInterceptor)
   async getCommentsByPostId(
@@ -93,7 +92,7 @@ export class PostsController {
     @Query() query: GetPostsQueryParams,
     @UserIdOptional() userId: string,
   ) {
-    return this.postQueryRepository.findAllWithLikes(query);
+    return this.postQueryRepository.findAllWithLikes(query, userId);
   }
 
   @UseGuards(BasicAuthGuard)
