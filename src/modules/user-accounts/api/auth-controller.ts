@@ -1,6 +1,13 @@
 import { AuthService } from '../application/auth-service';
 import { AuthQueryRepository } from '../infrastructure/auth/authQueryRepository';
-import { Controller, Get, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpStatus,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
 import { Body, HttpCode } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
@@ -14,6 +21,7 @@ import { GetMeOutputDto } from './dto/output/get-me-output.dto';
 import { JwtAuthGuard } from '../guards/jwt/jwt-auth.guard';
 import { LocalAuthValidationGuard } from '../guards/local/local-auth-validation.guard';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Response } from 'express';
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
@@ -37,7 +45,16 @@ export class AuthController {
   })
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{ accessToken: string }> {
+    const refreshToken = 'stub.jwt.token.with.dots';
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000, // 24 часа
+    });
     return this.authService.loginUser(user);
   }
 
