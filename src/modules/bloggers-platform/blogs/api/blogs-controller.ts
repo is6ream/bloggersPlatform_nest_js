@@ -51,8 +51,6 @@ export class BlogsController {
     @Param('id') id: string,
     @Query() query: GetPostsQueryParams,
   ) {
-    //@ts-ignore
-
     return this.postsQueryRepository.getAllPostsForBlog(id, query);
   }
 
@@ -65,9 +63,8 @@ export class BlogsController {
     const post: PostDocument = await this.commandBus.execute(
       new CreatePostForSpecificBlogCommand(id, body),
     );
-    //@ts-ignore
 
-    return this.postsQueryRepository.getByIdOrNotFoundFail(post._id.toString());
+    return this.postsQueryRepository.getCreatedPost(post._id.toString());
   }
 
   @UseGuards(BasicAuthGuard)

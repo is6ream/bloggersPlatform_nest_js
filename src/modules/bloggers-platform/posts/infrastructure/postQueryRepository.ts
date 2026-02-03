@@ -15,6 +15,7 @@ import { PostViewDto } from 'src/modules/bloggers-platform/posts/infrastructure/
 import { ExtendedLikesInfoDto } from 'src/modules/bloggers-platform/likes/types/output/extended-likes.dto';
 import { NewestLikeDto } from 'src/modules/bloggers-platform/likes/types/output/newest-likes.dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { CreatePostByBlogIdInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostByBlogIdInputDto';
 
 @Injectable()
 export class PostsQueryRepository {
@@ -179,72 +180,7 @@ export class PostsQueryRepository {
       items,
     );
   }
-  //
-  // async findByIdOrNotFoundFail(
-  //   id: string,
-  //   userId?: string,
-  // ): Promise<PostViewDto> {
-  //   // Валидация ID
-  //   if (!Types.ObjectId.isValid(id)) {
-  //     throw new NotFoundException(`Post with id ${id} not found`);
-  //   }
-  //
-  //   // Поиск поста
-  //   const post = await this.postModel
-  //     .findOne({
-  //       _id: new Types.ObjectId(id),
-  //       deleteAt: null,
-  //     })
-  //     .lean()
-  //     .exec();
-  //
-  //   if (!post) {
-  //     throw new NotFoundException(`Post with id ${id} not found`);
-  //   }
-  //
-  //   // Получаем агрегированные данные о лайках для одного поста
-  //   const likesAggregation = await this.getLikesForSinglePost(id, userId);
-  //   const postLikes = likesAggregation[0] || {
-  //     userReaction: 'None',
-  //     newestLikes: [],
-  //     likesCount: 0,
-  //     dislikesCount: 0,
-  //   };
-  //
-  //   // Формируем newestLikes
-  //   const newestLikes = [...postLikes.newestLikes]
-  //     .sort(
-  //       (a, b) =>
-  //         new Date(b.addedAt || b.createdAt).getTime() -
-  //         new Date(a.addedAt || a.createdAt).getTime(),
-  //     )
-  //     .slice(0, 3)
-  //     .map(
-  //       (like) =>
-  //         new NewestLikeDto(
-  //           like.addedAt || like.createdAt,
-  //           like.userId,
-  //           like.login || `user${like.userId?.slice(0, 4) || 'unknown'}`,
-  //         ),
-  //     );
-  //
-  //   // Возвращаем DTO
-  //   return new PostViewDto(
-  //     post._id.toString(),
-  //     post.title,
-  //     post.shortDescription,
-  //     post.content,
-  //     post.blogId,
-  //     post.blogName,
-  //     post.createdAt,
-  //     new ExtendedLikesInfoDto(
-  //       postLikes.likesCount,
-  //       postLikes.dislikesCount,
-  //       userId ? postLikes.userReaction : 'None',
-  //       newestLikes,
-  //     ),
-  //   );
-  // }
+
 
   private async getLikesAggregation(
     postIds: string[],
