@@ -52,12 +52,12 @@ export class BlogsController {
   @Get(':id/posts')
   @UseInterceptors(UserExtractorInterceptor)
   async getAllPostsForBlog(
-    @Param('id') id: string,
-    @UserIdOptional() userId: string,
+    @Param('id') blogId: string,
     @Query()
     query: GetPostsQueryParams,
+    @UserIdOptional() userId?: string,
   ) {
-    return this.postsQueryRepository.getAllPostsForBlog(id, query);
+    return this.postsQueryRepository.getAllPostsForBlog(blogId, query, userId);
   }
 
   @UseGuards(BasicAuthGuard)

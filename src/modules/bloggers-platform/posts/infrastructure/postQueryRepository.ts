@@ -83,12 +83,86 @@ export class PostsQueryRepository {
   }
 
   async getAllPostsForBlog(
-    queryDto: PostQueryDto,
     blogId: string,
-    userId: string,
-  ): Promise<PostViewDto[]> {
+    queryDto: PostQueryDto,
+    userId?: string,
+  ): Promise<PaginatedPostsDto> {
     const { pageNumber, pageSize, sortBy, sortDirection, searchPostNameTerm } =
       queryDto;
+    const filter: any = { deleteAt: null, blogId: blogId };
+
+    const skip = (pageNumber - 1) * pageSize;
+
+    const posts = await this.postModel
+      .find(filter)
+      .sort({ [sortBy]: sortDirection === 'asc' ? 1 : -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .lean()
+      .exec();
+
+    if (!posts.length) {
+      return new PaginatedPostsDto(0, pageNumber, pageSize, 0, []);
+    }
+
+    const postIds = posts.map((post) => post._id.toString());
+
+    const likesAggregation = await this.getLikesAggregation(postIds, userId);
+
+    const likesMap = this.createLikesMap(likesAggregation);
+
+    const items: PostViewDto[] = posts.map((post) => {
+      const postId = post._id.toString();
+      const postLikes = likesMap[postId] || {
+        userReaction: 'None',
+        newestLikes: [],
+        likesCount: 0,
+        dislikesCount: 0,
+      };
+
+      const newestLikes = [...postLikes.newestLikes]
+        .sort(
+          (a, b) =>
+            new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+        )
+        .slice(0, 3)
+        .map(
+          (like) =>
+            new NewestLikeDto(
+              like.addedAt,
+              like.userId,
+              like.login || `user${like.userId.slice(0, 4)}`,
+            ),
+        );
+
+      return new PostViewDto(
+        postId,
+        post.title,
+        post.shortDescription,
+        post.content,
+        post.blogId,
+        post.blogName,
+        post.createdAt,
+        new ExtendedLikesInfoDto(
+          postLikes.likesCount,
+          postLikes.dislikesCount,
+          userId ? postLikes.userReaction : 'None',
+          newestLikes,
+        ),
+      );
+    });
+
+    const totalCount = await this.postModel.countDocuments(filter);
+
+    const pagesCount = Math.ceil(totalCount / pageSize);
+
+    return new PaginatedPostsDto(
+      pagesCount,
+      pageNumber,
+      pageSize,
+      totalCount,
+      items,
+    );
   }
 
   async findAllWithLikes(
