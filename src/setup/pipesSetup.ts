@@ -21,4 +21,4 @@ export function pipesSetup(app: INestApplication) {
       },
     }),
   );
-} 
+}

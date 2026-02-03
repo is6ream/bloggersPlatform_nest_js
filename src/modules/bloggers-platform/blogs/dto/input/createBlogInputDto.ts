@@ -1,6 +1,8 @@
-import { Length, Matches, IsString } from 'class-validator';
+import { Length, IsString, IsUrl, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateBlogInputDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @Length(1, 15)
   name: string;
@@ -9,10 +11,7 @@ export class CreateBlogInputDto {
   @Length(1, 500)
   description: string;
 
-  @IsString()
-  @Matches(
-    /^https:\/\/([a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)*\/?$/,
-  )
+  @IsUrl()
   @Length(1, 100)
   websiteUrl: string;
 }

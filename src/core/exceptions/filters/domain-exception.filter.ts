@@ -54,6 +54,7 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
       exception.code === DomainExceptionCode.ValidationError &&
       exception.extensions?.length > 0
     ) {
+      console.log('EXTENSIONS CHECK', exception.extensions);
       return {
         errorsMessages: exception.extensions.map((ext) => ({
           message: ext.message,
