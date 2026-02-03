@@ -82,6 +82,15 @@ export class PostsQueryRepository {
     };
   }
 
+  async getAllPostsForBlog(
+    queryDto: PostQueryDto,
+    blogId: string,
+    userId: string,
+  ): Promise<PostViewDto[]> {
+    const { pageNumber, pageSize, sortBy, sortDirection, searchPostNameTerm } =
+      queryDto;
+  }
+
   async findAllWithLikes(
     queryDto: PostQueryDto,
     userId?: string,
@@ -94,8 +103,6 @@ export class PostsQueryRepository {
     if (searchPostNameTerm) {
       filter.title = { $regex: searchPostNameTerm, $options: 'i' };
     }
-
-    console.log(userId, 'userId check in DAL');
 
     // 2. Рассчитываем пагинацию
     const skip = (pageNumber - 1) * pageSize;
@@ -180,7 +187,6 @@ export class PostsQueryRepository {
       items,
     );
   }
-
 
   private async getLikesAggregation(
     postIds: string[],
@@ -313,7 +319,7 @@ export interface LikesAggregationResult {
   postId: string;
   likesCount: number;
   dislikesCount: number;
-  userReaction: string; // 'Like' | 'Dislike' | 'None'
+  userReaction: string;
   newestLikes: Array<{
     addedAt: Date;
     userId: string;

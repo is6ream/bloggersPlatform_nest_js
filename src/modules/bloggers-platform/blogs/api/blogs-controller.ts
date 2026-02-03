@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
@@ -30,6 +31,8 @@ import { DeleteBlogCommand } from '../application/useCases/delete-blog-by-id.use
 import { CreateBlogCommand } from '../application/useCases/create-blog.usecase';
 import { GetBlogByIdQuery } from '../application/queries/get-blog-byId.query';
 import { CreatePostForSpecificBlogCommand } from '../application/useCases/create-blog-by-blogId.usecase';
+import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
+import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 
 @Controller('blogs')
 export class BlogsController {
@@ -47,9 +50,12 @@ export class BlogsController {
     return this.blogsQueryRepository.getAll(query);
   }
   @Get(':id/posts')
+  @UseInterceptors(UserExtractorInterceptor)
   async getAllPostsForBlog(
     @Param('id') id: string,
-    @Query() query: GetPostsQueryParams,
+    @UserIdOptional() userId: string,
+    @Query()
+    query: GetPostsQueryParams,
   ) {
     return this.postsQueryRepository.getAllPostsForBlog(id, query);
   }
