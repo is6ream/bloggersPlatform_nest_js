@@ -42,11 +42,11 @@ export class CreatePostByBlogIdUseCase implements ICommandHandler<CreatePostForS
     if (!blog) {
       throw new DomainException({ code: 1, message: 'Blog not found' });
     }
-    const post: PostDocument = new this.PostModel({
+    const post: PostDocument = this.PostModel.createInstance({
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,
-      blogId: blog._id,
+      blogId: blog._id.toString(),
       blogName: blog.name,
     });
     await this.postRepository.save(post);
