@@ -26,7 +26,7 @@ export class Like {
 
   static createInstance(dto: CreateLikeDto): LikeDocument {
     const like = new this();
-    like.status = dto.likeStatus;
+    like.status = dto.status;
     like.userId = dto.userId;
     like.parentId = dto.parentId;
     like.parentType = dto.parentType;

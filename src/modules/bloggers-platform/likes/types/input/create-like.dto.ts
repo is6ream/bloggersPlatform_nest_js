@@ -1,6 +1,6 @@
 export class CreateLikeDto {
   parentId: string;
   userId: string;
-  likeStatus: string;
+  status: string;
   parentType: string;
 }

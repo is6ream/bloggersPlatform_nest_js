@@ -25,7 +25,6 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
     private usersRepository: UsersRepository,
   ) {}
   async execute(command: UpdatePostLikeStatusCommand): Promise<any> {
-
     let post: PostDocument = await this.postRepository.findOrNotFoundFail(
       command.postId,
     );
@@ -41,15 +40,15 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
 
     if (!like) {
       const newLike: LikeDocument = this.LikeModel.createInstance({
-        likeStatus: command.likeStatus,
+        status: command.likeStatus,
         userId: command.userId,
         parentId: command.postId,
         parentType: 'Post',
       });
       post.updateLikeCounter('None', command.likeStatus);
 
-      await this.postRepository.likeStatusSave(newLike); //некорретно сохраняется likeEntity
-      await this.postRepository.save(post); //нет полей extendedLikeInfo в postEntity после обновления
+      await this.postRepository.likeStatusSave(newLike);
+      await this.postRepository.save(post);
       return;
     }
 

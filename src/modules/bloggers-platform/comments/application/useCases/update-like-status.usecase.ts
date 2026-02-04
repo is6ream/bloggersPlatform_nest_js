@@ -17,7 +17,6 @@ export class UpdateCommentLikeStatusCommand {
     public likeStatus: string,
   ) {}
 }
-//todo решить задачу с сохранением нового статуса реакции пользователя для комментария
 @CommandHandler(UpdateCommentLikeStatusCommand)
 export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCommentLikeStatusCommand> {
   constructor(
@@ -38,7 +37,7 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
 
     if (!like) {
       const newLike: LikeDocument = this.LikeModel.createInstance({
-        likeStatus: command.likeStatus,
+        status: command.likeStatus,
         userId: command.userId,
         parentId: command.commentId,
         parentType: 'Comment', //сохраняется некорректный parentType
