@@ -12,6 +12,7 @@ import { Like } from 'src/modules/bloggers-platform/likes/domain/like-entity';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { createTestBlog } from '../../helpers/factory/blog-factory';
 import request from 'supertest';
+import { createCustomTestUser } from '../../helpers/factory/custom-user.factory';
 
 describe('Post Likes E2E tests', () => {
   let app: INestApplication;
@@ -73,17 +74,19 @@ describe('Post Likes E2E tests', () => {
     await postModel.deleteMany({});
     await likeModel.deleteMany({});
 
-    user1 = await createTestUser(userModel, {
+    const { user: user1, password: pass1 } = await createCustomTestUser(userModel, {
       login: 'user1',
-      password: 'testPassword',
-    });
-    user2 = await createTestUser(userModel, {
-      login: 'user2',
-      password: 'testPassword',
+      password: 'pass1',
     });
 
-    user1Token = await loginAndGetAccessToken('user1', 'testPassword');
-    user2Token = await loginAndGetAccessToken('user2', 'testPassword');
+     user1Token = await loginAndGetAccessToken('user1', pass1);
+
+    const { user: user2, password: pass2 } = await createCustomTestUser(userModel, {
+      login: 'user2',
+      password: 'pass2',
+    });
+
+     user2Token = await loginAndGetAccessToken('user2', pass2);
   });
 
   afterAll(async () => {

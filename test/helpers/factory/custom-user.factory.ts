@@ -9,7 +9,7 @@ type CreateTestUserParams = {
   isConfirmed?: boolean;
 };
 
-export async function createTestUser(
+export async function createCustomTestUser(
   userModel: UserModelType,
   params: CreateTestUserParams = {},
 ) {
