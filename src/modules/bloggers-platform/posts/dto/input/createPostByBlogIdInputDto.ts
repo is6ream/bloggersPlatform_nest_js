@@ -1,13 +1,16 @@
 import { IsString, Length, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreatePostByBlogIdInputDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @Length(1, 30)
-  @IsString()
   title: string;
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @Length(1, 100)
-  @IsString()
   shortDescription: string;
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @Length(1, 1000)
-  @IsString()
   content: string;
 }
