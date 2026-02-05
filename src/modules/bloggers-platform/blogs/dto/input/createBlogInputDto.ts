@@ -7,7 +7,7 @@ export class CreateBlogInputDto {
   @Length(1, 15)
   name: string;
 
-  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @Length(1, 500)
   description: string;
 
