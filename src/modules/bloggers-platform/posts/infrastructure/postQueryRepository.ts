@@ -16,12 +16,15 @@ import { ExtendedLikesInfoDto } from 'src/modules/bloggers-platform/likes/types/
 import { NewestLikeDto } from 'src/modules/bloggers-platform/likes/types/output/newest-likes.dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { CreatePostByBlogIdInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostByBlogIdInputDto';
+import { BlogsQueryRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsQueryRepository';
+import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 
 @Injectable()
 export class PostsQueryRepository {
   constructor(
     @InjectModel(PostEntity.name) private postModel: Model<PostDocument>,
     @InjectModel(Like.name) private likeModel: Model<LikeDocument>,
+    private blogsRepository: BlogsRepository,
   ) {}
 
   async getPostById(id: string, userId: string): Promise<PostViewDto> {
@@ -49,7 +52,7 @@ export class PostsQueryRepository {
       extendedLikesInfo: {
         likesCount: likesInfo.likesCount,
         dislikesCount: likesInfo.dislikesCount,
-        myStatus: userId ? likesInfo.userReaction : 'None',
+        myStatus: userId ? (likesInfo.userReaction ?? 'None') : 'None',
         newestLikes: likesInfo.newestLikes.map((like) => ({
           addedAt: like.addedAt,
           userId: like.userId,
@@ -87,6 +90,8 @@ export class PostsQueryRepository {
     queryDto: PostQueryDto,
     userId?: string,
   ): Promise<PaginatedPostsDto> {
+    await this.blogsRepository.checkBlogExist(blogId);
+
     const { pageNumber, pageSize, sortBy, sortDirection, searchPostNameTerm } =
       queryDto;
     const filter: any = { deleteAt: null, blogId: blogId };

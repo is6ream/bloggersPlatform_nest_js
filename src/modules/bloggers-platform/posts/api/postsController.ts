@@ -109,6 +109,7 @@ export class PostsController {
     @Param('id') id: string,
     @UserIdOptional() userId: string,
   ): Promise<PostViewModel> {
+    console.log('API CHECK');
     return this.postQueryRepository.getPostById(id, userId);
   }
 
