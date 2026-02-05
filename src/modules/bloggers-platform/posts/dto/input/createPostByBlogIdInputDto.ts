@@ -1,4 +1,4 @@
-import { IsString, Length, Min } from 'class-validator';
+import { Length } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreatePostByBlogIdInputDto {

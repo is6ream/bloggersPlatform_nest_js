@@ -33,7 +33,7 @@ if (!process.env.JWT_SECRET) {
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
-        limit: 5,
+        limit: 10,
       },
     ]),
   ],
