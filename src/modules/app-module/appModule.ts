@@ -13,7 +13,11 @@ import { ConfigModule } from '@nestjs/config';
     MongooseModule.forRoot('mongodb://127.0.0.1:27017/blogger-platform'),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: [
+        `.env.${process.env.NODE_ENV}.local`,
+        `.env.${process.env.NODE_ENV}`,
+        '.env',
+      ],
     }),
     CqrsModule.forRoot(),
     UserAccountsModule,
