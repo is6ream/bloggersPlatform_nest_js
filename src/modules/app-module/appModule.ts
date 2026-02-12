@@ -5,16 +5,16 @@ import { AppService } from './appService';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BloggersPlatformModule } from '../bloggers-platform/bloggers-platform.module';
 import { TestingModule } from '../testing/testing-module';
-// import { ConfigModule } from '@nestjs/config';
 import { EmailAdapter } from '../notifications/email-adapter';
 import { CqrsModule } from '@nestjs/cqrs';
+import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
     MongooseModule.forRoot('mongodb://127.0.0.1:27017/blogger-platform'),
-    // ConfigModule.forRoot({
-    //   isGlobal: true,
-    //   envFilePath: '.env',
-    // }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     CqrsModule.forRoot(),
     UserAccountsModule,
     BloggersPlatformModule,
