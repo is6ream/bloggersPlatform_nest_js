@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "start:dev": "cross-env   nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:unit": "jest --testPathPatterns='src'",
-    "test:e2e": "jest --testPathPatterns='test'",
+    "test:e2e": "cross-env PORT=3000 MONGODB_URI=mongodb://127.0.0.1:27017/test-db jest --testPathPatterns='test'",
     "test:debug": "jest --inspect-brk --runInBand"
   },
   "dependencies": {
@@ -64,6 +64,7 @@
     "@types/nodemailer": "^7.0.4",
     "@types/passport-http": "^0.3.11",
     "@types/supertest": "^6.0.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

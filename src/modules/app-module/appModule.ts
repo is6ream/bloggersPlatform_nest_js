@@ -8,15 +8,16 @@ import { TestingModule } from '../testing/testing-module';
 import { EmailAdapter } from '../notifications/email-adapter';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://127.0.0.1:27017/blogger-platform'),
+    MongooseModule.forRoot(process.env.MONGODB_URI as string),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [
         `.env.${process.env.NODE_ENV}.local`,
         `.env.${process.env.NODE_ENV}`,
-        '.env',
+        '.env.development',
       ],
     }),
     CqrsModule.forRoot(),
