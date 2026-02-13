@@ -1,3 +1,4 @@
+//configModule must be in the top of imports
 import { configModule } from 'src/config';
 import { Module } from '@nestjs/common';
 import { UserAccountsModule } from '../user-accounts/userAccounts.module';
