@@ -9,18 +9,27 @@ import { BloggersPlatformModule } from '../bloggers-platform/bloggers-platform.m
 import { TestingModule } from '../testing/testing-module';
 import { EmailAdapter } from '../notifications/email-adapter';
 import { CqrsModule } from '@nestjs/cqrs';
-import { AppConfig } from 'src/modules/app-module/app-config';
+import { CoreConfig } from 'src/modules/app-module/core-config';
+import { CoreModule } from 'src/core/core.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGODB_URI as string),
+    MongooseModule.forRootAsync({
+      useFactory: (coreConfig: CoreConfig) => {
+        return {
+          uri: coreConfig.mongoURI,
+        };
+      },
+      inject: [CoreConfig],
+    }),
     CqrsModule.forRoot(),
     UserAccountsModule,
     BloggersPlatformModule,
     TestingModule,
     configModule,
+    CoreModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EmailAdapter, AppConfig],
+  providers: [AppService, EmailAdapter, CoreConfig],
 })
 export class AppModule {}
