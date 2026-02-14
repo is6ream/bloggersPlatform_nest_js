@@ -3,7 +3,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connect, Connection } from 'mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { beforeAll, expect } from '@jest/globals';
-import { AppModule } from 'src/modules/app-module/appModule';
+import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { getModelToken } from '@nestjs/mongoose';
 import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';

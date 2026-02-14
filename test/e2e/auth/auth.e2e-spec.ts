@@ -2,7 +2,7 @@ import { beforeAll, expect } from '@jest/globals';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connect } from 'mongoose';
 import { Test } from '@nestjs/testing';
-import { AppModule } from '../../../src/modules/app-module/appModule';
+import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from '../../../src/setup/app.setup';
 import { getModelToken } from '@nestjs/mongoose';
 import { INestApplication } from '@nestjs/common';

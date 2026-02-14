@@ -4,7 +4,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { Connection, connect } from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { AppModule } from 'src/modules/app-module/appModule';
+import { AppModule } from 'src/modules/app-module/app-module';
 
 describe('Posts Likes E2E Test', () => {
   let app: INestApplication;

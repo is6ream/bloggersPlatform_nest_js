@@ -2,13 +2,14 @@
 import { configModule } from 'src/config';
 import { Module } from '@nestjs/common';
 import { UserAccountsModule } from '../user-accounts/userAccounts.module';
-import { AppController } from './appController';
-import { AppService } from './appService';
+import { AppController } from './app-controller';
+import { AppService } from './app-service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BloggersPlatformModule } from '../bloggers-platform/bloggers-platform.module';
 import { TestingModule } from '../testing/testing-module';
 import { EmailAdapter } from '../notifications/email-adapter';
 import { CqrsModule } from '@nestjs/cqrs';
+import { AppConfig } from 'src/modules/app-module/app-config';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { CqrsModule } from '@nestjs/cqrs';
     configModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EmailAdapter],
+  providers: [AppService, EmailAdapter, AppConfig],
 })
 export class AppModule {}

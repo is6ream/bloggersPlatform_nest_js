@@ -5,7 +5,7 @@ import { Connection, connect } from 'mongoose';
 import { getModelToken } from '@nestjs/mongoose';
 import { User } from 'src/modules/user-accounts/domain/userEntity';
 import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
-import { AppModule } from 'src/modules/app-module/appModule';
+import { AppModule } from 'src/modules/app-module/app-module';
 import request from 'supertest';
 import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
 import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
