@@ -8,8 +8,9 @@ export class UserAccountsConfig {
   @IsBoolean({
     message: 'Set Env variable IS_USER_AUTOMATICALLY_CONFIRMED, example: false',
   })
-  isAutomaticallyConfirmed: boolean =
-    this.configService.getOrThrow('IS_USER_AUTOMATICALLY_CONFIRMED') === 'true';
+  isAutomaticallyConfirmed: boolean | null  = configValidationUtility.convertToBoolean(
+    this.configService.getOrThrow('USER_IS_AUTOMATICALLY_CONFIRMED'),
+  );
 
   constructor(private configService: ConfigService) {
     configValidationUtility.validateConfig(this);

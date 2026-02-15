@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IsEnum, IsNotEmpty, IsNumber, validateSync } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  validateSync,
+} from 'class-validator';
 import { Enviroments } from 'src/modules/app-module/types/env-enums';
+import { configValidationUtility } from 'src/core/config/config-validation.utility';
 
 @Injectable()
 export class CoreConfig {
@@ -21,12 +28,15 @@ export class CoreConfig {
   @IsEnum(Enviroments)
   env: string = this.configService.getOrThrow('NODE_ENV');
 
+  @IsBoolean({
+    message:
+      'Set Enviroments environment variable IS_SWAGGER_ENABLED to enable/disable Swagger, example: true',
+  })
+  isSwaggerEnabled: boolean | null = configValidationUtility.convertToBoolean(
+    this.configService.getOrThrow('IS_SWAGGER_ENABLED'),
+  );
+
   constructor(private configService: ConfigService) {
-    const errors = validateSync(this);
-    if (errors.length > 0) {
-      const sortedMessage = errors
-        .map((err) => Object.values(err.constraints || {}).join(', '))
-        .join('; ');
-    }
+    configValidationUtility.validateConfig(this);
   }
 }
