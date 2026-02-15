@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IsNotEmpty, IsNumber, IsString, validateSync } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, validateSync } from 'class-validator';
+import { Enviroments } from 'src/modules/app-module/types/env-enums';
 
 @Injectable()
 export class CoreConfig {
@@ -16,6 +17,9 @@ export class CoreConfig {
     message: 'Set Env variable MONGO_URI',
   })
   mongoURI: string = this.configService.getOrThrow('MONGODB_URI');
+
+  @IsEnum(Enviroments)
+  env: string = this.configService.getOrThrow('NODE_ENV');
 
   constructor(private configService: ConfigService) {
     const errors = validateSync(this);
