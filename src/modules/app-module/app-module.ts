@@ -14,6 +14,7 @@ import { CoreModule } from 'src/core/core.module';
 
 @Module({
   imports: [
+    configModule,
     MongooseModule.forRootAsync({
       useFactory: (coreConfig: CoreConfig) => {
         return {
@@ -26,7 +27,6 @@ import { CoreModule } from 'src/core/core.module';
     UserAccountsModule,
     BloggersPlatformModule,
     TestingModule,
-    configModule,
     CoreModule,
   ],
   controllers: [AppController],

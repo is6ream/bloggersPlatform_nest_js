@@ -8,11 +8,12 @@
       {
         "name": "@nestjs/swagger",
         "options": {
-          "dtoFileNameSuffix": [".input-dto.ts", ".view-dto.ts"], 
+          "dtoFileNameSuffix": [".input-dto.ts", ".view-dto.ts"],
           "classValidatorShim": true,
           "introspectComments": true
         }
       }
-    ]
+    ],
+    "assets": [{ "include": "**/env/*", "watchAssests": true }]
   }
 }

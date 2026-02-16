@@ -11,6 +11,6 @@ export function appSetup(app: INestApplication) {
   globalPrefixSetup(app);
   enableCors(app);
   exceptionFiltersSetup(app);
-  swaggerSetup(app);
+  // swaggerSetup(app);
   enableCookiesSetup(app);
 }
