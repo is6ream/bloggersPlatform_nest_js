@@ -23,6 +23,7 @@ import { LocalAuthValidationGuard } from '../guards/local/local-auth-validation.
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Response } from 'express';
 
+//todo реализовать работу с refreshToken
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {

@@ -38,6 +38,9 @@ export class User {
   @Prop({ type: Date, nullable: true, default: null })
   deleteAt: Date | null;
 
+  @Prop({ type: String, default: null })
+  refreshTokenHash: string | null;
+
   static createInstance(dto: CreateUserDto): UserDocument {
     const user = new this();
     user.email = dto.email;

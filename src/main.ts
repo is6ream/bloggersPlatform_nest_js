@@ -27,5 +27,3 @@ async function bootstrap() {
   await app.listen(coreConfig.port);
 }
 bootstrap();
-
-//todo - сделать AuthConfig для работы с переменными окружения ветки Auth
