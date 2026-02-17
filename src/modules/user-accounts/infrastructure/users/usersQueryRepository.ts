@@ -26,6 +26,19 @@ export class UsersQueryRepository {
     return UserViewDto.mapToView(user);
   }
 
+  async getById(id: string): Promise<UserViewDto | null> {
+    const user: UserDocument | null = await this.UserModel.findOne({
+      _id: id,
+      deleteAt: null,
+    });
+
+    if (!user) {
+      return null
+    }
+
+    return UserViewDto.mapToView(user);
+  }
+
   async getAll(
     query: GetUsersQueryParams,
   ): Promise<PaginatedViewDto<UserViewDto>> {
