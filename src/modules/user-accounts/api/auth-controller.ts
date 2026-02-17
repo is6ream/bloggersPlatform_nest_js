@@ -106,6 +106,27 @@ export class AuthController {
     return this.authService.emailResending(body.email);
   }
 
+  @Post('refresh-token')
+  @UseGuards(RefreshTokenGuard)
+  async refreshToken(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const userId = (req.user as any).sub;
+    const refreshToken = (req.user as any).refreshToken;
+
+    const tokens = await this.authService.refreshTokens(userId, refreshToken);
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+    });
+
+    return { accessToken: tokens.accessToken };
+  }
+
   @ApiBearerAuth()
   @Get('me')
   @UseGuards(JwtAuthGuard)
