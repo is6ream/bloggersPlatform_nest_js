@@ -1,11 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UsersQueryRepository } from '../infrastructure/users/usersQueryRepository';
-import * as bcrypt from 'bcrypt';
-import { DomainException } from 'src/core/exceptions/domain-exceptions';
-import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
+import { ConfigService } from '@nestjs/config';
+import { UsersQueryRepository } from 'src/modules/user-accounts/infrastructure/users/usersQueryRepository';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class RefreshJwtStrategy extends PassportStrategy(
@@ -13,29 +11,21 @@ export class RefreshJwtStrategy extends PassportStrategy(
   'jwt-refresh',
 ) {
   constructor(
-    private configService: ConfigService,
-    private usersQueryRepository: UsersQueryRepository,
+    private readonly configService: ConfigService,
+    private readonly usersQueryRepository: UsersQueryRepository,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
         (request) => request?.cookies?.['refreshToken'],
       ]),
-      secret: configService.get('JWT_REFRESH_SECRET'),
+      ignoreExpiration: false,
+      secretOrKey: configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      passReqToCallback: true,
     });
   }
 
-  async validate(payload: { sub: string }, rawToken: string) {
-    const user = await this.usersQueryRepository.getByIdOrNotFoundFail(payload.sub);
-    if (!user)
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'Unauthorized',
-      });
-
-    const isValid = await bcrypt.compare(rawToken, user.refreshTokenHash);
-    if (!isValid) throw new UnauthorizedException();
-
-    return { sub: payload.sub, refreshToken: rawToken };
+  async validate(req: Request, payload: { sub: string }) {
+    const refreshToken = req.cookies?.['refreshToken'];
+    return { sub: payload.sub, refreshToken };
   }
 }
