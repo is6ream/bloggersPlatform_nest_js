@@ -26,7 +26,6 @@ import { Response } from 'express';
 import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-token.guard';
 import { Request } from 'express';
 
-//todo реализовать работу с refreshToken
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
