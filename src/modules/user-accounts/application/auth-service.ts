@@ -11,6 +11,7 @@ import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 import { UserContextOutput } from '../guards/dto/user-context.output.dto';
 import dotenv from 'dotenv';
+import { ConfigService } from '@nestjs/config';
 
 dotenv.config();
 @Injectable()
@@ -21,6 +22,7 @@ export class AuthService {
     private jwtService: JwtService,
     private bcryptService: BcryptService,
     private emailAdapter: EmailAdapter,
+    private configService: ConfigService,
   ) {}
 
   async validateUser(
@@ -205,5 +207,24 @@ export class AuthService {
       email,
       user.emailConfirmation.confirmationCode,
     );
+  }
+
+  async issueTokens(
+    userId: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload = { sub: userId };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.getOrThrow('JWT_SECRET'),
+        expiresIn: '10s',
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
+        expiresIn: '20s',
+      }),
+    ]);
+
+    return { accessToken, refreshToken };
   }
 }
