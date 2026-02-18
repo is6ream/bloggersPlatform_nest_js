@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Post,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -22,6 +23,8 @@ import { JwtAuthGuard } from '../guards/jwt/jwt-auth.guard';
 import { LocalAuthValidationGuard } from '../guards/local/local-auth-validation.guard';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Response } from 'express';
+import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-token.guard';
+import { Request } from 'express';
 
 //todo реализовать работу с refreshToken
 @Controller('auth')
