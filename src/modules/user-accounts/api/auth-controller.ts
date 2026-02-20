@@ -25,6 +25,8 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Response } from 'express';
 import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-token.guard';
 import { Request } from 'express';
+import { CommandBus } from '@nestjs/cqrs';
+import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
@@ -32,6 +34,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private authQueryRepository: AuthQueryRepository,
+    private commandBus: CommandBus,
   ) {}
 
   @Post('login')
@@ -50,15 +53,16 @@ export class AuthController {
     @ExtractUserFromRequest() user: UserContextDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ accessToken: string }> {
-    const refreshToken = 'stub.jwt.token.with.dots';
-
+    const { accessToken, refreshToken } =
+      await this.authService.loginUser(user);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000,
     });
-    return this.authService.loginUser(user);
+
+    return { accessToken: accessToken };
   }
 
   @Post('password-recovery')
@@ -114,10 +118,13 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
+    console.log('Rt controller works check');
     const userId = (req.user as any).sub;
     const refreshToken = (req.user as any).refreshToken;
 
-    const tokens = await this.authService.refreshTokens(userId, refreshToken);
+    const tokens = await this.commandBus.execute(
+      new RefreshTokensCommand(userId, refreshToken),
+    );
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,

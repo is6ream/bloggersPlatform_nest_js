@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserModelType } from '../../domain/userEntity';
-import { UserDocument } from '../../domain/userEntity';
+import { User, UserDocument, UserModelType } from '../../domain/userEntity';
 import { LoginOrEmailDto } from '../dto/login-or-email.dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
 @Injectable()
 export class UsersRepository {
@@ -85,5 +85,22 @@ export class UsersRepository {
     return this.UserModel.findOne({
       'emailConfirmation.confirmationCode': code,
     });
+  }
+  //прописываю вспомогательные методы для refreshToken usecase
+  async updateRefreshTokenHash(
+    userId: string,
+    refreshTokenHash: string,
+  ): Promise<void> {
+    const result = await this.UserModel.updateOne(
+      { _id: userId },
+      { refreshTokenHash },
+    );
+
+    if (result.matchedCount === 0) {
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Refresh token hash does not match',
+      });
+    }
   }
 }

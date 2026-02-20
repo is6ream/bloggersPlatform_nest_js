@@ -18,6 +18,7 @@ import { JwtStrategy } from './strategies/jwt-strategy';
 import { BasicAuthStrategy } from './strategies/basic-strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { RefreshJwtStrategy } from 'src/modules/user-accounts/strategies/refresh-token.jwt.strategy';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
   providers: [
     JwtStrategy,
     LocalStrategy,
+    RefreshJwtStrategy,
     UsersQueryRepository,
     UsersRepository,
     UsersService,

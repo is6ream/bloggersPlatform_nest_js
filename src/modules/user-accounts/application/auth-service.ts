@@ -113,12 +113,15 @@ export class AuthService {
     };
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: process.env.JWT_SECRET,
-      expiresIn: '20m',
+      expiresIn: '10s',
     });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: '20s',
+    });
+    await this.usersRepository.updateRefreshTokenHash(user.id, refreshToken);
 
-    return {
-      accessToken,
-    };
+    return { accessToken, refreshToken };
   }
 
   async resetPassword(

@@ -3,10 +3,11 @@ import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-//todo реализовать refreshToken useCase
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
+import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
 @Injectable()
-class RefreshTokensCommand {
+export class RefreshTokensCommand {
   constructor(
     public userId: string,
     public refreshToken: string,
@@ -21,11 +22,23 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
   ) {}
 
   async execute({ userId, refreshToken }: RefreshTokensCommand) {
+    //проверяем, есть ли пользователь в системе
+    console.log('refreshToken: ', refreshToken);
     const user = await this.usersRepository.findById(userId);
-    if (!user?.refreshTokenHash) throw new UnauthorizedException();
-
+    if (!user?.refreshTokenHash) {
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Refresh token hash does not match',
+      });
+    }
+    //сравниваем хеш токена, который поступил и токена user
     const isValid = await bcrypt.compare(refreshToken, user.refreshTokenHash);
-    if (!isValid) throw new UnauthorizedException();
+    if (!isValid) {
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Refresh token hash does not match',
+      });
+    }
 
     const tokens = await this.authService.issueTokens(userId);
 
