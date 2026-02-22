@@ -17,7 +17,7 @@
     "test:watch": "cross-env NODE_ENV=testing jest --watch",
     "test:coverage": "cross-env NODE_ENV=testing jest --coverage",
     "test:unit": "jest --testPathPatterns='src'",
-    "test:e2e": "cross-env cross-env NODE_ENV=testing jest --testPathPatterns='test'",
+    "test:e2e": "cross-env NODE_ENV=testing jest --config ./test/jest-e2e.json",
     "test:debug": "jest --inspect-brk --runInBand"
   },
   "dependencies": {

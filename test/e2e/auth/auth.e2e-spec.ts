@@ -9,6 +9,7 @@ import { INestApplication } from '@nestjs/common';
 import { User } from '../../../src/modules/user-accounts/domain/userEntity';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import request from 'supertest';
+
 describe('Auth e2e tests', () => {
   let mongoServer: any;
   let mongoClient: any;
@@ -44,6 +45,7 @@ describe('Auth e2e tests', () => {
   });
 
   it('should success authentication', async () => {
+    console.log('test check');
     testUser = await createTestUser(userModel);
 
     const authResponse = await request(app.getHttpServer())
@@ -57,16 +59,17 @@ describe('Auth e2e tests', () => {
     expect(authResponse.headers['set-cookie']).toBeDefined();
 
     // Ищем конкретную куку
-    const cookies = authResponse.headers['set-cookie'] ;
+    const cookies = authResponse.headers['set-cookie'];
     console.log('Cookies check: ', cookies);
-    // const refreshTokenCookie = cookies.find((cookie) =>
+    const refreshTokenCookie = cookies;
+    //   .find((cookie) =>
     //   cookie.includes('refresh_token'),
     // );
-    //
-    // expect(refreshTokenCookie).toBeDefined();
-    //
-    // expect(refreshTokenCookie).toContain('HttpOnly');
-    // expect(refreshTokenCookie).toContain('Secure'); // если используешь HTTPS
+
+    expect(refreshTokenCookie).toBeDefined();
+
+    expect(refreshTokenCookie).toContain('HttpOnly');
+    expect(refreshTokenCookie).toContain('Secure');
   });
 
   afterAll(async () => {
