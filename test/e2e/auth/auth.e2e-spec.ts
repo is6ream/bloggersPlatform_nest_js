@@ -4,7 +4,11 @@ import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { INestApplication } from '@nestjs/common';
 import { createTestUser } from '../../helpers/factory/user-factory';
+import { loginUserHelper } from './helpers/login-user';
 import request from 'supertest';
+import {
+  extractRefreshToken,
+} from './helpers/extract-refresh.token';
 
 describe('Auth e2e tests', () => {
   let mongoServer: any;
@@ -30,31 +34,23 @@ describe('Auth e2e tests', () => {
     await app.init();
   });
 
-  it('should success authentication', async () => {
-    console.log('test check');
-    testUser = await createTestUser(userModel);
+  it('should return refreshToken in HttpOnly Secure cookie', async () => {
+    const response = await loginUserHelper(app);
 
-    const authResponse = await request(app.getHttpServer())
-      .post('/hometask_15/api/auth/login')
-      .send({
-        loginOrEmail: 'testuser',
-        password: 'testpassword',
-      });
+    const cookie = response.headers['set-cookie'];
 
-    expect(authResponse.headers['set-cookie']).toBeDefined();
+    expect(cookie).toBeDefined();
 
-    const cookies = authResponse.headers['set-cookie'];
-    console.log('Cookies check: ', cookies);
-    const refreshTokenCookie = cookies;
-    //   .find((cookie) =>
-    //   cookie.includes('refresh_token'),
-    // );
+    const refreshToken = extractRefreshToken(cookie as string);
 
-    expect(refreshTokenCookie).toBeDefined();
+    expect(refreshToken).toBeDefined();
+    expect(typeof refreshToken).toBe('string');
+    // expect(refreshToken.length).toBeGreaterThan(10);
 
-    expect(refreshTokenCookie).toContain('HttpOnly');
-    expect(refreshTokenCookie).toContain('Secure');
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('Secure');
   });
+
 
   afterAll(async () => {
     if (mongoConnection) await mongoConnection.close();
