@@ -34,6 +34,7 @@ export class AuthService {
         login: loginOrEmail,
         email: loginOrEmail,
       });
+    console.log('user check: ', user);
     if (!user) {
       return null;
     }

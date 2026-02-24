@@ -6,9 +6,8 @@ import { INestApplication } from '@nestjs/common';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { loginUserHelper } from './helpers/login-user';
 import request from 'supertest';
-import {
-  extractRefreshToken,
-} from './helpers/extract-refresh.token';
+import { extractRefreshToken } from './helpers/extract-refresh.token';
+import { UserModelType } from 'src/modules/user-accounts/domain/userEntity';
 
 describe('Auth e2e tests', () => {
   let mongoServer: any;
@@ -16,7 +15,7 @@ describe('Auth e2e tests', () => {
   let mongoConnection: any;
   let moduleFixture: any;
   let app: INestApplication;
-  let userModel: any;
+  let userModel!: UserModelType;
 
   // Общие данные для всех тестов
   let testUser: any;
@@ -35,6 +34,9 @@ describe('Auth e2e tests', () => {
   });
 
   it('should return refreshToken in HttpOnly Secure cookie', async () => {
+    console.log('is userModel exist check: ', userModel);
+
+    await createTestUser(userModel);
     const response = await loginUserHelper(app);
 
     const cookie = response.headers['set-cookie'];
@@ -50,7 +52,6 @@ describe('Auth e2e tests', () => {
     expect(cookie).toContain('HttpOnly');
     expect(cookie).toContain('Secure');
   });
-
 
   afterAll(async () => {
     if (mongoConnection) await mongoConnection.close();

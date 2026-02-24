@@ -2,21 +2,23 @@ import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 import { UserModelType } from 'src/modules/user-accounts/domain/userEntity';
 
-export async function createTestUser(
-  userModel: UserModelType,
-  overrides: Partial<any> = {},
-) {
-  const defaultData = {
+
+export async function createTestUser(userModel: UserModelType) {
+  const password = 'testpassword';
+
+  return await userModel.create({
     login: 'testuser',
     email: 'test@example.com',
-    passwordHash: await bcrypt.hash('testpassword', 10),
-    emailConfirmation: {
-      confirmationCode: randomUUID(),
-      expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      isConfirmed: false,
-    },
-    passwordRecovery: null,
-  };
+    passwordHash: await bcrypt.hash(password, 10),
 
-  return userModel.create({ ...defaultData, ...overrides });
+    // если у тебя есть обязательные поля в схеме —
+    // просто ставим минимально валидные значения
+    emailConfirmation: {
+      confirmationCode: null,
+      expirationDate: null,
+      isConfirmed: true, // важно для логина
+    },
+
+    passwordRecovery: null,
+  });
 }
