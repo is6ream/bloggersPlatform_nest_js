@@ -19,10 +19,14 @@ import { BasicAuthStrategy } from './strategies/basic-strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RefreshJwtStrategy } from 'src/modules/user-accounts/strategies/refresh-token.jwt.strategy';
+import { DeviceSession, DeviceSessionSchema } from './domain/device-session.entity';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      {name: DeviceSession.name, schema: DeviceSessionSchema}
+    ]),
     PassportModule,
     ConfigModule,
     JwtModule.registerAsync({
