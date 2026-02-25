@@ -108,7 +108,10 @@ export class AuthService {
     );
   }
 
-  async loginUser(user: UserContextDto) {
+  async loginUser(
+    user: UserContextDto,
+    deviceMeta: { ip: string; userAgent: string },
+  ) {
     const payload = {
       id: user.id,
     };

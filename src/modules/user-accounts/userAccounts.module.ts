@@ -20,6 +20,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RefreshJwtStrategy } from 'src/modules/user-accounts/strategies/refresh-token.jwt.strategy';
 import { DeviceSession, DeviceSessionSchema } from './domain/device-session.entity';
+import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.repository';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { DeviceSession, DeviceSessionSchema } from './domain/device-session.enti
     EmailAdapter,
     UsersService,
     EmailAdapter,
+    DeviceSessionsRepository,
     BasicAuthStrategy,
   ],
   exports: [],

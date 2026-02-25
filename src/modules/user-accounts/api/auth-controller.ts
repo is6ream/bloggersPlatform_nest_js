@@ -51,10 +51,24 @@ export class AuthController {
   })
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ accessToken: string }> {
-    const { accessToken, refreshToken } =
-      await this.authService.loginUser(user);
+    const ip =
+      (req.ip as string) ||
+      (req.socket?.remoteAddress as string) ||
+      req.headers['x-forwarded-for']?.toString() ||
+      'unknown';
+
+    const userAgentHeader = req.headers['user-agent'];
+    const userAgent = Array.isArray(userAgentHeader)
+      ? userAgentHeader[0]
+      : userAgentHeader || 'unknown';
+
+    const { accessToken, refreshToken } = await this.authService.loginUser(
+      user,
+      { ip, userAgent },
+    );
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: true,
