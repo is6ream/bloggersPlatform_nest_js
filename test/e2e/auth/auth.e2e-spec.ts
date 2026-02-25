@@ -1,21 +1,21 @@
 import { beforeAll, expect } from '@jest/globals';
-import { Test } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { INestApplication } from '@nestjs/common';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { loginUserHelper } from './helpers/login-user';
-import request from 'supertest';
 import { extractRefreshToken } from './helpers/extract-refresh.token';
 import { UserModelType } from 'src/modules/user-accounts/domain/userEntity';
-
+import { getModelToken } from '@nestjs/mongoose';
+import { User } from 'src/modules/user-accounts/domain/userEntity';
 describe('Auth e2e tests', () => {
   let mongoServer: any;
   let mongoClient: any;
   let mongoConnection: any;
-  let moduleFixture: any;
+  let moduleFixture: TestingModule;
   let app: INestApplication;
-  let userModel!: UserModelType;
+  let userModel: UserModelType;
 
   // Общие данные для всех тестов
   let testUser: any;
@@ -28,29 +28,34 @@ describe('Auth e2e tests', () => {
       imports: [AppModule],
     }).compile();
 
+    userModel = moduleFixture.get<UserModelType>(getModelToken(User.name));
+
     app = moduleFixture.createNestApplication();
     appSetup(app);
     await app.init();
   });
 
   it('should return refreshToken in HttpOnly Secure cookie', async () => {
-    console.log('is userModel exist check: ', userModel);
 
     await createTestUser(userModel);
     const response = await loginUserHelper(app);
 
-    const cookie = response.headers['set-cookie'];
+    const cookieHeader = response.headers['set-cookie'];
 
-    expect(cookie).toBeDefined();
+    expect(cookieHeader).toBeDefined();
 
-    const refreshToken = extractRefreshToken(cookie as string);
+    const refreshToken = extractRefreshToken(cookieHeader);
 
     expect(refreshToken).toBeDefined();
     expect(typeof refreshToken).toBe('string');
-    // expect(refreshToken.length).toBeGreaterThan(10);
 
-    expect(cookie).toContain('HttpOnly');
-    expect(cookie).toContain('Secure');
+    const firstCookie =
+      Array.isArray(cookieHeader) && cookieHeader.length > 0
+        ? cookieHeader[0]
+        : (cookieHeader as string);
+
+    expect(firstCookie).toContain('HttpOnly');
+    expect(firstCookie).toContain('Secure');
   });
 
   afterAll(async () => {

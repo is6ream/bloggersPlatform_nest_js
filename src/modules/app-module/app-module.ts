@@ -11,7 +11,6 @@ import { EmailAdapter } from '../notifications/email-adapter';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CoreConfig } from 'src/modules/app-module/core-config';
 import { CoreModule } from 'src/core/core.module';
-import { CounterModule } from 'src/test/counter-module';
 
 @Module({
   imports: [
@@ -29,9 +28,8 @@ import { CounterModule } from 'src/test/counter-module';
     BloggersPlatformModule,
     TestingModule,
     CoreModule,
-    CounterModule
   ],
   controllers: [AppController],
   providers: [AppService, EmailAdapter, CoreConfig],
 })
-export class AppModule {}
+export class AppModule { }

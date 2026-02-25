@@ -10,15 +10,11 @@ export async function createTestUser(userModel: UserModelType) {
     login: 'testuser',
     email: 'test@example.com',
     passwordHash: await bcrypt.hash(password, 10),
-
-    // если у тебя есть обязательные поля в схеме —
-    // просто ставим минимально валидные значения
     emailConfirmation: {
-      confirmationCode: null,
-      expirationDate: null,
-      isConfirmed: true, // важно для логина
+      confirmationCode: "123212",
+      expirationDate: new Date(),
+      isConfirmed: true,
     },
-
     passwordRecovery: null,
-  });
+  } as any);
 }
