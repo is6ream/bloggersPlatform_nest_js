@@ -12,6 +12,8 @@ import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes'
 import { UserContextOutput } from '../guards/dto/user-context.output.dto';
 import dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
+import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
+import { randomUUID } from 'crypto';
 
 dotenv.config();
 @Injectable()
@@ -23,6 +25,7 @@ export class AuthService {
     private bcryptService: BcryptService,
     private emailAdapter: EmailAdapter,
     private configService: ConfigService,
+    private deviceSessionsRepository: DeviceSessionsRepository,
   ) {}
 
   async validateUser(
@@ -112,18 +115,32 @@ export class AuthService {
     user: UserContextDto,
     deviceMeta: { ip: string; userAgent: string },
   ) {
-    const payload = {
-      id: user.id,
-    };
-    const accessToken = await this.jwtService.signAsync(payload, {
+    const deviceId = randomUUID();
+
+    const accessPayload = { id: user.id };
+    const refreshPayload = { sub: user.id, deviceId };
+
+    const accessToken = await this.jwtService.signAsync(accessPayload, {
       secret: process.env.JWT_SECRET,
       expiresIn: '10s',
     });
-    const refreshToken = this.jwtService.sign(payload, {
+
+    const refreshToken = this.jwtService.sign(refreshPayload, {
       secret: process.env.JWT_REFRESH_SECRET,
       expiresIn: '20s',
     });
-    await this.usersRepository.updateRefreshTokenHash(user.id, refreshToken);
+
+    const refreshTokenHash = await this.bcryptService.generateHash(
+      refreshToken,
+    );
+
+    await this.deviceSessionsRepository.createSession({
+      userId: user.id,
+      deviceId,
+      ip: deviceMeta.ip,
+      userAgent: deviceMeta.userAgent,
+      refreshTokenHash,
+    });
 
     return { accessToken, refreshToken };
   }
@@ -218,8 +235,9 @@ export class AuthService {
 
   async issueTokens(
     userId: string,
+    deviceId: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: userId };
+    const payload = { sub: userId, deviceId };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {

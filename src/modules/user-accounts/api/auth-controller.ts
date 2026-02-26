@@ -134,10 +134,11 @@ export class AuthController {
   ) {
     console.log('Rt controller works check');
     const userId = (req.user as any).sub;
+    const deviceId = (req.user as any).deviceId;
     const refreshToken = (req.user as any).refreshToken;
 
     const tokens = await this.commandBus.execute(
-      new RefreshTokensCommand(userId, refreshToken),
+      new RefreshTokensCommand(userId, deviceId, refreshToken),
     );
 
     res.cookie('refreshToken', tokens.refreshToken, {

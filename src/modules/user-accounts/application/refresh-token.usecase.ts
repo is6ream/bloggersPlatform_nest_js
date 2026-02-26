@@ -2,6 +2,7 @@ import { AuthService } from 'src/modules/user-accounts/application/auth-service'
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
+import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
@@ -10,6 +11,7 @@ import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes'
 export class RefreshTokensCommand {
   constructor(
     public userId: string,
+    public deviceId: string,
     public refreshToken: string,
   ) {}
 }
@@ -19,20 +21,28 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
   constructor(
     private readonly authService: AuthService,
     private readonly usersRepository: UsersRepository,
+    private readonly deviceSessionsRepository: DeviceSessionsRepository,
   ) {}
 
-  async execute({ userId, refreshToken }: RefreshTokensCommand) {
-    //проверяем, есть ли пользователь в системе
+  async execute({ userId, deviceId, refreshToken }: RefreshTokensCommand) {
     console.log('refreshToken: ', refreshToken);
-    const user = await this.usersRepository.findById(userId);
-    if (!user?.refreshTokenHash) {
+
+    const session = await this.deviceSessionsRepository.findByUserAndDevice(
+      userId,
+      deviceId,
+    );
+
+    if (!session?.refreshTokenHash) {
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
         message: 'Refresh token hash does not match',
       });
     }
-    //сравниваем хеш токена, который поступил и токена user
-    const isValid = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+
+    const isValid = await bcrypt.compare(
+      refreshToken,
+      session.refreshTokenHash,
+    );
     if (!isValid) {
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
@@ -40,13 +50,15 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
       });
     }
 
-    const tokens = await this.authService.issueTokens(userId);
+    const tokens = await this.authService.issueTokens(userId, deviceId);
 
-    // ротация: новый токен → новый хеш
-    await this.usersRepository.updateRefreshTokenHash(
+    const newRefreshHash = await bcrypt.hash(tokens.refreshToken, 10);
+
+    await this.deviceSessionsRepository.updateSessionToken({
       userId,
-      await bcrypt.hash(tokens.refreshToken, 10),
-    );
+      deviceId,
+      refreshTokenHash: newRefreshHash,
+    });
 
     return tokens;
   }

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   DeviceSession,
+  DeviceSessionDocument,
   DeviceSessionModelType,
 } from '../../domain/device-session.entity';
 
@@ -60,6 +61,13 @@ export class DeviceSessionsRepository {
       userId,
       deviceId: { $ne: deviceId },
     });
+  }
+
+  async findByUserAndDevice(
+    userId: string,
+    deviceId: string,
+  ): Promise<DeviceSessionDocument | null> {
+    return this.deviceSessionModel.findOne({ userId, deviceId });
   }
 }
 
