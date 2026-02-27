@@ -27,6 +27,7 @@ import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-
 import { Request } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
+import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
@@ -35,6 +36,7 @@ export class AuthController {
     private authService: AuthService,
     private authQueryRepository: AuthQueryRepository,
     private commandBus: CommandBus,
+    private deviceSessionsRepository: DeviceSessionsRepository,
   ) {}
 
   @Post('login')
@@ -151,6 +153,26 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(RefreshTokenGuard)
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const { sub: userId, deviceId } = req.user as any;
+
+    if (userId && deviceId) {
+      await this.authService.logout(userId, deviceId);
+    }
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+  }
+
   @ApiBearerAuth()
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -159,4 +181,6 @@ export class AuthController {
   ): Promise<GetMeOutputDto> {
     return this.authQueryRepository.getMe(user.id);
   }
+
+
 }

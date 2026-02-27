@@ -88,7 +88,6 @@ export class CommentsQueryRepository {
     query: GetCommentsQueryParams,
     userId?: string, // Делаем необязательным
   ): Promise<PaginatedViewDto<CommentViewDto>> {
-    console.log(userId, 'user id check in DAL');
 
     const skip = query.calculateSkip();
 

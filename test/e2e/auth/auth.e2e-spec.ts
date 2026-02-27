@@ -17,7 +17,6 @@ describe('Auth e2e tests', () => {
   let app: INestApplication;
   let userModel: UserModelType;
 
-  // Общие данные для всех тестов
   let testUser: any;
   let testUserId: string;
   let testPostId: string;

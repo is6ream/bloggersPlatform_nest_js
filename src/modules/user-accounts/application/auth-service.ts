@@ -26,7 +26,7 @@ export class AuthService {
     private emailAdapter: EmailAdapter,
     private configService: ConfigService,
     private deviceSessionsRepository: DeviceSessionsRepository,
-  ) {}
+  ) { }
 
   async validateUser(
     loginOrEmail: string,
@@ -37,7 +37,6 @@ export class AuthService {
         login: loginOrEmail,
         email: loginOrEmail,
       });
-    console.log('user check: ', user);
     if (!user) {
       return null;
     }
@@ -105,10 +104,15 @@ export class AuthService {
     user.requestPasswordRecovery();
     await this.usersRepository.save(user);
 
-    await this.emailAdapter.sendRecoveryCodeEmail(
-      email,
-      user.passwordRecovery?.code!,
-    );
+    try {
+      await this.emailAdapter.sendConfirmationCodeEmail(
+        email,
+        user.passwordRecovery?.code!
+      );
+    } catch (e) {
+      console.error('Error sending recovery email: ', e)
+    }
+
   }
 
   async loginUser(
@@ -252,4 +256,9 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
+
+  async logout(userId: string, deviceId: string): Promise<void> {
+    await this.deviceSessionsRepository.deleteSession(userId, deviceId);
+  }
+
 }

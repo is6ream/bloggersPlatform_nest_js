@@ -76,14 +76,14 @@ export class User {
 
   requestPasswordRecovery(): void {
     if (!this.emailConfirmation.isConfirmed) {
-      throw new Error('Email must be confirmed');
+      return;
     }
 
     const recoveryCode = this.generateRecoveryCode();
 
     this.passwordRecovery = {
       code: recoveryCode,
-      expiresAt: new Date(Date.now() + 3600000), // 1 час
+      expiresAt: new Date(Date.now() + 3600000),
       isUsed: false,
     };
   }

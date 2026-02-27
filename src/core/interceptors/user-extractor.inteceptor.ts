@@ -21,7 +21,6 @@ export class UserExtractorInterceptor implements NestInterceptor {
 
       const payload = this.jwtService.decode(token);
 
-      console.log(payload.id, 'user id check in payload');
 
       if (payload && typeof payload === 'object') {
         request.user = {
