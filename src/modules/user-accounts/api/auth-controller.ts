@@ -37,7 +37,7 @@ export class AuthController {
     private authQueryRepository: AuthQueryRepository,
     private commandBus: CommandBus,
     private deviceSessionsRepository: DeviceSessionsRepository,
-  ) {}
+  ) { }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -139,9 +139,13 @@ export class AuthController {
     const deviceId = (req.user as any).deviceId;
     const refreshToken = (req.user as any).refreshToken;
 
+
+    //шина не отрабатывает
     const tokens = await this.commandBus.execute(
       new RefreshTokensCommand(userId, deviceId, refreshToken),
     );
+
+    console.log("command bus work check", tokens)
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -149,6 +153,8 @@ export class AuthController {
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
     });
+
+    console.log("tokens check", tokens.accessToken, tokens.refreshToken)
 
     return { accessToken: tokens.accessToken };
   }

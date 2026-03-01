@@ -25,6 +25,10 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
   ) {}
 
   async execute({ userId, deviceId, refreshToken }: RefreshTokensCommand) {
+
+    console.log("command bus works")
+
+
     console.log('refreshToken: ', refreshToken);
 
     const session = await this.deviceSessionsRepository.findByUserAndDevice(

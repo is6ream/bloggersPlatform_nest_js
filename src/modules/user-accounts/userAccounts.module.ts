@@ -21,6 +21,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { RefreshJwtStrategy } from 'src/modules/user-accounts/strategies/refresh-token.jwt.strategy';
 import { DeviceSession, DeviceSessionSchema } from './domain/device-session.entity';
 import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.repository';
+import { CqrsModule } from '@nestjs/cqrs';
+import { RefreshTokensUseCase } from './application/refresh-token.usecase';
 
 @Module({
   imports: [
@@ -28,6 +30,7 @@ import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.
       { name: User.name, schema: UserSchema },
       {name: DeviceSession.name, schema: DeviceSessionSchema}
     ]),
+    CqrsModule,
     PassportModule,
     ConfigModule,
     JwtModule.registerAsync({
@@ -62,6 +65,7 @@ import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.
     EmailAdapter,
     DeviceSessionsRepository,
     BasicAuthStrategy,
+    RefreshTokensUseCase,
   ],
   exports: [],
 })
