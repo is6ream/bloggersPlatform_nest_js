@@ -139,8 +139,6 @@ export class AuthController {
     const deviceId = (req.user as any).deviceId;
     const refreshToken = (req.user as any).refreshToken;
 
-
-    //шина не отрабатывает
     const tokens = await this.commandBus.execute(
       new RefreshTokensCommand(userId, deviceId, refreshToken),
     );
