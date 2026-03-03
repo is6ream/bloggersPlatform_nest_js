@@ -1,6 +1,6 @@
 import { AuthService } from 'src/modules/user-accounts/application/auth-service';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
@@ -27,7 +27,6 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
   async execute({ userId, deviceId, refreshToken }: RefreshTokensCommand) {
 
     console.log("command bus works")
-
 
     console.log('refreshToken: ', refreshToken);
 

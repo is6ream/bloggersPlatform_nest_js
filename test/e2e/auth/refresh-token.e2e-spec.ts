@@ -48,7 +48,7 @@ describe('Auth refresh-token e2e', () => {
 
     const refreshResponse = await agent
       .post('/hometask_16/api/auth/refresh-token')
-      .expect(201)
+      .expect(200)
       .expect('Content-Type', /json/);
 
     const newCookieHeader = refreshResponse.headers['set-cookie'];
@@ -62,10 +62,10 @@ describe('Auth refresh-token e2e', () => {
   });
 
   it('should return 401 for invalid refreshToken', async () => {
-    const agent = request.agent(app.getHttpServer());
-    agent.jar.setCookie(`refreshToken=invalid-token`);
-
-    await agent.post('/hometask_16/api/auth/refresh-token').expect(401);
+    await request(app.getHttpServer())
+      .post('/hometask_16/api/auth/refresh-token')
+      .set('Cookie', 'refreshToken=invalid-token')
+      .expect(401);
   });
 
   it('should return 401 for expired refreshToken on /auth/refresh-token', async () => {
@@ -75,14 +75,14 @@ describe('Auth refresh-token e2e', () => {
       { sub: 'someUserId', deviceId: 'someDeviceId' },
       {
         secret,
-        expiresIn: -10, 
+        expiresIn: -10,
       },
     );
 
-    const agent = request.agent(app.getHttpServer());
-    agent.jar.setCookie(`refreshToken=${expiredToken}`);
-
-    await agent.post('/hometask_16/api/auth/refresh-token').expect(401);
+    await request(app.getHttpServer())
+      .post('/hometask_16/api/auth/refresh-token')
+      .set('Cookie', `refreshToken=${expiredToken}`)
+      .expect(401);
   });
 
   it('should return 401 for expired refreshToken on /auth/logout', async () => {
@@ -96,10 +96,10 @@ describe('Auth refresh-token e2e', () => {
       },
     );
 
-    const agent = request.agent(app.getHttpServer());
-    agent.jar.setCookie(`refreshToken=${expiredToken}`);
-
-    await agent.post('/hometask_16/api/auth/logout').expect(401);
+    await request(app.getHttpServer())
+      .post('/hometask_16/api/auth/logout')
+      .set('Cookie', `refreshToken=${expiredToken}`)
+      .expect(401);
   });
 
   afterAll(async () => {

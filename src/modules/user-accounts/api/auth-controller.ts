@@ -129,12 +129,12 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(RefreshTokenGuard)
   async refreshToken(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    console.log('Rt controller works check');
     const userId = (req.user as any).sub;
     const deviceId = (req.user as any).deviceId;
     const refreshToken = (req.user as any).refreshToken;
@@ -143,16 +143,12 @@ export class AuthController {
       new RefreshTokensCommand(userId, deviceId, refreshToken),
     );
 
-    console.log("command bus work check", tokens)
-
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
-
-    console.log("tokens check", tokens.accessToken, tokens.refreshToken)
 
     return { accessToken: tokens.accessToken };
   }
