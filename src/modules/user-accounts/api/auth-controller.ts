@@ -39,6 +39,17 @@ export class AuthController {
     private deviceSessionsRepository: DeviceSessionsRepository,
   ) { }
 
+
+  
+  @Post('password-recovery')
+  @Throttle({
+    default: { limit: 5, ttl: 60000 },
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
+    return this.authService.passwordRecovery(body.email);
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthValidationGuard)
@@ -81,14 +92,6 @@ export class AuthController {
     return { accessToken: accessToken };
   }
 
-  @Post('password-recovery')
-  @Throttle({
-    default: { limit: 5, ttl: 60000 },
-  })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
-    return this.authService.passwordRecovery(body.email);
-  }
 
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
