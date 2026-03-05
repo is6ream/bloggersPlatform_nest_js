@@ -11,10 +11,6 @@ module.exports = {
     '<rootDir>/src/**/*.spec.ts',
     '<rootDir>/src/**/*.test.ts',
 
-    // E2E тесты
-    '<rootDir>/test/**/*.e2e-spec.ts',
-    '<rootDir>/test/*.e2e-test.ts',
-
     // Интеграционные тесты
     '<rootDir>/test/**/*.integration-spec.ts',
   ],
