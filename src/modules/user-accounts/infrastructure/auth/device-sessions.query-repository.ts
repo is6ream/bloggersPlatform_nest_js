@@ -16,4 +16,8 @@ export class DeviceSessionsQueryRepository {
   async findAllByUserId(userId: string): Promise<DeviceSessionDocument[]> {
     return this.deviceSessionModel.find({ userId }).exec();
   }
+
+  async findByDeviceId(deviceId: string): Promise<DeviceSessionDocument | null> {
+    return this.deviceSessionModel.findOne({ deviceId }).exec();
+  }
 }
