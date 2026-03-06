@@ -14,6 +14,7 @@ import { RefreshTokenGuard } from '../guards/jwt/refresh-token.guard';
 import { DeviceSessionsQueryRepository } from '../infrastructure/auth/device-sessions.query-repository';
 import { DeviceSessionViewDto } from './dto/output/device-session.view-dto';
 import { DeleteDeviceSessionCommand } from '../application/delete-device-session.usecase';
+import { DeleteAllOtherSessionsCommand } from '../application/delete-all-other-sessions.usecase';
 
 @Controller('security')
 export class SecurityController {
@@ -29,6 +30,15 @@ export class SecurityController {
     const userId = (req.user as any).sub;
     const sessions = await this.deviceSessionsQueryRepository.findAllByUserId(userId);
     return sessions.map(DeviceSessionViewDto.mapToView);
+  }
+
+  @Delete('devices')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(RefreshTokenGuard)
+  async deleteAllOtherDevices(@Req() req: Request): Promise<void> {
+    const userId = (req.user as any).sub;
+    const deviceId = (req.user as any).deviceId;
+    await this.commandBus.execute(new DeleteAllOtherSessionsCommand(userId, deviceId));
   }
 
   @Delete('devices/:deviceId')
