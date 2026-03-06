@@ -1,0 +1,5 @@
+#!/bin/sh
+# Removes lines added by Cursor IDE from commit messages
+sed -i '/^Made-with: Cursor/d' "$1"
+# Remove trailing blank lines left after deletion
+sed -i -e :a -e '/^\n*$/{$d;N;ba}' "$1"
