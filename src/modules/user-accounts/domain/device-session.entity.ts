@@ -31,3 +31,8 @@ export type DeviceSessionDocument = HydratedDocument<DeviceSession>;
 export type DeviceSessionModelType = Model<DeviceSessionDocument>;
 
 export const DeviceSessionSchema = SchemaFactory.createForClass(DeviceSession);
+
+DeviceSessionSchema.index(
+  { userId: 1, deviceId: 1 },
+  { unique: true },
+);

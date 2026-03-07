@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
 import {
   DeviceSession,
   DeviceSessionDocument,
@@ -52,17 +51,20 @@ export class DeviceSessionsRepository {
 
   /**
    * Atomically updates refreshTokenHash only if current hash matches.
-   * Uses sessionId to target the exact document and avoid race/mismatch.
+   * Matches by userId, deviceId and current hash so the same token cannot be used twice.
+   * Uses native collection to ensure write is visible to subsequent reads (no Mongoose cache).
    * Returns true if document was updated, false if no document matched (token already rotated or session gone).
    */
   async updateSessionTokenIfMatch(params: {
-    sessionId: string;
+    userId: string;
+    deviceId: string;
     currentRefreshTokenHash: string;
     newRefreshTokenHash: string;
   }): Promise<boolean> {
-    const result = await this.deviceSessionModel.updateOne(
+    const result = await this.deviceSessionModel.collection.updateOne(
       {
-        _id: new Types.ObjectId(params.sessionId),
+        userId: params.userId,
+        deviceId: params.deviceId,
         refreshTokenHash: params.currentRefreshTokenHash,
       },
       { $set: { refreshTokenHash: params.newRefreshTokenHash } },
@@ -87,8 +89,12 @@ export class DeviceSessionsRepository {
   async findByUserAndDevice(
     userId: string,
     deviceId: string,
-  ): Promise<DeviceSessionDocument | null> {
-    return this.deviceSessionModel.findOne({ userId, deviceId });
+  ): Promise<{ _id: unknown; refreshTokenHash: string } | null> {
+    const doc = await this.deviceSessionModel
+      .findOne({ userId, deviceId }, { refreshTokenHash: 1 })
+      .lean()
+      .exec();
+    return doc ? (doc as { _id: unknown; refreshTokenHash: string }) : null;
   }
 }
 

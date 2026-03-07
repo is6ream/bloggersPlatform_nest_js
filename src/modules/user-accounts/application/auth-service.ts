@@ -1,5 +1,5 @@
 import { CreateUserDto } from 'src/modules/user-accounts/dto/UserInputDto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
 import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { JwtService } from '@nestjs/jwt';
@@ -18,6 +18,8 @@ import { randomUUID } from 'crypto';
 dotenv.config();
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersRepository: UsersRepository,
     private usersService: UsersService,
@@ -258,6 +260,9 @@ export class AuthService {
   }
 
   async logout(userId: string, deviceId: string): Promise<void> {
+    this.logger.log(
+      `[/logout] Invalidating session — userId=${userId}, deviceId=${deviceId}`,
+    );
     await this.deviceSessionsRepository.deleteSession(userId, deviceId);
   }
 

@@ -24,6 +24,7 @@ import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.
 import { DeviceSessionsQueryRepository } from './infrastructure/auth/device-sessions.query-repository';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RefreshTokensUseCase } from './application/refresh-token.usecase';
+import { UsedRefreshTokenStore } from './application/used-refresh-token.store';
 import { DeleteDeviceSessionUseCase } from './application/delete-device-session.usecase';
 import { DeleteAllOtherSessionsUseCase } from './application/delete-all-other-sessions.usecase';
 import { SecurityController } from './api/security.controller';
@@ -70,6 +71,7 @@ import { SecurityController } from './api/security.controller';
     DeviceSessionsRepository,
     DeviceSessionsQueryRepository,
     BasicAuthStrategy,
+    UsedRefreshTokenStore,
     RefreshTokensUseCase,
     DeleteDeviceSessionUseCase,
     DeleteAllOtherSessionsUseCase,

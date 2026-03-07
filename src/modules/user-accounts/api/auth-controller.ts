@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Logger,
   Post,
   Req,
   Res,
@@ -28,16 +29,20 @@ import { Request } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
+import { UsedRefreshTokenStore } from '../application/used-refresh-token.store';
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private authService: AuthService,
     private authQueryRepository: AuthQueryRepository,
     private commandBus: CommandBus,
     private deviceSessionsRepository: DeviceSessionsRepository,
-  ) { }
+    private usedRefreshTokenStore: UsedRefreshTokenStore,
+  ) {}
 
 
   
@@ -142,9 +147,15 @@ export class AuthController {
     const deviceId = (req.user as any).deviceId;
     const refreshToken = (req.user as any).refreshToken;
 
+    this.logger.log(
+      `[/refresh-token] Request with valid refresh token — userId=${userId}, deviceId=${deviceId}`,
+    );
+
     const tokens = await this.commandBus.execute(
       new RefreshTokensCommand(userId, deviceId, refreshToken),
     );
+
+    this.usedRefreshTokenStore.add(refreshToken);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -163,8 +174,15 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    const { sub: userId, deviceId } = req.user as any;
+    const { sub: userId, deviceId, refreshToken } = req.user as any;
 
+    this.logger.log(
+      `[/logout] Request with valid refresh token — userId=${userId}, deviceId=${deviceId}`,
+    );
+
+    if (refreshToken) {
+      this.usedRefreshTokenStore.add(refreshToken);
+    }
     if (userId && deviceId) {
       await this.authService.logout(userId, deviceId);
     }
