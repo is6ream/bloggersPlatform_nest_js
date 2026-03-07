@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { UsersQueryRepository } from 'src/modules/user-accounts/infrastructure/users/usersQueryRepository';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 
 @Injectable()
 export class RefreshJwtStrategy extends PassportStrategy(
@@ -12,7 +11,6 @@ export class RefreshJwtStrategy extends PassportStrategy(
 ) {
   constructor(
     private readonly configService: ConfigService,
-    private readonly usersQueryRepository: UsersQueryRepository,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -25,7 +23,6 @@ export class RefreshJwtStrategy extends PassportStrategy(
   }
 
   async validate(req: Request, payload: { sub: string; deviceId: string }) {
-    console.log('strategy check');
     const refreshToken = req.cookies?.['refreshToken'];
     return { sub: payload.sub, deviceId: payload.deviceId, refreshToken };
   }

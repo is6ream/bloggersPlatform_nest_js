@@ -42,7 +42,7 @@ import { SecurityController } from './api/security.controller';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '60m' },
+        signOptions: { expiresIn: '20s' },
     }),
     }),
     ThrottlerModule.forRoot([
