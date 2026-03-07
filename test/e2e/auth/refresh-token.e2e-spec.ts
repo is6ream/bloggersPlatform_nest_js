@@ -5,6 +5,10 @@ import request from 'supertest';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { User, UserModelType } from 'src/modules/user-accounts/domain/userEntity';
+import {
+  DeviceSession,
+  DeviceSessionModelType,
+} from 'src/modules/user-accounts/domain/device-session.entity';
 import { getModelToken } from '@nestjs/mongoose';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { loginUserHelper } from './helpers/login-user';
@@ -16,6 +20,7 @@ describe('Auth refresh-token e2e', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let userModel: UserModelType;
+  let deviceSessionModel: DeviceSessionModelType;
   let jwtService: JwtService;
   let configService: ConfigService;
 
@@ -25,6 +30,9 @@ describe('Auth refresh-token e2e', () => {
     }).compile();
 
     userModel = moduleFixture.get<UserModelType>(getModelToken(User.name));
+    deviceSessionModel = moduleFixture.get<DeviceSessionModelType>(
+      getModelToken(DeviceSession.name),
+    );
     jwtService = moduleFixture.get<JwtService>(JwtService);
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
@@ -59,6 +67,27 @@ describe('Auth refresh-token e2e', () => {
 
     expect(newRefreshToken).toBeDefined();
     expect(typeof newRefreshToken).toBe('string');
+  });
+
+  it('should return 401 when reusing same refresh token after it was already used', async () => {
+    await userModel.deleteMany({});
+    await deviceSessionModel.deleteMany({});
+    await createTestUser(userModel);
+
+    const loginResponse = await loginUserHelper(app);
+    const cookieHeader = loginResponse.headers['set-cookie'];
+    const savedRefreshToken = extractRefreshToken(cookieHeader);
+    expect(savedRefreshToken).toBeDefined();
+
+    await request(app.getHttpServer())
+      .post('/hometask_16/api/auth/refresh-token')
+      .set('Cookie', `refreshToken=${savedRefreshToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post('/hometask_16/api/auth/refresh-token')
+      .set('Cookie', `refreshToken=${savedRefreshToken}`)
+      .expect(401);
   });
 
   it('should return 401 for invalid refreshToken', async () => {

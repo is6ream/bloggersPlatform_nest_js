@@ -25,11 +25,6 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
   ) {}
 
   async execute({ userId, deviceId, refreshToken }: RefreshTokensCommand) {
-
-    console.log("command bus works")
-
-    console.log('refreshToken: ', refreshToken);
-
     const session = await this.deviceSessionsRepository.findByUserAndDevice(
       userId,
       deviceId,
@@ -54,14 +49,20 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
     }
 
     const tokens = await this.authService.issueTokens(userId, deviceId);
-
     const newRefreshHash = await bcrypt.hash(tokens.refreshToken, 10);
 
-    await this.deviceSessionsRepository.updateSessionToken({
-      userId,
-      deviceId,
-      refreshTokenHash: newRefreshHash,
+    const updated = await this.deviceSessionsRepository.updateSessionTokenIfMatch({
+      sessionId: session._id.toString(),
+      currentRefreshTokenHash: session.refreshTokenHash,
+      newRefreshTokenHash: newRefreshHash,
     });
+
+    if (!updated) {
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Refresh token already used or session invalid',
+      });
+    }
 
     return tokens;
   }

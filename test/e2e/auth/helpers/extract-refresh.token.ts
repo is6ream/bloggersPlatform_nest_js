@@ -7,5 +7,5 @@ export function extractRefreshToken(
   if (typeof cookieStr !== 'string') return null;
 
   const match = cookieStr.match(/refreshToken=([^;]+)/);
-  return match ? match[1] : null;
+  return match ? match[1].trim() : null;
 }

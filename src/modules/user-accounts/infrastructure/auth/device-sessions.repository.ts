@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 import {
   DeviceSession,
   DeviceSessionDocument,
@@ -47,6 +48,26 @@ export class DeviceSessionsRepository {
         expiresAt: params.expiresAt,
       },
     );
+  }
+
+  /**
+   * Atomically updates refreshTokenHash only if current hash matches.
+   * Uses sessionId to target the exact document and avoid race/mismatch.
+   * Returns true if document was updated, false if no document matched (token already rotated or session gone).
+   */
+  async updateSessionTokenIfMatch(params: {
+    sessionId: string;
+    currentRefreshTokenHash: string;
+    newRefreshTokenHash: string;
+  }): Promise<boolean> {
+    const result = await this.deviceSessionModel.updateOne(
+      {
+        _id: new Types.ObjectId(params.sessionId),
+        refreshTokenHash: params.currentRefreshTokenHash,
+      },
+      { $set: { refreshTokenHash: params.newRefreshTokenHash } },
+    );
+    return result.matchedCount === 1 && result.modifiedCount === 1;
   }
 
   async deleteSession(userId: string, deviceId: string): Promise<void> {
