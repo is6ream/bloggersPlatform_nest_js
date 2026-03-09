@@ -137,4 +137,28 @@ describe('GET /security/devices', () => {
     const beforeMs = new Date(lastActiveDateBefore).getTime();
     expect(lastActiveAtMs).toBeGreaterThanOrEqual(beforeMs);
   });
+
+  it('Log out device: logout with cookie then device list does not include logged-out device; status 204', async () => {
+    const loginResponse = await loginUserHelper(app);
+    const refreshToken = extractRefreshToken(loginResponse.headers['set-cookie']);
+    expect(refreshToken).toBeDefined();
+
+    const devicesBefore = await request(app.getHttpServer())
+      .get(ENDPOINT)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(200);
+
+    expect(Array.isArray(devicesBefore.body)).toBe(true);
+    expect(devicesBefore.body.length).toBeGreaterThan(0);
+
+    await request(app.getHttpServer())
+      .post('/hometask_16/api/auth/logout')
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(ENDPOINT)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(401);
+  });
 });
