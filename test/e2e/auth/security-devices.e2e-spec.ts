@@ -5,6 +5,10 @@ import request from 'supertest';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { User, UserModelType } from 'src/modules/user-accounts/domain/userEntity';
+import {
+  DeviceSession,
+  DeviceSessionModelType,
+} from 'src/modules/user-accounts/domain/device-session.entity';
 import { getModelToken } from '@nestjs/mongoose';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { loginUserHelper } from './helpers/login-user';
@@ -20,6 +24,7 @@ describe('GET /security/devices', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let userModel: UserModelType;
+  let deviceSessionModel: DeviceSessionModelType;
   let jwtService: JwtService;
   let configService: ConfigService;
 
@@ -29,6 +34,9 @@ describe('GET /security/devices', () => {
     }).compile();
 
     userModel = moduleFixture.get<UserModelType>(getModelToken(User.name));
+    deviceSessionModel = moduleFixture.get<DeviceSessionModelType>(
+      getModelToken(DeviceSession.name),
+    );
     jwtService = moduleFixture.get<JwtService>(JwtService);
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
@@ -90,5 +98,43 @@ describe('GET /security/devices', () => {
       .get(ENDPOINT)
       .set('Cookie', `refreshToken=${expiredToken}`)
       .expect(401);
+  });
+
+  it('should not change deviceId after /auth/refresh-token; lastActiveDate should be updated', async () => {
+    const loginResponse = await loginUserHelper(app);
+    const refreshToken = extractRefreshToken(loginResponse.headers['set-cookie']);
+    expect(refreshToken).toBeDefined();
+
+    const devicesBefore = await request(app.getHttpServer())
+      .get(ENDPOINT)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(200);
+
+    expect(Array.isArray(devicesBefore.body)).toBe(true);
+    expect(devicesBefore.body.length).toBeGreaterThan(0);
+
+    const sessionBefore = devicesBefore.body[0];
+    const deviceIdBefore = sessionBefore.deviceId;
+    const lastActiveDateBefore = sessionBefore.lastActiveDate;
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    await request(app.getHttpServer())
+      .post('/hometask_16/api/auth/refresh-token')
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(200);
+
+    const sessionDoc = await deviceSessionModel
+      .findOne({ deviceId: deviceIdBefore })
+      .lean()
+      .exec();
+    expect(sessionDoc).not.toBeNull();
+    expect(sessionDoc!.deviceId).toBe(deviceIdBefore);
+
+    const lastActiveAt = (sessionDoc as any).lastActiveAt;
+    expect(lastActiveAt).toBeDefined();
+    const lastActiveAtMs = new Date(lastActiveAt).getTime();
+    const beforeMs = new Date(lastActiveDateBefore).getTime();
+    expect(lastActiveAtMs).toBeGreaterThanOrEqual(beforeMs);
   });
 });

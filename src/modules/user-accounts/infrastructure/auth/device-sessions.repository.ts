@@ -67,7 +67,12 @@ export class DeviceSessionsRepository {
         deviceId: params.deviceId,
         refreshTokenHash: params.currentRefreshTokenHash,
       },
-      { $set: { refreshTokenHash: params.newRefreshTokenHash } },
+      {
+        $set: {
+          refreshTokenHash: params.newRefreshTokenHash,
+          lastActiveDate: new Date(),
+        },
+      },
     );
     return result.matchedCount === 1 && result.modifiedCount === 1;
   }

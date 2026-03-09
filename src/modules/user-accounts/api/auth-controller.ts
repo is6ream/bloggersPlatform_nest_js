@@ -42,10 +42,10 @@ export class AuthController {
     private commandBus: CommandBus,
     private deviceSessionsRepository: DeviceSessionsRepository,
     private usedRefreshTokenStore: UsedRefreshTokenStore,
-  ) {}
+  ) { }
 
 
-  
+
   @Post('password-recovery')
   @Throttle({
     default: { limit: 5, ttl: 60000 },
@@ -57,6 +57,9 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({
+    default: { limit: 5, ttl: 10000 },
+  })
   @UseGuards(LocalAuthValidationGuard)
   @ApiBody({
     schema: {
@@ -71,7 +74,8 @@ export class AuthController {
     @ExtractUserFromRequest() user: UserContextDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ accessToken: string }> {
+  )
+    : Promise<{ accessToken: string }> {
     const ip =
       (req.ip as string) ||
       (req.socket?.remoteAddress as string) ||
@@ -89,7 +93,7 @@ export class AuthController {
     );
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -101,7 +105,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   @Throttle({
-    default: { limit: 15, ttl: 60000 },
+    default: { limit: 5, ttl: 10000 },
   })
   registration(@Body() body: CreateUserInputDto): Promise<void> {
     return this.authService.registerUser(body);
@@ -118,7 +122,7 @@ export class AuthController {
 
   @Post('registration-confirmation')
   @Throttle({
-    default: { limit: 5, ttl: 60000 },
+    default: { limit: 5, ttl: 10000 },
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   async confirmRegistration(
@@ -128,9 +132,9 @@ export class AuthController {
   }
 
   @Post('registration-email-resending')
-  // @Throttle({
-  //   default: { limit: 5, ttl: 60000 },
-  // })
+  @Throttle({
+    default: { limit: 5, ttl: 10000 },
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async emailResending(@Body() body: EmailResendingInputDto): Promise<void> {
     return this.authService.emailResending(body.email);
@@ -159,9 +163,9 @@ export class AuthController {
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, 
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return { accessToken: tokens.accessToken };
