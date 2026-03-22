@@ -1,17 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import {
-  DeviceSession,
-  DeviceSessionDocument,
-  DeviceSessionModelType,
-} from '../../domain/device-session.entity';
+import { DeviceSessionsSqliteDatabase } from './device-sessions-sqlite.database';
 
 @Injectable()
 export class DeviceSessionsRepository {
-  constructor(
-    @InjectModel(DeviceSession.name)
-    private readonly deviceSessionModel: DeviceSessionModelType,
-  ) {}
+  constructor(private readonly sqlite: DeviceSessionsSqliteDatabase) {}
 
   async createSession(params: {
     userId: string;
@@ -20,40 +12,25 @@ export class DeviceSessionsRepository {
     userAgent: string;
     refreshTokenHash: string;
     expiresAt?: Date;
-  }) {
-    const session = new this.deviceSessionModel({
-      userId: params.userId,
+  }): Promise<void> {
+    const db = this.sqlite.database;
+    const expiresAt =
+      params.expiresAt != null ? params.expiresAt.toISOString() : null;
+    db.prepare(
+      `INSERT INTO device_sessions (device_id, user_id, ip, user_agent, refresh_token_hash, expires_at)
+       VALUES (@deviceId, @userId, @ip, @userAgent, @refreshTokenHash, @expiresAt)`,
+    ).run({
       deviceId: params.deviceId,
+      userId: params.userId,
       ip: params.ip,
       userAgent: params.userAgent,
       refreshTokenHash: params.refreshTokenHash,
-      expiresAt: params.expiresAt,
+      expiresAt,
     });
-
-    await session.save();
-    return session;
-  }
-
-  async updateSessionToken(params: {
-    userId: string;
-    deviceId: string;
-    refreshTokenHash: string;
-    expiresAt?: Date;
-  }): Promise<void> {
-    await this.deviceSessionModel.updateOne(
-      { userId: params.userId, deviceId: params.deviceId },
-      {
-        refreshTokenHash: params.refreshTokenHash,
-        expiresAt: params.expiresAt,
-      },
-    );
   }
 
   /**
    * Atomically updates refreshTokenHash only if current hash matches.
-   * Matches by userId, deviceId and current hash so the same token cannot be used twice.
-   * Uses native collection to ensure write is visible to subsequent reads (no Mongoose cache).
-   * Returns true if document was updated, false if no document matched (token already rotated or session gone).
    */
   async updateSessionTokenIfMatch(params: {
     userId: string;
@@ -61,45 +38,49 @@ export class DeviceSessionsRepository {
     currentRefreshTokenHash: string;
     newRefreshTokenHash: string;
   }): Promise<boolean> {
-    const result = await this.deviceSessionModel.collection.updateOne(
-      {
+    const result = this.sqlite.database
+      .prepare(
+        `UPDATE device_sessions
+         SET refresh_token_hash = @newHash, last_active_date = datetime('now')
+         WHERE user_id = @userId AND device_id = @deviceId AND refresh_token_hash = @currentHash`,
+      )
+      .run({
+        newHash: params.newRefreshTokenHash,
         userId: params.userId,
         deviceId: params.deviceId,
-        refreshTokenHash: params.currentRefreshTokenHash,
-      },
-      {
-        $set: {
-          refreshTokenHash: params.newRefreshTokenHash,
-          lastActiveDate: new Date(),
-        },
-      },
-    );
-    return result.matchedCount === 1 && result.modifiedCount === 1;
+        currentHash: params.currentRefreshTokenHash,
+      });
+    return result.changes === 1;
   }
 
   async deleteSession(userId: string, deviceId: string): Promise<void> {
-    await this.deviceSessionModel.deleteOne({ userId, deviceId });
+    this.sqlite.database
+      .prepare(
+        `DELETE FROM device_sessions WHERE user_id = ? AND device_id = ?`,
+      )
+      .run(userId, deviceId);
   }
 
   async deleteAllSessionsExceptCurrent(
     userId: string,
     deviceId: string,
   ): Promise<void> {
-    await this.deviceSessionModel.deleteMany({
-      userId,
-      deviceId: { $ne: deviceId },
-    });
+    this.sqlite.database
+      .prepare(
+        `DELETE FROM device_sessions WHERE user_id = ? AND device_id != ?`,
+      )
+      .run(userId, deviceId);
   }
 
   async findByUserAndDevice(
     userId: string,
     deviceId: string,
-  ): Promise<{ _id: unknown; refreshTokenHash: string } | null> {
-    const doc = await this.deviceSessionModel
-      .findOne({ userId, deviceId }, { refreshTokenHash: 1 })
-      .lean()
-      .exec();
-    return doc ? (doc as { _id: unknown; refreshTokenHash: string }) : null;
+  ): Promise<{ refreshTokenHash: string } | null> {
+    const row = this.sqlite.database
+      .prepare(
+        `SELECT refresh_token_hash AS refreshTokenHash FROM device_sessions WHERE user_id = ? AND device_id = ?`,
+      )
+      .get(userId, deviceId) as { refreshTokenHash: string } | undefined;
+    return row ?? null;
   }
 }
-

@@ -19,9 +19,9 @@ import { BasicAuthStrategy } from './strategies/basic-strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RefreshJwtStrategy } from 'src/modules/user-accounts/strategies/refresh-token.jwt.strategy';
-import { DeviceSession, DeviceSessionSchema } from './domain/device-session.entity';
 import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.repository';
 import { DeviceSessionsQueryRepository } from './infrastructure/auth/device-sessions.query-repository';
+import { DeviceSessionsSqliteDatabase } from './infrastructure/auth/device-sessions-sqlite.database';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RefreshTokensUseCase } from './application/refresh-token.usecase';
 import { UsedRefreshTokenStore } from './application/used-refresh-token.store';
@@ -31,10 +31,7 @@ import { SecurityController } from './api/security.controller';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      {name: DeviceSession.name, schema: DeviceSessionSchema}
-    ]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     CqrsModule,
     PassportModule,
     ConfigModule,
@@ -68,6 +65,7 @@ import { SecurityController } from './api/security.controller';
     EmailAdapter,
     UsersService,
     EmailAdapter,
+    DeviceSessionsSqliteDatabase,
     DeviceSessionsRepository,
     DeviceSessionsQueryRepository,
     BasicAuthStrategy,

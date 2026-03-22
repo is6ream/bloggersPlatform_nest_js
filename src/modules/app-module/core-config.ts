@@ -5,8 +5,9 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
-  validateSync,
+  IsString,
 } from 'class-validator';
+import { join } from 'path';
 import { Enviroments } from 'src/modules/app-module/types/env-enums';
 import { configValidationUtility } from 'src/core/config/config-validation.utility';
 
@@ -24,6 +25,13 @@ export class CoreConfig {
     message: 'Set Env variable MONGO_URI',
   })
   mongoURI: string = this.configService.getOrThrow('MONGODB_URI');
+
+  @IsString({
+    message: 'Set DEVICE_SESSIONS_SQLITE_PATH or rely on default path under cwd/data',
+  })
+  deviceSessionsSqlitePath: string =
+    this.configService.get<string>('DEVICE_SESSIONS_SQLITE_PATH')?.trim() ||
+    join(process.cwd(), 'data', 'device-sessions.sqlite');
 
   @IsEnum(Enviroments)
   env: string = this.configService.getOrThrow('NODE_ENV');

@@ -28,7 +28,6 @@ import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-
 import { Request } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
-import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { UsedRefreshTokenStore } from '../application/used-refresh-token.store';
 
 @Controller('auth')
@@ -40,11 +39,23 @@ export class AuthController {
     private authService: AuthService,
     private authQueryRepository: AuthQueryRepository,
     private commandBus: CommandBus,
-    private deviceSessionsRepository: DeviceSessionsRepository,
     private usedRefreshTokenStore: UsedRefreshTokenStore,
-  ) { }
+  ) {}
 
-
+  private getRefreshTokenCookieOptions(
+    req: Request,
+    maxAgeMs?: number,
+  ): { httpOnly: true; secure: boolean; sameSite: 'strict'; maxAge?: number } {
+    const isSecure =
+      req.secure || req.get('x-forwarded-proto') === 'https';
+    const secure = isSecure || process.env.NODE_ENV === 'production';
+    return {
+      httpOnly: true,
+      secure,
+      sameSite: 'strict',
+      ...(maxAgeMs !== undefined && { maxAge: maxAgeMs }),
+    };
+  }
 
   @Post('password-recovery')
   @Throttle({
@@ -92,10 +103,7 @@ export class AuthController {
       { ip, userAgent },
     );
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000,
+      ...this.getRefreshTokenCookieOptions(req, 24 * 60 * 60 * 1000),
     });
 
     return { accessToken: accessToken };
@@ -162,10 +170,7 @@ export class AuthController {
     this.usedRefreshTokenStore.add(refreshToken);
 
     res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...this.getRefreshTokenCookieOptions(req, 7 * 24 * 60 * 60 * 1000),
     });
 
     return { accessToken: tokens.accessToken };
@@ -191,11 +196,10 @@ export class AuthController {
       await this.authService.logout(userId, deviceId);
     }
 
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+    res.clearCookie(
+      'refreshToken',
+      this.getRefreshTokenCookieOptions(req),
+    );
   }
 
   @ApiBearerAuth()

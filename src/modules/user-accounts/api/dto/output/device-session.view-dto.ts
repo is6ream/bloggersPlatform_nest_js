@@ -1,4 +1,4 @@
-import { DeviceSessionDocument } from '../../../domain/device-session.entity';
+import { DeviceSessionRow } from '../../../domain/device-session.types';
 
 export class DeviceSessionViewDto {
   ip: string;
@@ -6,12 +6,12 @@ export class DeviceSessionViewDto {
   lastActiveDate: string;
   deviceId: string;
 
-  static mapToView(doc: DeviceSessionDocument): DeviceSessionViewDto {
+  static mapToView(row: DeviceSessionRow): DeviceSessionViewDto {
     const view = new DeviceSessionViewDto();
-    view.ip = doc.ip;
-    view.title = doc.userAgent;
-    view.lastActiveDate = (doc as any).lastActiveAt?.toISOString() ?? new Date().toISOString();
-    view.deviceId = doc.deviceId;
+    view.ip = row.ip;
+    view.title = row.userAgent;
+    view.lastActiveDate = row.lastActiveDate.toISOString();
+    view.deviceId = row.deviceId;
     return view;
   }
 }

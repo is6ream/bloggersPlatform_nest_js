@@ -15,6 +15,7 @@ import { CoreModule } from 'src/core/core.module';
 @Module({
   imports: [
     configModule,
+    CoreModule,
     MongooseModule.forRootAsync({
       useFactory: (coreConfig: CoreConfig) => {
         return {
@@ -27,9 +28,8 @@ import { CoreModule } from 'src/core/core.module';
     UserAccountsModule,
     BloggersPlatformModule,
     TestingModule,
-    CoreModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EmailAdapter, CoreConfig],
+  providers: [AppService, EmailAdapter],
 })
 export class AppModule { }

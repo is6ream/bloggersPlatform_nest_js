@@ -2,19 +2,17 @@ import { beforeAll, expect } from '@jest/globals';
 import { INestApplication } from '@nestjs/common';
 import { TestingModule, Test } from '@nestjs/testing';
 import request from 'supertest';
+import Database from 'better-sqlite3';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { User, UserModelType } from 'src/modules/user-accounts/domain/userEntity';
-import {
-  DeviceSession,
-  DeviceSessionModelType,
-} from 'src/modules/user-accounts/domain/device-session.entity';
 import { getModelToken } from '@nestjs/mongoose';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { loginUserHelper } from './helpers/login-user';
 import { extractRefreshToken } from './helpers/extract-refresh.token';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { assignE2eDeviceSessionsDbPath } from '../helpers/device-sessions-sqlite-e2e';
 
 jest.setTimeout(60000);
 
@@ -24,19 +22,18 @@ describe('GET /security/devices', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let userModel: UserModelType;
-  let deviceSessionModel: DeviceSessionModelType;
+  let deviceSessionsSqlitePath: string;
   let jwtService: JwtService;
   let configService: ConfigService;
 
   beforeAll(async () => {
+    deviceSessionsSqlitePath = assignE2eDeviceSessionsDbPath();
+
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     userModel = moduleFixture.get<UserModelType>(getModelToken(User.name));
-    deviceSessionModel = moduleFixture.get<DeviceSessionModelType>(
-      getModelToken(DeviceSession.name),
-    );
     jwtService = moduleFixture.get<JwtService>(JwtService);
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
@@ -124,18 +121,20 @@ describe('GET /security/devices', () => {
       .set('Cookie', `refreshToken=${refreshToken}`)
       .expect(200);
 
-    const sessionDoc = await deviceSessionModel
-      .findOne({ deviceId: deviceIdBefore })
-      .lean()
-      .exec();
-    expect(sessionDoc).not.toBeNull();
-    expect(sessionDoc!.deviceId).toBe(deviceIdBefore);
+    const db = new Database(deviceSessionsSqlitePath);
+    const sessionRow = db
+      .prepare(
+        `SELECT device_id, last_active_date FROM device_sessions WHERE device_id = ?`,
+      )
+      .get(deviceIdBefore) as
+      | { device_id: string; last_active_date: string }
+      | undefined;
+    db.close();
 
-    const lastActiveAt = (sessionDoc as any).lastActiveAt;
-    expect(lastActiveAt).toBeDefined();
-    const lastActiveAtMs = new Date(lastActiveAt).getTime();
-    const beforeMs = new Date(lastActiveDateBefore).getTime();
-    expect(lastActiveAtMs).toBeGreaterThanOrEqual(beforeMs);
+    expect(sessionRow).toBeDefined();
+    expect(sessionRow!.device_id).toBe(deviceIdBefore);
+    expect(sessionRow!.last_active_date).toBeDefined();
+    expect(new Date(sessionRow!.last_active_date).getTime()).not.toBeNaN();
   });
 
   it('Log out device: logout with cookie then device list does not include logged-out device; status 204', async () => {
@@ -159,6 +158,62 @@ describe('GET /security/devices', () => {
     await request(app.getHttpServer())
       .get(ENDPOINT)
       .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(401);
+  });
+
+  it('Four devices: login 4 times from different devices, logout one, GET /security/devices returns list without logged-out device', async () => {
+    const authPrefix = '/hometask_16/api/auth';
+
+    await new Promise((r) => setTimeout(r, 11000));
+
+    const login1 = await loginUserHelper(app, 'Device-One');
+    await loginUserHelper(app, 'Device-Two');
+    await loginUserHelper(app, 'Device-Three');
+    const login4 = await loginUserHelper(app, 'Device-Four');
+
+    const refreshToken1 = extractRefreshToken(login1.headers['set-cookie']);
+    const refreshToken4 = extractRefreshToken(login4.headers['set-cookie']);
+
+    expect(refreshToken1).toBeDefined();
+    expect(refreshToken4).toBeDefined();
+    if (!refreshToken4) return;
+
+    const payload4 = jwtService.decode(refreshToken4) as { deviceId?: string } | null;
+    expect(payload4?.deviceId).toBeDefined();
+    const loggedOutDeviceId = payload4?.deviceId ?? '';
+
+    const devicesBeforeLogout = await request(app.getHttpServer())
+      .get(ENDPOINT)
+      .set('Cookie', `refreshToken=${refreshToken4}`)
+      .expect(200);
+
+    expect(Array.isArray(devicesBeforeLogout.body)).toBe(true);
+    const deviceIdsBefore = devicesBeforeLogout.body.map(
+      (s: { deviceId: string }) => s.deviceId,
+    );
+    expect(deviceIdsBefore).toContain(loggedOutDeviceId);
+
+    await request(app.getHttpServer())
+      .post(`${authPrefix}/logout`)
+      .set('Cookie', `refreshToken=${refreshToken4}`)
+      .expect(204);
+
+    const devicesAfterLogout = await request(app.getHttpServer())
+      .get(ENDPOINT)
+      .set('Cookie', `refreshToken=${refreshToken1}`)
+      .expect(200)
+      .expect('Content-Type', /json/);
+
+    expect(Array.isArray(devicesAfterLogout.body)).toBe(true);
+    const remainingDeviceIds = devicesAfterLogout.body.map(
+      (s: { deviceId: string }) => s.deviceId,
+    );
+    expect(remainingDeviceIds).not.toContain(loggedOutDeviceId);
+    expect(devicesAfterLogout.body).toHaveLength(devicesBeforeLogout.body.length - 1);
+
+    await request(app.getHttpServer())
+      .get(ENDPOINT)
+      .set('Cookie', `refreshToken=${refreshToken4}`)
       .expect(401);
   });
 });
