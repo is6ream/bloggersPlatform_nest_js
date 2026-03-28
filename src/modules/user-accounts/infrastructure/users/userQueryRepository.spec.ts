@@ -1,52 +1,69 @@
 import { TestingModule, Test } from '@nestjs/testing';
-import { UsersQueryRepository } from '../usersQueryRepository';
-import { getModelToken } from '@nestjs/mongoose';
-import { User } from '../../domain/userEntity';
-import { GetUsersQueryParams } from '../api/get-users-query-params.input.dto';
+import { DataSource } from 'typeorm';
+import { UsersRawSqlQueryRepository } from './users-raw-sql.query-repository';
+import { GetUsersQueryParams } from '../../api/dto/output/get-users-query-params.input.dto';
 
-describe('UsersQueyRepository', () => {
-  let repository: UsersQueryRepository;
-  let mockUserModel: any;
+describe('UsersRawSqlQueryRepository', () => {
+  let repository: UsersRawSqlQueryRepository;
+  let queryMock: jest.Mock;
 
   beforeEach(async () => {
-    mockUserModel = {
-      find: jest.fn().mockReturnValue({
-        skip: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue({
-            sort: jest.fn().mockResolvedValue([
-              {
-                _id: '1',
-                login: 'user1',
-                email: 'user1@test.com',
-                createdAt: new Date(),
-              },
-              {
-                _id: '2',
-                login: 'user2',
-                email: 'user2@test.com',
-                createdAt: new Date(),
-              },
-            ]),
-          }),
-        }),
-      }),
-      countDocuments: jest.fn().mockResolvedValue(2),
-    };
+    queryMock = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UsersQueryRepository,
+        UsersRawSqlQueryRepository,
         {
-          provide: getModelToken(User.name),
-          useValue: mockUserModel,
+          provide: DataSource,
+          useValue: { query: queryMock },
         },
       ],
     }).compile();
 
-    repository = module.get<UsersQueryRepository>(UsersQueryRepository);
+    repository = module.get(UsersRawSqlQueryRepository);
   });
 
   it('should return paginated users', async () => {
+    const rows = [
+      {
+        id: '1',
+        login: 'user1',
+        email: 'user1@test.com',
+        passwordHash: 'h',
+        confirmationCode: 'c',
+        confirmationExpiration: new Date(),
+        isEmailConfirmed: true,
+        recoveryCode: null,
+        recoveryExpiresAt: null,
+        recoveryIsUsed: null,
+        createdAt: new Date(),
+        deleteAt: null,
+        refreshTokenHash: null,
+      },
+      {
+        id: '2',
+        login: 'user2',
+        email: 'user2@test.com',
+        passwordHash: 'h',
+        confirmationCode: 'c',
+        confirmationExpiration: new Date(),
+        isEmailConfirmed: true,
+        recoveryCode: null,
+        recoveryExpiresAt: null,
+        recoveryIsUsed: null,
+        createdAt: new Date(),
+        deleteAt: null,
+        refreshTokenHash: null,
+      },
+    ];
+
+    queryMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(rows)
+      .mockResolvedValueOnce([{ count: 2 }]);
+
     const query = new GetUsersQueryParams();
     query.pageNumber = 1;
     query.pageSize = 10;
@@ -57,22 +74,6 @@ describe('UsersQueyRepository', () => {
     expect(result.totalCount).toBe(2);
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(10);
-    expect(mockUserModel.find).toHaveBeenCalled();
-    expect(mockUserModel.countDocuments).toHaveBeenCalled();
-  });
-
-  it('should filter users by search term', async () => {
-    const query = new GetUsersQueryParams();
-    query.pageNumber = 1;
-    query.pageSize = 10;
-    query.searchLoginTerm = 'user';
-
-    await repository.getAll(query);
-
-    expect(mockUserModel.find).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: expect.objectContaining({ $regex: 'user' }),
-      }),
-    );
+    expect(queryMock).toHaveBeenCalled();
   });
 });

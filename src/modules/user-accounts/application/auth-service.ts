@@ -5,7 +5,7 @@ import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { JwtService } from '@nestjs/jwt';
 import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { UsersService } from './user-service';
-import { UserDocument } from '../domain/userEntity';
+import { UserSqlEntity } from '../domain/user-sql.entity';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
@@ -34,7 +34,7 @@ export class AuthService {
     loginOrEmail: string,
     password: string,
   ): Promise<UserContextOutput | null> {
-    const user: UserDocument | null =
+    const user: UserSqlEntity | null =
       await this.usersRepository.findUserByLoginOrEmail({
         login: loginOrEmail,
         email: loginOrEmail,
@@ -49,7 +49,7 @@ export class AuthService {
     if (!isPasswordValid) {
       return null;
     }
-    return { id: user._id.toString(), loginOrEmail: loginOrEmail };
+    return { id: user.id, loginOrEmail: loginOrEmail };
   }
   async registerUser(dto: CreateUserDto) {
     const existingUser = await this.usersRepository.findUserByLoginOrEmail({
@@ -62,7 +62,7 @@ export class AuthService {
     }
 
     const userId: string = await this.usersService.createUser(dto);
-    const user: UserDocument =
+    const user: UserSqlEntity =
       await this.usersRepository.findOrNotFoundFail(userId);
 
     await this.emailAdapter
@@ -75,7 +75,7 @@ export class AuthService {
       });
   }
   async passwordRecovery(email: string) {
-    const user: UserDocument | null =
+    const user: UserSqlEntity | null =
       await this.usersRepository.findByEmail(email);
     if (!user) {
       return null;
@@ -133,7 +133,7 @@ export class AuthService {
     newPassword: string,
     recoveryCode: string,
   ): Promise<void> {
-    const user: UserDocument | null =
+    const user: UserSqlEntity | null =
       await this.usersRepository.findByRecoveryCode(recoveryCode);
 
     if (!user) {
@@ -152,7 +152,7 @@ export class AuthService {
   }
 
   async confirmRegistration(code: string): Promise<void> {
-    const user: UserDocument | null =
+    const user: UserSqlEntity | null =
       await this.usersRepository.findByConfirmationCode(code);
     if (!user) {
       throw new DomainException({
@@ -187,7 +187,7 @@ export class AuthService {
   }
 
   async emailResending(email: string) {
-    const user: UserDocument | null =
+    const user: UserSqlEntity | null =
       await this.usersRepository.findByEmail(email);
     if (!user) {
       throw new DomainException({

@@ -5,7 +5,7 @@ describe('User entity methods tests', () => {
   it('should create new user', () => {
     const user = User.createInstance({
       email: 'test@email.com',
-      passwordHash: '321321321fsdfds',
+      password: '321321321fsdfds',
       login: 'testLogin',
     });
     expect(user.email).toBe('test@email.com');
