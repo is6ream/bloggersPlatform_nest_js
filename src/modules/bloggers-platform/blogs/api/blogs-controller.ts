@@ -22,7 +22,7 @@ import { PostsQueryRepository } from '../../posts/infrastructure/postQueryReposi
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { BlogDocument } from '../domain/blogEntity';
+import { BlogSqlEntity } from '../domain/blog-sql.entity';
 import { PostDocument } from '../../posts/domain/postEntity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
 import { UpdateBlogCommand } from '../application/useCases/update-blog-usecase';
@@ -76,10 +76,10 @@ export class BlogsController {
   @UseGuards(BasicAuthGuard)
   @Post()
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
-    const blog: BlogDocument = await this.commandBus.execute(
+    const blog: BlogSqlEntity = await this.commandBus.execute(
       new CreateBlogCommand(body),
     );
-    return blog.toViewModel(blog._id.toString());
+    return blog.toViewModel(blog.id);
   }
 
   @Get(':id')

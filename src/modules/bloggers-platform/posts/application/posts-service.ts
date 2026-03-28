@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { PostDocument, PostModelType } from '../domain/postEntity';
 import { PostEntity } from '../domain/postEntity';
-import { BlogDocument } from '../../blogs/domain/blogEntity';
+import { BlogSqlEntity } from '../../blogs/domain/blog-sql.entity';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
 import { PostRepository } from '../infrastructure/postRepository';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
@@ -19,7 +19,7 @@ export class PostsService {
   ) {}
 
   async createPost(dto: CreatePostInputDto): Promise<string> {
-    const blog: BlogDocument = await this.blogsRepository.findOrNotFoundFail(
+    const blog: BlogSqlEntity = await this.blogsRepository.findOrNotFoundFail(
       dto.blogId,
     );
     const post = this.PostModel.createInstance({
@@ -39,7 +39,7 @@ export class PostsService {
     blogId: string,
     dto: CreatePostForBlogInputDto,
   ): Promise<string> {
-    const blog: BlogDocument =
+    const blog: BlogSqlEntity =
       await this.blogsRepository.findOrNotFoundFail(blogId);
 
     const post = this.PostModel.createInstance({

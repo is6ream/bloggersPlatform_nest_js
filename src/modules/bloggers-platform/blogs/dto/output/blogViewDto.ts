@@ -1,4 +1,5 @@
 import { BlogDocument } from '../../domain/blogEntity';
+import { BlogSqlEntity } from '../../domain/blog-sql.entity';
 
 export class BlogViewDto {
   id: string;
@@ -8,7 +9,7 @@ export class BlogViewDto {
   createdAt: Date;
   isMembership: boolean;
 
-  static mapToView(blog: BlogDocument): BlogViewDto {
+  static mapToView(blog: BlogDocument | BlogSqlEntity): BlogViewDto {
     const dto = new this();
 
     dto.id = blog._id.toString();

@@ -1,33 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { BlogDocument, BlogModelType } from '../domain/blogEntity';
 import { CreateBlogDto } from '../dto/input/createBlogDto';
 import { BlogsRepository } from '../infrastructure/blogsRepository';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
-import { Blog } from '../domain/blogEntity';
+import { BlogSqlEntity } from '../domain/blog-sql.entity';
+
 @Injectable()
 export class BlogsService {
-  constructor(
-    @InjectModel(Blog.name)
-    private BlogModel: BlogModelType,
-    private blogsRepository: BlogsRepository,
-  ) {}
+  constructor(private blogsRepository: BlogsRepository) {}
 
   async createBlog(dto: CreateBlogDto): Promise<string> {
-    const blog: BlogDocument = this.BlogModel.createInstance({
-      name: dto.name,
-      description: dto.description,
-      websiteUrl: dto.websiteUrl,
-    });
-
+    const blog = BlogSqlEntity.createForInsert(dto);
     await this.blogsRepository.save(blog);
-
-    return blog._id.toString();
+    return blog.id;
   }
 
   async updateBlog(id: string, dto: UpdateBlogDto): Promise<void> {
-    const blog: BlogDocument =
-      await this.blogsRepository.findOrNotFoundFail(id);
+    const blog = await this.blogsRepository.findOrNotFoundFail(id);
 
     blog.updateBlog(dto);
 
@@ -37,8 +25,7 @@ export class BlogsService {
   }
 
   async deleteBlog(id: string): Promise<void> {
-    const blog: BlogDocument =
-      await this.blogsRepository.findOrNotFoundFail(id);
+    const blog = await this.blogsRepository.findOrNotFoundFail(id);
 
     blog.makeDeleted();
 
