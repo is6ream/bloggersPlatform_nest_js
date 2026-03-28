@@ -37,7 +37,6 @@
     "@types/passport-local": "^1.0.38",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.8.0",
     "blogger-platform": "link:",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
@@ -49,8 +48,10 @@
     "passport-http": "^0.3.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.28"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -59,13 +60,13 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^7.0.4",
     "@types/passport-http": "^0.3.11",
+    "@types/pg": "^8.20.0",
     "@types/supertest": "^6.0.2",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
@@ -91,6 +92,8 @@
   "coverageDirectory": "../coverage",
   "testEnvironment": "node",
   "pnpm": {
-    "onlyBuiltDependencies": ["bcrypt", "better-sqlite3"]
+    "onlyBuiltDependencies": [
+      "bcrypt"
+    ]
   }
 }

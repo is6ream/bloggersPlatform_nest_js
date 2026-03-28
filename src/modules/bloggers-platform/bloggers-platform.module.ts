@@ -5,6 +5,7 @@ import { Blog } from './blogs/domain/blogEntity';
 import { BlogsController } from './blogs/api/blogs-controller';
 import { BlogsQueryRepository } from './blogs/infrastructure/blogsQueryRepository';
 import { BlogsRepository } from './blogs/infrastructure/blogsRepository';
+import { BlogsRawSqlQueryRepository } from './blogs/infrastructure/blogs-raw-sql.query-repository';
 import { BlogsService } from './blogs/application/blogs-service';
 import { PostsQueryRepository } from './posts/infrastructure/postQueryRepository';
 import { PostRepository } from './posts/infrastructure/postRepository';
@@ -35,7 +36,11 @@ import { JwtService } from '@nestjs/jwt';
   ],
   controllers: [BlogsController, PostsController, CommentsController],
   providers: [
-    BlogsQueryRepository,
+    BlogsRawSqlQueryRepository,
+    {
+      provide: BlogsQueryRepository,
+      useExisting: BlogsRawSqlQueryRepository,
+    },
     BlogsRepository,
     BlogsService,
     PostsQueryRepository,
