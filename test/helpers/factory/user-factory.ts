@@ -1,20 +1,32 @@
-import bcrypt from 'bcryptjs';
-import { randomUUID } from 'crypto';
-import { UserModelType } from 'src/modules/user-accounts/domain/userEntity';
+import {
+  deleteAllE2eUsers,
+  findE2eUserIdByLogin,
+  insertE2eUser,
+} from '../../e2e/helpers/users-pg-e2e';
 
+export type E2eTestUser = {
+  id: string;
+  login: string;
+  email: string;
+};
 
-export async function createTestUser(userModel: UserModelType) {
-  const password = 'testpassword';
+export async function createTestUser(
+  overrides?: Partial<{
+    login: string;
+    email: string;
+    password: string;
+  }>,
+): Promise<E2eTestUser> {
+  const login = overrides?.login ?? 'testuser';
+  const email = overrides?.email ?? 'test@example.com';
+  const passwordPlain = overrides?.password ?? 'testpassword';
 
-  return await userModel.create({
-    login: 'testuser',
-    email: 'test@example.com',
-    passwordHash: await bcrypt.hash(password, 10),
-    emailConfirmation: {
-      confirmationCode: "123212",
-      expirationDate: new Date(),
-      isConfirmed: true,
-    },
-    passwordRecovery: null,
-  } as any);
+  return insertE2eUser({
+    login,
+    email,
+    passwordPlain,
+    isEmailConfirmed: true,
+  });
 }
+
+export { deleteAllE2eUsers, findE2eUserIdByLogin };

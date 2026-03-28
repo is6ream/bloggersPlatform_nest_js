@@ -3,13 +3,17 @@ import { INestApplication } from '@nestjs/common';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Connection, connect } from 'mongoose';
 import { getModelToken } from '@nestjs/mongoose';
-import { User } from 'src/modules/user-accounts/domain/userEntity';
 import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import { AppModule } from 'src/modules/app-module/app-module';
 import request from 'supertest';
 import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
 import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
-import { createTestUser } from '../../helpers/factory/user-factory';
+import {
+  createTestUser,
+  deleteAllE2eUsers,
+  findE2eUserIdByLogin,
+} from '../../helpers/factory/user-factory';
+import { e2eApiPath } from '../helpers/api-path';
 import { createTestBlog } from '../../helpers/factory/blog-factory';
 import { createTestPost } from '../../helpers/factory/post-factory';
 import { appSetup } from 'src/setup/app.setup';
@@ -20,7 +24,6 @@ describe('Comments E2E Tests', () => {
   let mongoConnection: Connection;
   let moduleFixture: TestingModule;
   let commentModel: any;
-  let userModel: any;
   let postModel: any;
   let blogModel: any;
   let authToken: string;
@@ -28,9 +31,8 @@ describe('Comments E2E Tests', () => {
   let testUserId: string;
 
   // Константы для URL
-  const BASE_URL = '/hometask_15/api';
-  const POSTS_BASE = `${BASE_URL}/posts`;
-  const COMMENTS_BASE = `${BASE_URL}/comments`;
+  const POSTS_BASE = e2eApiPath('posts');
+  const COMMENTS_BASE = e2eApiPath('comments');
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -49,21 +51,17 @@ describe('Comments E2E Tests', () => {
     await app.init();
 
     // Инициализируем модели
-    userModel = moduleFixture.get(getModelToken(User.name));
     postModel = moduleFixture.get(getModelToken(PostEntity.name));
     commentModel = moduleFixture.get(getModelToken(Comment.name));
     blogModel = moduleFixture.get(getModelToken(Blog.name));
 
-    // Очищаем базу пользователей
-    await userModel.deleteMany({});
+    await deleteAllE2eUsers();
 
-    // Создаем тестовые данные
-    const testUser = await createTestUser(userModel);
-    testUserId = testUser._id.toString();
+    const testUser = await createTestUser();
+    testUserId = testUser.id;
 
-    // Получаем токен авторизации
     const loginResponse = await request(app.getHttpServer())
-      .post(`${BASE_URL}/auth/login`)
+      .post(e2eApiPath('auth/login'))
       .send({
         loginOrEmail: 'testuser',
         password: 'testpassword',
@@ -240,7 +238,7 @@ describe('Comments E2E Tests', () => {
 
     it("should return 403 Forbidden when updating another user's comment", async () => {
       // Создаем отдельного пользователя с его комментарием
-      const anotherUser = await createTestUser(userModel, {
+      const anotherUser = await createTestUser({
         login: 'another',
         email: 'another@example.com',
       });
@@ -248,7 +246,7 @@ describe('Comments E2E Tests', () => {
       const anotherUserComment = await commentModel.create({
         content: 'Comment from another user',
         commentatorInfo: {
-          userId: anotherUser._id.toString(),
+          userId: anotherUser.id,
           userLogin: 'another',
         },
         likesInfo: { likesCount: 0, dislikesCount: 0 },
@@ -278,14 +276,16 @@ describe('Comments E2E Tests', () => {
     });
 
     it('should return 204 successfully', async () => {
-      //создали пользователя
-      const testUser = await createTestUser(userModel);
-      testUserId = testUser._id.toString();
-      //авторизовались им
+      await deleteAllE2eUsers();
+      const testUser = await createTestUser({
+        login: 'updusr',
+        email: 'updusr@test.com',
+      });
+      testUserId = testUser.id;
       const loginResponse = await request(app.getHttpServer())
-        .post(`${BASE_URL}/auth/login`)
+        .post(e2eApiPath('auth/login'))
         .send({
-          loginOrEmail: 'testuser',
+          loginOrEmail: 'updusr',
           password: 'testpassword',
         });
       authToken = loginResponse.body.accessToken;
@@ -295,7 +295,7 @@ describe('Comments E2E Tests', () => {
         content: 'Original comment content',
         commentatorInfo: {
           userId: testUserId,
-          userLogin: 'testuser',
+          userLogin: 'updusr',
         },
         likesInfo: {
           likesCount: 0,
@@ -307,7 +307,6 @@ describe('Comments E2E Tests', () => {
       const content = { content: 't'.repeat(22) };
       const commentId = comment._id.toString();
       const url = `${COMMENTS_BASE}/${commentId}`;
-      //обновили комментарий тем же пользователем
       console.log(authToken, 'auth token before comment updated');
       await request(app.getHttpServer())
         .put(url)
@@ -393,15 +392,13 @@ describe('Comments E2E Tests', () => {
       let otherUserComment: any;
 
       beforeAll(async () => {
-        // Создаем второго пользователя
-        const otherUser = await createTestUser(userModel, {
+        await createTestUser({
           login: 'otheruser',
           email: 'other@example.com',
         });
 
-        // Логинимся вторым пользователем
         const loginResponse = await request(app.getHttpServer())
-          .post('/hometask_15/api/auth/login')
+          .post(e2eApiPath('auth/login'))
           .send({
             loginOrEmail: 'otheruser',
             password: 'testpassword',
@@ -410,12 +407,14 @@ describe('Comments E2E Tests', () => {
       });
 
       beforeEach(async () => {
-        // Второй пользователь создает комментарий
-        const otherUser = await userModel.findOne({ login: 'otheruser' });
+        const otherUserId = await findE2eUserIdByLogin('otheruser');
+        if (!otherUserId) {
+          throw new Error('otheruser not found');
+        }
         otherUserComment = await commentModel.create({
           content: 'Comment from other user',
           commentatorInfo: {
-            userId: otherUser._id.toString(),
+            userId: otherUserId,
             userLogin: 'otheruser',
           },
           likesInfo: { likesCount: 0, dislikesCount: 0 },

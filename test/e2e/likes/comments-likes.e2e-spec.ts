@@ -7,8 +7,8 @@ import { appSetup } from 'src/setup/app.setup';
 import { getModelToken } from '@nestjs/mongoose';
 import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
 import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
-import { User } from 'src/modules/user-accounts/domain/userEntity';
-import { createTestUser } from '../../helpers/factory/user-factory';
+import { createTestUser, deleteAllE2eUsers } from '../../helpers/factory/user-factory';
+import { e2eApiPath } from '../helpers/api-path';
 import request from 'supertest';
 import { createTestBlog } from '../../helpers/factory/blog-factory';
 import { createTestPost } from '../../helpers/factory/post-factory';
@@ -54,23 +54,21 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
     commentModel = moduleFixture.get(getModelToken(Comment.name));
     postModel = moduleFixture.get(getModelToken(PostEntity.name));
     blogModel = moduleFixture.get(getModelToken(Blog.name));
-    userModel = moduleFixture.get(getModelToken(User.name));
     likeModel = moduleFixture.get(getModelToken(Like.name));
 
-    // Очищаем базу перед созданием общих данных
-    await userModel.deleteMany({});
+    await deleteAllE2eUsers();
     await blogModel.deleteMany({});
     await postModel.deleteMany({});
     await commentModel.deleteMany({});
     await likeModel.deleteMany({});
 
     // Создаем общие данные (пользователь, блог, пост)
-    testUser = await createTestUser(userModel);
-    testUserId = testUser._id.toString();
+    testUser = await createTestUser();
+    testUserId = testUser.id;
 
     // Получаем токен
     const loginResponse = await request(app.getHttpServer())
-      .post('/hometask_15/api/auth/login')
+      .post(e2eApiPath('auth/login'))
       .send({
         loginOrEmail: 'testuser',
         password: 'testpassword',
@@ -116,7 +114,7 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
 
     // 1. Проверяем начальный статус (должен быть None)
     const initialResponse = await request(app.getHttpServer())
-      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .get(e2eApiPath(`comments/${testCommentId}`))
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
@@ -126,7 +124,7 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
 
     // 2. Шлем Like
     await request(app.getHttpServer())
-      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
+      .put(e2eApiPath(`comments/${testCommentId}/like-status`))
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         likeStatus: 'Like',
@@ -135,7 +133,7 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
 
     // 3. Проверяем, что статус изменился на Like
     const finalResponse = await request(app.getHttpServer())
-      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .get(e2eApiPath(`comments/${testCommentId}`))
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
@@ -160,7 +158,7 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
 
     // 1. Сначала ставим Like
     await request(app.getHttpServer())
-      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
+      .put(e2eApiPath(`comments/${testCommentId}/like-status`))
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         likeStatus: 'Like',
@@ -169,7 +167,7 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
 
     // 2. Проверяем, что Like установился
     const afterLike = await request(app.getHttpServer())
-      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .get(e2eApiPath(`comments/${testCommentId}`))
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
@@ -179,7 +177,7 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
 
     // 3. Шлем Dislike (должен заменить Like на Dislike)
     await request(app.getHttpServer())
-      .put(`/hometask_15/api/comments/${testCommentId}/like-status`)
+      .put(e2eApiPath(`comments/${testCommentId}/like-status`))
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         likeStatus: 'Dislike',
@@ -188,7 +186,7 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
 
     // 4. Проверяем, что статус изменился на Dislike
     const finalResponse = await request(app.getHttpServer())
-      .get(`/hometask_15/api/comments/${testCommentId}`)
+      .get(e2eApiPath(`comments/${testCommentId}`))
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 

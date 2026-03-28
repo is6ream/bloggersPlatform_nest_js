@@ -4,9 +4,8 @@ import { TestingModule, Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
-import { User, UserModelType } from 'src/modules/user-accounts/domain/userEntity';
-import { getModelToken } from '@nestjs/mongoose';
-import { createTestUser } from '../../helpers/factory/user-factory';
+import { createTestUser, deleteAllE2eUsers } from '../../helpers/factory/user-factory';
+import { e2eApiPath } from '../helpers/api-path';
 import { loginUserHelper } from './helpers/login-user';
 import { extractRefreshToken } from './helpers/extract-refresh.token';
 import { JwtService } from '@nestjs/jwt';
@@ -19,7 +18,6 @@ import {
 describe('Auth refresh-token e2e', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
-  let userModel: UserModelType;
   let jwtService: JwtService;
   let configService: ConfigService;
 
@@ -30,7 +28,6 @@ describe('Auth refresh-token e2e', () => {
       imports: [AppModule],
     }).compile();
 
-    userModel = moduleFixture.get<UserModelType>(getModelToken(User.name));
     jwtService = moduleFixture.get<JwtService>(JwtService);
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
@@ -40,7 +37,8 @@ describe('Auth refresh-token e2e', () => {
   });
 
   it('should issue new access/refresh tokens for valid refreshToken', async () => {
-    await createTestUser(userModel);
+    await deleteAllE2eUsers();
+    await createTestUser();
 
     const loginResponse = await loginUserHelper(app);
 
@@ -53,7 +51,7 @@ describe('Auth refresh-token e2e', () => {
     agent.jar.setCookie(`refreshToken=${refreshToken}`);
 
     const refreshResponse = await agent
-      .post('/hometask_16/api/auth/refresh-token')
+      .post(e2eApiPath('auth/refresh-token'))
       .expect(200)
       .expect('Content-Type', /json/);
 
@@ -68,9 +66,9 @@ describe('Auth refresh-token e2e', () => {
   });
 
   it('should return 401 when reusing same refresh token after it was already used', async () => {
-    await userModel.deleteMany({});
     await clearE2eDeviceSessionsTable();
-    await createTestUser(userModel);
+    await deleteAllE2eUsers();
+    await createTestUser();
 
     const loginResponse = await loginUserHelper(app);
     const cookieHeader = loginResponse.headers['set-cookie'];
@@ -78,19 +76,19 @@ describe('Auth refresh-token e2e', () => {
     expect(savedRefreshToken).toBeDefined();
 
     await request(app.getHttpServer())
-      .post('/hometask_16/api/auth/refresh-token')
+      .post(e2eApiPath('auth/refresh-token'))
       .set('Cookie', `refreshToken=${savedRefreshToken}`)
       .expect(200);
 
     await request(app.getHttpServer())
-      .post('/hometask_16/api/auth/refresh-token')
+      .post(e2eApiPath('auth/refresh-token'))
       .set('Cookie', `refreshToken=${savedRefreshToken}`)
       .expect(401);
   });
 
   it('should return 401 for invalid refreshToken', async () => {
     await request(app.getHttpServer())
-      .post('/hometask_16/api/auth/refresh-token')
+      .post(e2eApiPath('auth/refresh-token'))
       .set('Cookie', 'refreshToken=invalid-token')
       .expect(401);
   });
@@ -107,7 +105,7 @@ describe('Auth refresh-token e2e', () => {
     );
 
     await request(app.getHttpServer())
-      .post('/hometask_16/api/auth/refresh-token')
+      .post(e2eApiPath('auth/refresh-token'))
       .set('Cookie', `refreshToken=${expiredToken}`)
       .expect(401);
   });
@@ -124,7 +122,7 @@ describe('Auth refresh-token e2e', () => {
     );
 
     await request(app.getHttpServer())
-      .post('/hometask_16/api/auth/logout')
+      .post(e2eApiPath('auth/logout'))
       .set('Cookie', `refreshToken=${expiredToken}`)
       .expect(401);
   });

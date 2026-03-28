@@ -4,9 +4,8 @@ import { TestingModule, Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
-import { User, UserModelType } from 'src/modules/user-accounts/domain/userEntity';
-import { getModelToken } from '@nestjs/mongoose';
 import { createTestUser } from '../../helpers/factory/user-factory';
+import { e2eApiPath } from '../helpers/api-path';
 import { loginUserHelper } from './helpers/login-user';
 import { extractRefreshToken } from './helpers/extract-refresh.token';
 import { JwtService } from '@nestjs/jwt';
@@ -15,12 +14,11 @@ import { assignE2eDeviceSessionsPgConfig } from '../helpers/device-sessions-post
 
 jest.setTimeout(60000);
 
-const ENDPOINT = '/hometask_16/api/security/devices';
+const ENDPOINT = e2eApiPath('security/devices');
 
 describe('GET /security/devices', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
-  let userModel: UserModelType;
   let jwtService: JwtService;
   let configService: ConfigService;
 
@@ -31,7 +29,6 @@ describe('GET /security/devices', () => {
       imports: [AppModule],
     }).compile();
 
-    userModel = moduleFixture.get<UserModelType>(getModelToken(User.name));
     jwtService = moduleFixture.get<JwtService>(JwtService);
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
@@ -39,7 +36,7 @@ describe('GET /security/devices', () => {
     appSetup(app);
     await app.init();
 
-    await createTestUser(userModel);
+    await createTestUser();
   });
 
   afterAll(async () => {
@@ -115,7 +112,7 @@ describe('GET /security/devices', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     await request(app.getHttpServer())
-      .post('/hometask_16/api/auth/refresh-token')
+      .post(e2eApiPath('auth/refresh-token'))
       .set('Cookie', `refreshToken=${refreshToken}`)
       .expect(200);
 
@@ -151,7 +148,7 @@ describe('GET /security/devices', () => {
     expect(devicesBefore.body.length).toBeGreaterThan(0);
 
     await request(app.getHttpServer())
-      .post('/hometask_16/api/auth/logout')
+      .post(e2eApiPath('auth/logout'))
       .set('Cookie', `refreshToken=${refreshToken}`)
       .expect(204);
 
@@ -162,8 +159,6 @@ describe('GET /security/devices', () => {
   });
 
   it('Four devices: login 4 times from different devices, logout one, GET /security/devices returns list without logged-out device', async () => {
-    const authPrefix = '/hometask_16/api/auth';
-
     await new Promise((r) => setTimeout(r, 11000));
 
     const login1 = await loginUserHelper(app, 'Device-One');
@@ -194,7 +189,7 @@ describe('GET /security/devices', () => {
     expect(deviceIdsBefore).toContain(loggedOutDeviceId);
 
     await request(app.getHttpServer())
-      .post(`${authPrefix}/logout`)
+      .post(e2eApiPath('auth/logout'))
       .set('Cookie', `refreshToken=${refreshToken4}`)
       .expect(204);
 

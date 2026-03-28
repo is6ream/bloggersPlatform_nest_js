@@ -1,6 +1,6 @@
-import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
-import { UserModelType } from 'src/modules/user-accounts/domain/userEntity';
+import { insertE2eUser } from '../../e2e/helpers/users-pg-e2e';
+import type { E2eTestUser } from './user-factory';
 
 type CreateTestUserParams = {
   login?: string;
@@ -9,27 +9,16 @@ type CreateTestUserParams = {
   isConfirmed?: boolean;
 };
 
-export async function createCustomTestUser(
-  userModel: UserModelType,
-  params: CreateTestUserParams = {},
-) {
-  const login = params.login ?? `user_${randomUUID().slice(0, 8)}`;
+export async function createCustomTestUser(params: CreateTestUserParams = {}) {
+  const login = params.login ?? `u_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
   const password = params.password ?? 'testpassword';
   const email = params.email ?? `${login}@test.local`;
 
-  const passwordHash = await bcrypt.hash(password, 10); // hash нужен для validateUser [web:538]
-
-  const user = await userModel.create({
+  const user: E2eTestUser = await insertE2eUser({
     login,
     email,
-    passwordHash,
-    emailConfirmation: {
-      confirmationCode: randomUUID(),
-      expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      isConfirmed: params.isConfirmed ?? true,
-    },
-    passwordRecovery: null,
-    deleteAt: null,
+    passwordPlain: password,
+    isEmailConfirmed: params.isConfirmed ?? true,
   });
 
   return { user, password };

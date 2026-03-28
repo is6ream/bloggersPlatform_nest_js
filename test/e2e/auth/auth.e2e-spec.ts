@@ -1,4 +1,4 @@
-import { beforeAll, expect } from '@jest/globals';
+import { afterAll, beforeAll, expect } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
@@ -6,34 +6,21 @@ import { INestApplication } from '@nestjs/common';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { loginUserHelper } from './helpers/login-user';
 import { extractRefreshToken } from './helpers/extract-refresh.token';
-import { UserModelType } from 'src/modules/user-accounts/domain/userEntity';
-import { getModelToken } from '@nestjs/mongoose';
-import { User } from 'src/modules/user-accounts/domain/userEntity';
+
 describe('Auth e2e tests', () => {
-  let mongoServer: any;
-  let mongoClient: any;
-  let mongoConnection: any;
   let moduleFixture: TestingModule;
   let app: INestApplication;
-  let userModel: UserModelType;
-
-  let testUser: any;
-  let testUserId: string;
-  let testPostId: string;
-  let authToken: string;
 
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
-    userModel = moduleFixture.get<UserModelType>(getModelToken(User.name));
-
     app = moduleFixture.createNestApplication();
     appSetup(app);
     await app.init();
 
-    await createTestUser(userModel);
+    await createTestUser();
   });
 
   it('should return refreshToken in HttpOnly Secure cookie', async () => {
@@ -78,7 +65,6 @@ describe('Auth e2e tests', () => {
   });
 
   afterAll(async () => {
-    if (mongoConnection) await mongoConnection.close();
     if (app) await app.close();
   });
 });
