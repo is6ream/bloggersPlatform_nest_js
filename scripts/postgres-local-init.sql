@@ -24,5 +24,3 @@ BEGIN
   IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'blogger_platform_test') THEN
     EXECUTE format('CREATE DATABASE %I OWNER %I', 'blogger_platform_test', 'nestjs');
   END IF;
-END
-$$;

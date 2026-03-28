@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext, Body } from '@nestjs/common';
+import { Injectable, ExecutionContext } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -10,7 +10,8 @@ import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes'
 export class LocalAuthValidationGuard extends AuthGuard('local') {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const dto = plainToInstance(LoginInputDto, request.body);
+    const body = request.body ?? {};
+    const dto = plainToInstance(LoginInputDto, body);
     const errors = await validate(dto);
 
     if (errors.length > 0) {

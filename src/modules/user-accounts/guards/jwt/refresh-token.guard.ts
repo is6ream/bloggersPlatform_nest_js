@@ -6,13 +6,38 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsedRefreshTokenStore } from '../../application/used-refresh-token.store';
+import { DeviceSessionsRepository } from '../../infrastructure/auth/device-sessions.repository';
 
 @Injectable()
 export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
   private readonly logger = new Logger(RefreshTokenGuard.name);
 
-  constructor(private readonly usedRefreshTokenStore: UsedRefreshTokenStore) {
+  constructor(
+    private readonly usedRefreshTokenStore: UsedRefreshTokenStore,
+    private readonly deviceSessionsRepository: DeviceSessionsRepository,
+  ) {
     super();
+  }
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const parentResult = await super.canActivate(context);
+    if (!parentResult) return false;
+
+    const request = context.switchToHttp().getRequest();
+    const user = request.user as { sub?: string; deviceId?: string; refreshToken?: string } | undefined;
+    if (!user?.sub || !user?.deviceId) return true;
+
+    const session = await this.deviceSessionsRepository.findByUserAndDevice(
+      user.sub,
+      user.deviceId,
+    );
+    if (!session) {
+      this.logger.warn(
+        `[${request.url}] Refresh token: device session not found (e.g. deleted)`,
+      );
+      throw new UnauthorizedException();
+    }
+    return true;
   }
 
   handleRequest<TUser = any>(

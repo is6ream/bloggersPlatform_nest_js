@@ -1,4 +1,4 @@
-/** Plain row for device session persistence (SQLite / API mapping). */
+/** Plain row for device session persistence (PostgreSQL / API mapping). */
 export interface DeviceSessionRow {
   deviceId: string;
   userId: string;

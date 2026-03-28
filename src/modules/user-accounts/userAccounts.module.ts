@@ -21,7 +21,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { RefreshJwtStrategy } from 'src/modules/user-accounts/strategies/refresh-token.jwt.strategy';
 import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.repository';
 import { DeviceSessionsQueryRepository } from './infrastructure/auth/device-sessions.query-repository';
-import { DeviceSessionsSqliteDatabase } from './infrastructure/auth/device-sessions-sqlite.database';
+import { DeviceSessionsPostgresDatabase } from './infrastructure/auth/device-sessions-postgres.database';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RefreshTokensUseCase } from './application/refresh-token.usecase';
 import { UsedRefreshTokenStore } from './application/used-refresh-token.store';
@@ -65,7 +65,7 @@ import { SecurityController } from './api/security.controller';
     EmailAdapter,
     UsersService,
     EmailAdapter,
-    DeviceSessionsSqliteDatabase,
+    DeviceSessionsPostgresDatabase,
     DeviceSessionsRepository,
     DeviceSessionsQueryRepository,
     BasicAuthStrategy,

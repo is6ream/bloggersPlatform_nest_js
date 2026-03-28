@@ -2,7 +2,6 @@ import { beforeAll, expect } from '@jest/globals';
 import { INestApplication } from '@nestjs/common';
 import { TestingModule, Test } from '@nestjs/testing';
 import request from 'supertest';
-import Database from 'better-sqlite3';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { User, UserModelType } from 'src/modules/user-accounts/domain/userEntity';
@@ -12,7 +11,7 @@ import { loginUserHelper } from './helpers/login-user';
 import { extractRefreshToken } from './helpers/extract-refresh.token';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { assignE2eDeviceSessionsDbPath } from '../helpers/device-sessions-sqlite-e2e';
+import { assignE2eDeviceSessionsPgConfig } from '../helpers/device-sessions-postgres-e2e';
 
 jest.setTimeout(60000);
 
@@ -22,12 +21,11 @@ describe('GET /security/devices', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let userModel: UserModelType;
-  let deviceSessionsSqlitePath: string;
   let jwtService: JwtService;
   let configService: ConfigService;
 
   beforeAll(async () => {
-    deviceSessionsSqlitePath = assignE2eDeviceSessionsDbPath();
+    assignE2eDeviceSessionsPgConfig();
 
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
@@ -121,20 +119,22 @@ describe('GET /security/devices', () => {
       .set('Cookie', `refreshToken=${refreshToken}`)
       .expect(200);
 
-    const db = new Database(deviceSessionsSqlitePath);
-    const sessionRow = db
-      .prepare(
-        `SELECT device_id, last_active_date FROM device_sessions WHERE device_id = ?`,
-      )
-      .get(deviceIdBefore) as
-      | { device_id: string; last_active_date: string }
-      | undefined;
-    db.close();
+    const devicesAfter = await request(app.getHttpServer())
+      .get(ENDPOINT)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(200);
 
-    expect(sessionRow).toBeDefined();
-    expect(sessionRow!.device_id).toBe(deviceIdBefore);
-    expect(sessionRow!.last_active_date).toBeDefined();
-    expect(new Date(sessionRow!.last_active_date).getTime()).not.toBeNaN();
+    const sessionAfter = devicesAfter.body.find(
+      (s: { deviceId: string; lastActiveDate: string }) =>
+        s.deviceId === deviceIdBefore,
+    ) as { deviceId: string; lastActiveDate: string } | undefined;
+
+    expect(sessionAfter).toBeDefined();
+    expect(sessionAfter!.deviceId).toBe(deviceIdBefore);
+    expect(new Date(sessionAfter!.lastActiveDate).getTime()).not.toBeNaN();
+    expect(new Date(sessionAfter!.lastActiveDate).getTime()).toBeGreaterThanOrEqual(
+      new Date(lastActiveDateBefore).getTime(),
+    );
   });
 
   it('Log out device: logout with cookie then device list does not include logged-out device; status 204', async () => {

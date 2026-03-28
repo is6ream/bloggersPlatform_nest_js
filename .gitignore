@@ -47,9 +47,6 @@ src/env/.env.development
 .temp
 .tmp
 
-# Local SQLite (device sessions)
-/data/
-
 # Runtime data
 pids
 *.pid

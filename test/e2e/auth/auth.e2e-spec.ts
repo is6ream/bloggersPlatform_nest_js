@@ -32,12 +32,14 @@ describe('Auth e2e tests', () => {
     app = moduleFixture.createNestApplication();
     appSetup(app);
     await app.init();
+
+    await createTestUser(userModel);
   });
 
   it('should return refreshToken in HttpOnly Secure cookie', async () => {
-
-    await createTestUser(userModel);
     const response = await loginUserHelper(app);
+
+    expect(response.status).toBe(200);
 
     const cookieHeader = response.headers['set-cookie'];
 
@@ -55,6 +57,24 @@ describe('Auth e2e tests', () => {
 
     expect(firstCookie).toContain('HttpOnly');
     expect(firstCookie).toContain('Secure');
+  });
+
+  it('should return accessToken in body and refreshToken in cookie on POST /auth/login', async () => {
+    const response = await loginUserHelper(app);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('accessToken');
+    expect(response.body.accessToken).toBeDefined();
+    expect(typeof response.body.accessToken).toBe('string');
+    expect(response.body.accessToken.length).toBeGreaterThan(0);
+
+    const cookieHeader = response.headers['set-cookie'];
+    expect(cookieHeader).toBeDefined();
+
+    const refreshToken = extractRefreshToken(cookieHeader);
+    expect(refreshToken).toBeDefined();
+    expect(typeof refreshToken).toBe('string');
+    expect(refreshToken!.length).toBeGreaterThan(0);
   });
 
   afterAll(async () => {

@@ -42,11 +42,11 @@ export class CoreConfig {
     this.configService.get<string>('PGDATABASE')?.trim() || 'blogger_platform';
 
   @IsString()
-  pgUser: string = this.configService.get<string>('PGUSER')?.trim() || 'nestjs';
+  pgUser: string = this.configService.get<string>('PGUSER')?.trim() || 'nodejs';
 
   @IsNotEmpty({ message: 'Set env variable PGPASSWORD' })
   pgPassword: string =
-    this.configService.get<string>('PGPASSWORD')?.trim() || 'nestjs';
+    this.configService.get<string>('PGPASSWORD')?.trim() || 'nodejs';
 
   @IsEnum(Enviroments)
   env: string = this.configService.getOrThrow('NODE_ENV');

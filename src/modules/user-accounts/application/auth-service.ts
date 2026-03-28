@@ -57,30 +57,8 @@ export class AuthService {
       email: dto.email,
     });
 
-    if (existingUser?.login === dto.login) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'User with such login already exists',
-        extensions: [
-          {
-            message: 'User with such login already exists',
-            field: 'login',
-          },
-        ],
-      });
-    }
-
-    if (existingUser?.email === dto.email) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'User with such email already exists',
-        extensions: [
-          {
-            message: 'User with such email already exists',
-            field: 'email',
-          },
-        ],
-      });
+    if (existingUser?.login === dto.login || existingUser?.email === dto.email) {
+      return;
     }
 
     const userId: string = await this.usersService.createUser(dto);

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { DeviceSessionsSqliteDatabase } from './device-sessions-sqlite.database';
+import { DeviceSessionsPostgresDatabase } from './device-sessions-postgres.database';
 
 @Injectable()
 export class DeviceSessionsRepository {
-  constructor(private readonly sqlite: DeviceSessionsSqliteDatabase) {}
+  constructor(private readonly postgres: DeviceSessionsPostgresDatabase) {}
 
   async createSession(params: {
     userId: string;
@@ -13,20 +13,20 @@ export class DeviceSessionsRepository {
     refreshTokenHash: string;
     expiresAt?: Date;
   }): Promise<void> {
-    const db = this.sqlite.database;
     const expiresAt =
       params.expiresAt != null ? params.expiresAt.toISOString() : null;
-    db.prepare(
+    await this.postgres.db.query(
       `INSERT INTO device_sessions (device_id, user_id, ip, user_agent, refresh_token_hash, expires_at)
-       VALUES (@deviceId, @userId, @ip, @userAgent, @refreshTokenHash, @expiresAt)`,
-    ).run({
-      deviceId: params.deviceId,
-      userId: params.userId,
-      ip: params.ip,
-      userAgent: params.userAgent,
-      refreshTokenHash: params.refreshTokenHash,
-      expiresAt,
-    });
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        params.deviceId,
+        params.userId,
+        params.ip,
+        params.userAgent,
+        params.refreshTokenHash,
+        expiresAt,
+      ],
+    );
   }
 
   /**
@@ -38,49 +38,47 @@ export class DeviceSessionsRepository {
     currentRefreshTokenHash: string;
     newRefreshTokenHash: string;
   }): Promise<boolean> {
-    const result = this.sqlite.database
-      .prepare(
-        `UPDATE device_sessions
-         SET refresh_token_hash = @newHash, last_active_date = datetime('now')
-         WHERE user_id = @userId AND device_id = @deviceId AND refresh_token_hash = @currentHash`,
-      )
-      .run({
-        newHash: params.newRefreshTokenHash,
-        userId: params.userId,
-        deviceId: params.deviceId,
-        currentHash: params.currentRefreshTokenHash,
-      });
-    return result.changes === 1;
+    const result = await this.postgres.db.query(
+      `UPDATE device_sessions
+       SET refresh_token_hash = $1, last_active_date = NOW()
+       WHERE user_id = $2 AND device_id = $3 AND refresh_token_hash = $4`,
+      [
+        params.newRefreshTokenHash,
+        params.userId,
+        params.deviceId,
+        params.currentRefreshTokenHash,
+      ],
+    );
+    return result.rowCount === 1;
   }
 
   async deleteSession(userId: string, deviceId: string): Promise<void> {
-    this.sqlite.database
-      .prepare(
-        `DELETE FROM device_sessions WHERE user_id = ? AND device_id = ?`,
-      )
-      .run(userId, deviceId);
+    await this.postgres.db.query(
+      `DELETE FROM device_sessions WHERE user_id = $1 AND device_id = $2`,
+      [userId, deviceId],
+    );
   }
 
   async deleteAllSessionsExceptCurrent(
     userId: string,
     deviceId: string,
   ): Promise<void> {
-    this.sqlite.database
-      .prepare(
-        `DELETE FROM device_sessions WHERE user_id = ? AND device_id != ?`,
-      )
-      .run(userId, deviceId);
+    await this.postgres.db.query(
+      `DELETE FROM device_sessions WHERE user_id = $1 AND device_id != $2`,
+      [userId, deviceId],
+    );
   }
 
   async findByUserAndDevice(
     userId: string,
     deviceId: string,
   ): Promise<{ refreshTokenHash: string } | null> {
-    const row = this.sqlite.database
-      .prepare(
-        `SELECT refresh_token_hash AS refreshTokenHash FROM device_sessions WHERE user_id = ? AND device_id = ?`,
-      )
-      .get(userId, deviceId) as { refreshTokenHash: string } | undefined;
-    return row ?? null;
+    const result = await this.postgres.db.query<{ refreshTokenHash: string }>(
+      `SELECT refresh_token_hash AS "refreshTokenHash"
+       FROM device_sessions
+       WHERE user_id = $1 AND device_id = $2`,
+      [userId, deviceId],
+    );
+    return result.rows[0] ?? null;
   }
 }
