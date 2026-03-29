@@ -69,7 +69,7 @@ import { SecurityController } from './api/security.controller';
     DeleteDeviceSessionUseCase,
     DeleteAllOtherSessionsUseCase,
   ],
-  exports: [],
+  exports: [DeviceSessionsPostgresDatabase],
 })
 
 export class UserAccountsModule {}
