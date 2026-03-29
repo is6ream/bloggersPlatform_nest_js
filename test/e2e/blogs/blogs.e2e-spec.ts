@@ -1,230 +1,297 @@
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from '@jest/globals';
 import { INestApplication } from '@nestjs/common';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import { connect, Connection } from 'mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { beforeAll, expect } from '@jest/globals';
+import request from 'supertest';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
-import { getModelToken } from '@nestjs/mongoose';
-import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
-import {
-  Blog,
-  BlogDocument,
-} from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
-import request from 'supertest';
-import { createTestBlogs } from '../../helpers/blogs/create-blogs-helper';
-import { UpdateBlogDto } from 'src/modules/bloggers-platform/blogs/dto/input/updateBlogDto';
-import { createTestBlog} from '../../helpers/factory/blog-factory';
+import { e2eApiPath } from '../helpers/api-path';
 
-describe('Blogs E2E Tests', () => {
+const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
+const TESTING_PATH = e2eApiPath('testing/all-data');
+const BLOGS_PATH = e2eApiPath('blogs');
+
+type BlogInput = {
+  name: string;
+  description: string;
+  websiteUrl: string;
+};
+
+const VALID_BLOG_INPUT: BlogInput = {
+  name: 'blog-name',
+  description: 'blog-description',
+  websiteUrl: 'https://example.com',
+};
+
+describe('Blogs API (e2e)', () => {
   let app: INestApplication;
-  let mongoServer: MongoMemoryServer;
-  let mongoConnection: Connection;
   let moduleFixture: TestingModule;
-  let postModel: any;
-  let blogModel: any;
-  let testBlogId: any;
-  let testPostId: any;
+
+  const createBlog = async (input: BlogInput = VALID_BLOG_INPUT) => {
+    const res = await request(app.getHttpServer())
+      .post(BLOGS_PATH)
+      .set('Authorization', BASIC_AUTH)
+      .send(input)
+      .expect(201);
+
+    return res.body as {
+      id: string;
+      name: string;
+      description: string;
+      websiteUrl: string;
+      createdAt: string;
+      isMembership: boolean;
+    };
+  };
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-
-    mongoConnection = (await connect(mongoUri)).connection;
-
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
-    })
-      .overrideProvider('MONGO_CONNECTION')
-      .useValue(mongoConnection)
-      .compile();
+    }).compile();
 
     app = moduleFixture.createNestApplication();
     appSetup(app);
     await app.init();
-
-    postModel = moduleFixture.get(getModelToken(PostEntity.name));
-    blogModel = moduleFixture.get(getModelToken(Blog.name));
   });
 
   beforeEach(async () => {
-    await blogModel.deleteMany({});
+    await request(app.getHttpServer()).delete(TESTING_PATH).expect(204);
+  });
+
+  afterAll(async () => {
+    if (app) {
+      await app.close();
+    }
   });
 
   describe('GET /blogs', () => {
-    it('should get all blogs', async () => {
-      //нужно создать 4 блога и протестировать req.body
-      await createTestBlogs(blogModel, 4);
-      let response = await request(app.getHttpServer())
-        .get('/hometask_15/api/blogs')
-        .expect(200);
+    it('200 — empty list with default pagination', async () => {
+      const res = await request(app.getHttpServer()).get(BLOGS_PATH).expect(200);
 
-      console.log(response.body, 'response body check');
-      expect(response.body.items.length).toBe(4);
-    });
-
-    it('should have correct pagination structure', async () => {
-      await createTestBlogs(blogModel, 4);
-
-      const response = await request(app.getHttpServer())
-        .get('/hometask_15/api/blogs')
-        .expect(200);
-
-      //ожидаемое количество страниц
-      const expectedPagesCount = Math.ceil(
-        response.body.totalCount / response.body.pageSize,
-      );
-      expect(response.body.pagesCount).toBe(expectedPagesCount);
-
-      // page не должен быть больше pagesCount
-      expect(response.body.page).toBeLessThanOrEqual(response.body.pagesCount);
-    });
-
-    it('should use default query parameters when not provided', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/hometask_15/api/blogs')
-        .expect(200);
-
-      // Проверяем дефолтные значения
-      expect(response.body.page).toBe(1);
-      expect(response.body.pageSize).toBeGreaterThan(0);
-      expect(response.body.pageSize).toBe(10);
-    });
-
-    it('should not return deleted blogs', async () => {
-      // Создаем и удаляем один блог
-      const blogToDelete: BlogDocument = await createTestBlog(blogModel, {
-        name: 'To be deleted',
+      expect(res.body).toEqual({
+        pagesCount: 0,
+        page: 1,
+        pageSize: 10,
+        totalCount: 0,
+        items: [],
       });
-      blogToDelete.makeDeleted();
-      console.log(blogToDelete, 'check delete field');
-      await blogToDelete.save();
-
-      const response = await request(app.getHttpServer())
-        .get('/hometask_15/api/blogs')
-        .expect(200);
-
-      // Убеждаемся, что удаленный блог не в ответе
-      const deletedBlogInResponse = response.body.items.find(
-        (b: any) => b.id === blogToDelete._id.toString(),
-      );
-      expect(deletedBlogInResponse).toEqual(undefined);
     });
 
-    it('should create blog and return it', async () => {
-      const blog = await createTestBlog(blogModel);
-      const blogId = blog._id.toString();
-      console.log(blogId, 'blogId check');
+    it('200 — supports pagination + searchNameTerm', async () => {
+      await createBlog({
+        name: 'alpha',
+        description: 'alpha desc',
+        websiteUrl: 'https://alpha.com',
+      });
+      await createBlog({
+        name: 'beta',
+        description: 'beta desc',
+        websiteUrl: 'https://beta.com',
+      });
+      await createBlog({
+        name: 'alphabet',
+        description: 'alphabet desc',
+        websiteUrl: 'https://alphabet.com',
+      });
 
-      console.log(blog, 'blog after creating check');
-
-      const response = await request(app.getHttpServer())
-        .get(`/hometask_15/api/blogs/${blogId}`)
+      const res = await request(app.getHttpServer())
+        .get(BLOGS_PATH)
+        .query({ searchNameTerm: 'alpha', pageNumber: 1, pageSize: 2 })
         .expect(200);
 
-      console.log(response.body, 'response body check');
-
-      expect(response.body).toHaveProperty('id', blogId);
-      expect(response.body).toHaveProperty('description', blog.description);
-      expect(response.body).toHaveProperty('name', blog.name);
+      expect(res.body.page).toBe(1);
+      expect(res.body.pageSize).toBe(2);
+      expect(res.body.totalCount).toBe(2);
+      expect(res.body.pagesCount).toBe(1);
+      expect(res.body.items).toHaveLength(2);
+      expect(
+        res.body.items.every((b: { name: string }) => b.name.includes('alpha')),
+      ).toBe(true);
     });
   });
 
-  const VALID_AUTH = 'Basic YWRtaW46cXdlcnR5'; // admin:qwerty
-  let testBlog: any;
-
-  describe('POST /blogs', () => {
-    it('should create blog successfully - 201 Created', async () => {
-      const blogData = {
-        name: 'New Blog',
-        description: 'Blog description',
-        websiteUrl: 'https://example.com',
-      };
-
-      const response = await request(app.getHttpServer())
-        .post('/hometask_15/api/blogs')
-        .set('Authorization', VALID_AUTH)
-        .send(blogData)
-        .expect(201);
-
-      // Базовая проверка ответа
-      expect(response.body).toHaveProperty('id');
-      expect(response.body.name).toBe(blogData.name);
-      expect(response.body.description).toBe(blogData.description);
-      expect(response.body.websiteUrl).toBe(blogData.websiteUrl);
-      expect(response.body).toHaveProperty('createdAt');
-      expect(response.body).toHaveProperty('isMembership');
+  describe('GET /blogs/:id', () => {
+    it('404 — for non-existent blog', async () => {
+      await request(app.getHttpServer())
+        .get(`${BLOGS_PATH}/00000000-0000-4000-8000-000000000099`)
+        .expect(404);
     });
 
-    it('should return 401 Unauthorized without auth', async () => {
-      const blogData = {
-        name: 'Unauthorized Blog',
-        description: 'Should fail',
-        websiteUrl: 'https://example.com',
-      };
+    it('200 — returns existing blog', async () => {
+      const created = await createBlog();
 
+      const res = await request(app.getHttpServer())
+        .get(`${BLOGS_PATH}/${created.id}`)
+        .expect(200);
+
+      expect(res.body).toMatchObject({
+        id: created.id,
+        name: VALID_BLOG_INPUT.name,
+        description: VALID_BLOG_INPUT.description,
+        websiteUrl: VALID_BLOG_INPUT.websiteUrl,
+        isMembership: false,
+      });
+      expect(res.body.createdAt).toBeDefined();
+    });
+  });
+
+  describe('POST /blogs', () => {
+    it('401 — without Basic Auth', async () => {
       await request(app.getHttpServer())
-        .post('/hometask_15/api/blogs')
-        .send(blogData) // нет Authorization header
+        .post(BLOGS_PATH)
+        .send(VALID_BLOG_INPUT)
         .expect(401);
     });
 
-    it('should return 400 Bad Request for invalid data', async () => {
-      const invalidBlogData = {
-        name: '123456789101112123', // слишком длинное имя
-        description: 'Valid description',
-        websiteUrl: 'not-a-valid-url', // невалидный URL
-      };
-
+    it('400 — invalid payload', async () => {
       await request(app.getHttpServer())
-        .post('/hometask_15/api/blogs')
-        .set('Authorization', VALID_AUTH)
-        .send(invalidBlogData)
+        .post(BLOGS_PATH)
+        .set('Authorization', BASIC_AUTH)
+        .send({
+          name: 'x'.repeat(16),
+          description: '',
+          websiteUrl: 'not-url',
+        })
         .expect(400);
+    });
+
+    it('201 — creates blog', async () => {
+      const res = await request(app.getHttpServer())
+        .post(BLOGS_PATH)
+        .set('Authorization', BASIC_AUTH)
+        .send(VALID_BLOG_INPUT)
+        .expect(201);
+
+      expect(res.body).toMatchObject({
+        name: VALID_BLOG_INPUT.name,
+        description: VALID_BLOG_INPUT.description,
+        websiteUrl: VALID_BLOG_INPUT.websiteUrl,
+        isMembership: false,
+      });
+      expect(typeof res.body.id).toBe('string');
+      expect(res.body.createdAt).toBeDefined();
     });
   });
 
-  describe('UPDATE, DELETE /blogs/:id', () => {
-    it('delete blog by id', async () => {
-      const blog = await createTestBlog(blogModel);
-      const blogId = blog._id.toString();
+  describe('PUT /blogs/:id', () => {
+    it('401 — without Basic Auth', async () => {
+      const created = await createBlog();
 
       await request(app.getHttpServer())
-        .delete(`/hometask_15/api/blogs/${blogId}`)
-        .set('Authorization', VALID_AUTH)
-        .expect(204);
-
-      const getResponse = await request(app.getHttpServer())
-        .get(`/hometask_15/api/blogs/${blogId}`)
-        .expect(404);
-
-      expect(getResponse.body.length).toBe(0);
+        .put(`${BLOGS_PATH}/${created.id}`)
+        .send(VALID_BLOG_INPUT)
+        .expect(401);
     });
 
-    it('should update blog by id', async () => {
-      const blog = await createTestBlog(blogModel);
-      const blogId = blog._id.toString();
+    it('404 — for non-existent blog', async () => {
+      await request(app.getHttpServer())
+        .put(`${BLOGS_PATH}/00000000-0000-4000-8000-000000000099`)
+        .set('Authorization', BASIC_AUTH)
+        .send(VALID_BLOG_INPUT)
+        .expect(404);
+    });
 
-      const updateBlogData: UpdateBlogDto = {
-        name: 'string',
-        description: 'string',
-        websiteUrl:
-          'https://ii24ja59XLbIoaqneYiZ-LZsDX8Gobv6WN.kekVh_qj7DSaL.RjanKZyoVdFADg-FCgv7Ymqz3jb9SY3zI7c545.OkVX',
+    it('204 — updates blog', async () => {
+      const created = await createBlog();
+      const updateBody = {
+        name: 'updated',
+        description: 'updated description',
+        websiteUrl: 'https://updated.com',
       };
 
       await request(app.getHttpServer())
-        .put(`/hometask_15/api/blogs/${blogId}`)
-        .set('Authorization', VALID_AUTH)
-        .send(updateBlogData)
+        .put(`${BLOGS_PATH}/${created.id}`)
+        .set('Authorization', BASIC_AUTH)
+        .send(updateBody)
         .expect(204);
 
-      const getResponse = await request(app.getHttpServer())
-        .get(`/hometask_15/api/blogs/${blogId}`)
+      const getRes = await request(app.getHttpServer())
+        .get(`${BLOGS_PATH}/${created.id}`)
         .expect(200);
 
-      expect(getResponse.body.name).toBe(updateBlogData.name);
-      expect(getResponse.body.description).toBe(updateBlogData.description);
-      expect(getResponse.body.websiteUrl).toBe(updateBlogData.websiteUrl);
+      expect(getRes.body).toMatchObject(updateBody);
+    });
+  });
+
+  describe('DELETE /blogs/:id', () => {
+    it('401 — without Basic Auth', async () => {
+      const created = await createBlog();
+
+      await request(app.getHttpServer())
+        .delete(`${BLOGS_PATH}/${created.id}`)
+        .expect(401);
+    });
+
+    it('404 — for non-existent blog', async () => {
+      await request(app.getHttpServer())
+        .delete(`${BLOGS_PATH}/00000000-0000-4000-8000-000000000099`)
+        .set('Authorization', BASIC_AUTH)
+        .expect(404);
+    });
+
+    it('204 — deletes blog and hides it from reads', async () => {
+      const created = await createBlog();
+
+      await request(app.getHttpServer())
+        .delete(`${BLOGS_PATH}/${created.id}`)
+        .set('Authorization', BASIC_AUTH)
+        .expect(204);
+
+      await request(app.getHttpServer())
+        .get(`${BLOGS_PATH}/${created.id}`)
+        .expect(404);
+
+      const listRes = await request(app.getHttpServer()).get(BLOGS_PATH).expect(200);
+      expect(listRes.body.items.some((b: { id: string }) => b.id === created.id)).toBe(
+        false,
+      );
+    });
+  });
+
+  describe('POST /blogs/:id/posts + GET /blogs/:id/posts', () => {
+    it('201 + 200 — creates post for blog and returns it in blog posts feed', async () => {
+      const blog = await createBlog();
+
+      const createPostRes = await request(app.getHttpServer())
+        .post(`${BLOGS_PATH}/${blog.id}/posts`)
+        .set('Authorization', BASIC_AUTH)
+        .send({
+          title: 'post-title',
+          shortDescription: 'post-short-description',
+          content: 'post-content',
+        })
+        .expect(201);
+
+      expect(createPostRes.body).toMatchObject({
+        blogId: blog.id,
+        blogName: blog.name,
+        title: 'post-title',
+      });
+
+      const getPostsRes = await request(app.getHttpServer())
+        .get(`${BLOGS_PATH}/${blog.id}/posts`)
+        .expect(200);
+
+      expect(getPostsRes.body.totalCount).toBe(1);
+      expect(getPostsRes.body.items[0].id).toBe(createPostRes.body.id);
+    });
+
+    it('404 — create post for non-existent blog', async () => {
+      await request(app.getHttpServer())
+        .post(`${BLOGS_PATH}/00000000-0000-4000-8000-000000000099/posts`)
+        .set('Authorization', BASIC_AUTH)
+        .send({
+          title: 'post-title',
+          shortDescription: 'post-short-description',
+          content: 'post-content',
+        })
+        .expect(404);
     });
   });
 });
