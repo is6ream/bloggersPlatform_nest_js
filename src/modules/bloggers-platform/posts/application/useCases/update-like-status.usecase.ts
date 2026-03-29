@@ -5,8 +5,8 @@ import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/
 import { InjectModel } from '@nestjs/mongoose';
 import { Like, LikeDocument } from '../../../likes/domain/like-entity';
 import { LikeModelType } from '../../../likes/domain/like-entity';
-import { PostDocument } from '../../domain/postEntity';
 import { LikeStatus } from 'src/modules/bloggers-platform/likes/types/like-status';
+
 @Injectable()
 export class UpdatePostLikeStatusCommand {
   constructor(
@@ -24,14 +24,10 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
     private postRepository: PostRepository,
     private usersRepository: UsersRepository,
   ) {}
-  async execute(command: UpdatePostLikeStatusCommand): Promise<any> {
-    let post: PostDocument = await this.postRepository.findOrNotFoundFail(
-      command.postId,
-    );
+  async execute(command: UpdatePostLikeStatusCommand): Promise<void> {
+    const post = await this.postRepository.findOrNotFoundFail(command.postId);
 
-    const user = await this.usersRepository.findByIdOrThrowValidationError(
-      command.userId,
-    );
+    await this.usersRepository.findByIdOrThrowValidationError(command.userId);
 
     const like = await this.LikeModel.findOne({
       userId: command.userId,
@@ -47,7 +43,7 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
       });
       post.updateLikeCounter('None', command.likeStatus);
 
-      await this.postRepository.likeStatusSave(newLike);
+      await newLike.save();
       await this.postRepository.save(post);
       return;
     }
@@ -56,12 +52,11 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
       return;
     }
 
-    let oldLikeStatus = like.status;
+    const oldLikeStatus = like.status;
     like.status = command.likeStatus;
     like.createdAt = new Date();
     post.updateLikeCounter(oldLikeStatus, command.likeStatus);
-    await this.postRepository.likeStatusSave(like);
+    await like.save();
     await this.postRepository.save(post);
-    return;
   }
 }

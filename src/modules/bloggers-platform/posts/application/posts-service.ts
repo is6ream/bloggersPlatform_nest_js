@@ -1,19 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { PostDocument, PostModelType } from '../domain/postEntity';
-import { PostEntity } from '../domain/postEntity';
 import { BlogSqlEntity } from '../../blogs/domain/blog-sql.entity';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
 import { PostRepository } from '../infrastructure/postRepository';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 import { UpdatePostDto } from '../domain/dto/input/updatePostDto';
 import { CreatePostForBlogInputDto } from '../../blogs/dto/input/createPostForBlogInputDto';
+import { PostSqlEntity } from '../domain/post-sql.entity';
 
 @Injectable()
 export class PostsService {
   constructor(
-    @InjectModel(PostEntity.name)
-    private PostModel: PostModelType,
     private blogsRepository: BlogsRepository,
     private postRepository: PostRepository,
   ) {}
@@ -22,17 +18,17 @@ export class PostsService {
     const blog: BlogSqlEntity = await this.blogsRepository.findOrNotFoundFail(
       dto.blogId,
     );
-    const post = this.PostModel.createInstance({
+    const post = PostSqlEntity.createForInsert({
       title: dto.title,
       shortDescription: dto.shortDescription,
       content: dto.content,
       blogId: dto.blogId,
       blogName: blog.name,
-    }) as PostDocument;
+    });
 
     await this.postRepository.save(post);
 
-    return post._id.toString();
+    return post.id;
   }
 
   async createPostForSpecificBlog(
@@ -42,31 +38,30 @@ export class PostsService {
     const blog: BlogSqlEntity =
       await this.blogsRepository.findOrNotFoundFail(blogId);
 
-    const post = this.PostModel.createInstance({
+    const post = PostSqlEntity.createForInsert({
       title: dto.title,
       shortDescription: dto.shortDescription,
       content: dto.content,
-      blogId: blogId,
+      blogId,
       blogName: blog.name,
-    }) as PostDocument;
+    });
 
-    await this.postRepository.save(post as PostDocument);
+    await this.postRepository.save(post);
 
-    return post._id.toString();
+    return post.id;
   }
 
   async updatePost(id: string, dto: UpdatePostDto): Promise<void> {
-    const post: PostDocument = await this.postRepository.findOrNotFoundFail(id);
+    const post = await this.postRepository.findOrNotFoundFail(id);
     await this.blogsRepository.checkBlogExist(dto.blogId);
 
     post.updatePost(dto);
 
     await this.postRepository.save(post);
-    return;
   }
 
   async deletePost(id: string): Promise<void> {
-    const post: PostDocument = await this.postRepository.findOrNotFoundFail(id);
+    const post = await this.postRepository.findOrNotFoundFail(id);
 
     post.makeDeleted();
 

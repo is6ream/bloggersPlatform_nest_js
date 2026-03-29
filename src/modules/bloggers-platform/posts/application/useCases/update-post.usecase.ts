@@ -3,7 +3,7 @@ import { UpdatePostInputDto } from '../../dto/input/updatePostInputDto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostRepository } from '../../infrastructure/postRepository';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
-import { PostDocument } from '../../domain/postEntity';
+
 @Injectable()
 export class UpdatePostCommand {
   constructor(
@@ -19,10 +19,8 @@ export class UpdatePostUseCase implements ICommandHandler<UpdatePostCommand> {
     private blogsRepository: BlogsRepository,
   ) {}
 
-  async execute(command: UpdatePostCommand): Promise<any> {
-    const post: PostDocument = await this.postRepository.findOrNotFoundFail(
-      command.id,
-    );
+  async execute(command: UpdatePostCommand): Promise<void> {
+    const post = await this.postRepository.findOrNotFoundFail(command.id);
     await this.blogsRepository.findByIdOrThrowValidationError(
       command.dto.blogId,
     );

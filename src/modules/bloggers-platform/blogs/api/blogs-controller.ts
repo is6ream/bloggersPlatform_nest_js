@@ -23,7 +23,7 @@ import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-param
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { BlogSqlEntity } from '../domain/blog-sql.entity';
-import { PostDocument } from '../../posts/domain/postEntity';
+import { PostSqlEntity } from '../../posts/domain/post-sql.entity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
 import { UpdateBlogCommand } from '../application/useCases/update-blog-usecase';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
@@ -66,11 +66,11 @@ export class BlogsController {
     @Param('id') id: string,
     @Body() body: CreatePostByBlogIdInputDto,
   ): Promise<PostViewModel> {
-    const post: PostDocument = await this.commandBus.execute(
+    const post: PostSqlEntity = await this.commandBus.execute(
       new CreatePostForSpecificBlogCommand(id, body),
     );
 
-    return this.postsQueryRepository.getCreatedPost(post._id.toString());
+    return this.postsQueryRepository.getCreatedPost(post.id);
   }
 
   @UseGuards(BasicAuthGuard)

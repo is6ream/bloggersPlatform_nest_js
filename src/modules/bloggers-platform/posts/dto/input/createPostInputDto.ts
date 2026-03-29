@@ -1,4 +1,4 @@
-import { IsMongoId, IsString, Length } from 'class-validator';
+import { IsString, Length, Matches } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreatePostInputDto {
@@ -14,7 +14,10 @@ export class CreatePostInputDto {
   @Length(1, 1000)
   content: string;
 
-  @IsMongoId()
   @IsString()
+  @Matches(
+    /^([a-f\d]{24}|[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i,
+    { message: 'blogId must be a valid id' },
+  )
   blogId: string;
 }
