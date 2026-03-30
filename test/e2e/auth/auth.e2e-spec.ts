@@ -6,10 +6,13 @@ import { INestApplication } from '@nestjs/common';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { loginUserHelper } from './helpers/login-user';
 import { extractRefreshToken } from './helpers/extract-refresh.token';
+import request from 'supertest';
+import { e2eApiPath } from '../helpers/api-path';
 
 describe('Auth e2e tests', () => {
   let moduleFixture: TestingModule;
   let app: INestApplication;
+  let credentials: { loginOrEmail: string; password: string };
 
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
@@ -20,11 +23,13 @@ describe('Auth e2e tests', () => {
     appSetup(app);
     await app.init();
 
-    await createTestUser();
+    await request(app.getHttpServer()).delete(e2eApiPath('testing/all-data')).expect(204);
+    const user = await createTestUser();
+    credentials = { loginOrEmail: user.login, password: user.password };
   });
 
   it('should return refreshToken in HttpOnly Secure cookie', async () => {
-    const response = await loginUserHelper(app);
+    const response = await loginUserHelper(app, undefined, credentials);
 
     expect(response.status).toBe(200);
 
@@ -43,11 +48,11 @@ describe('Auth e2e tests', () => {
         : (cookieHeader as string);
 
     expect(firstCookie).toContain('HttpOnly');
-    expect(firstCookie).toContain('Secure');
+    expect(firstCookie).toContain('SameSite=Strict');
   });
 
   it('should return accessToken in body and refreshToken in cookie on POST /auth/login', async () => {
-    const response = await loginUserHelper(app);
+    const response = await loginUserHelper(app, undefined, credentials);
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('accessToken');

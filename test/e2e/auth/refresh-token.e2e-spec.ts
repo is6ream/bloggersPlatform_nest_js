@@ -4,7 +4,7 @@ import { TestingModule, Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
-import { createTestUser, deleteAllE2eUsers } from '../../helpers/factory/user-factory';
+import { createTestUser } from '../../helpers/factory/user-factory';
 import { e2eApiPath } from '../helpers/api-path';
 import { loginUserHelper } from './helpers/login-user';
 import { extractRefreshToken } from './helpers/extract-refresh.token';
@@ -12,7 +12,6 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import {
   assignE2eDeviceSessionsPgConfig,
-  clearE2eDeviceSessionsTable,
 } from '../helpers/device-sessions-postgres-e2e';
 
 describe('Auth refresh-token e2e', () => {
@@ -20,6 +19,7 @@ describe('Auth refresh-token e2e', () => {
   let moduleFixture: TestingModule;
   let jwtService: JwtService;
   let configService: ConfigService;
+  let credentials: { loginOrEmail: string; password: string };
 
   beforeAll(async () => {
     assignE2eDeviceSessionsPgConfig();
@@ -36,11 +36,14 @@ describe('Auth refresh-token e2e', () => {
     await app.init();
   });
 
-  it('should issue new access/refresh tokens for valid refreshToken', async () => {
-    await deleteAllE2eUsers();
-    await createTestUser();
+  beforeEach(async () => {
+    await request(app.getHttpServer()).delete(e2eApiPath('testing/all-data')).expect(204);
+    const user = await createTestUser();
+    credentials = { loginOrEmail: user.login, password: user.password };
+  });
 
-    const loginResponse = await loginUserHelper(app);
+  it('should issue new access/refresh tokens for valid refreshToken', async () => {
+    const loginResponse = await loginUserHelper(app, undefined, credentials);
 
     const cookieHeader = loginResponse.headers['set-cookie'];
     const refreshToken = extractRefreshToken(cookieHeader);
@@ -66,11 +69,7 @@ describe('Auth refresh-token e2e', () => {
   });
 
   it('should return 401 when reusing same refresh token after it was already used', async () => {
-    await clearE2eDeviceSessionsTable();
-    await deleteAllE2eUsers();
-    await createTestUser();
-
-    const loginResponse = await loginUserHelper(app);
+    const loginResponse = await loginUserHelper(app, undefined, credentials);
     const cookieHeader = loginResponse.headers['set-cookie'];
     const savedRefreshToken = extractRefreshToken(cookieHeader);
     expect(savedRefreshToken).toBeDefined();

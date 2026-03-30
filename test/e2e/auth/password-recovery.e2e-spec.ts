@@ -8,13 +8,20 @@ import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { createTestUser } from '../../helpers/factory/user-factory';
 import { e2eApiPath } from '../helpers/api-path';
+import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 
 const ENDPOINT = e2eApiPath('auth/password-recovery');
 
 async function buildApp(): Promise<{ app: INestApplication; moduleFixture: TestingModule }> {
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  })
+    .overrideProvider(EmailAdapter)
+    .useValue({
+      sendRecoveryCodeEmail: jest.fn().mockResolvedValue(undefined),
+      sendConfirmationCodeEmail: jest.fn().mockResolvedValue(undefined),
+    })
+    .compile();
 
   const app = moduleFixture.createNestApplication();
   appSetup(app);
@@ -25,10 +32,13 @@ async function buildApp(): Promise<{ app: INestApplication; moduleFixture: Testi
 
 describe('POST /auth/password-recovery — 204 / 400', () => {
   let app: INestApplication;
+  let existingUserEmail = '';
 
   beforeAll(async () => {
     ({ app } = await buildApp());
-    await createTestUser();
+    await request(app.getHttpServer()).delete(e2eApiPath('testing/all-data')).expect(204);
+    const user = await createTestUser();
+    existingUserEmail = user.email;
   });
 
   afterAll(async () => {
@@ -38,7 +48,7 @@ describe('POST /auth/password-recovery — 204 / 400', () => {
   it('should return 204 when email belongs to an existing user', async () => {
     await request(app.getHttpServer())
       .post(ENDPOINT)
-      .send({ email: 'test@example.com' })
+      .send({ email: existingUserEmail })
       .expect(204);
   });
 

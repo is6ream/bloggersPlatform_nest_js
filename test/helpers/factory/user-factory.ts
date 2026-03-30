@@ -8,6 +8,7 @@ export type E2eTestUser = {
   id: string;
   login: string;
   email: string;
+  password: string;
 };
 
 export async function createTestUser(
@@ -17,16 +18,22 @@ export async function createTestUser(
     password: string;
   }>,
 ): Promise<E2eTestUser> {
-  const login = overrides?.login ?? 'testuser';
-  const email = overrides?.email ?? 'test@example.com';
+  const uniqueSuffix = Date.now().toString(36);
+  const login = overrides?.login ?? `testuser_${uniqueSuffix}`;
+  const email = overrides?.email ?? `test_${uniqueSuffix}@example.com`;
   const passwordPlain = overrides?.password ?? 'testpassword';
 
-  return insertE2eUser({
+  const user = await insertE2eUser({
     login,
     email,
     passwordPlain,
     isEmailConfirmed: true,
   });
+
+  return {
+    ...user,
+    password: passwordPlain,
+  };
 }
 
 export { deleteAllE2eUsers, findE2eUserIdByLogin };

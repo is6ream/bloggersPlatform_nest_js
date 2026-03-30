@@ -21,6 +21,7 @@ describe('GET /security/devices', () => {
   let moduleFixture: TestingModule;
   let jwtService: JwtService;
   let configService: ConfigService;
+  let credentials: { loginOrEmail: string; password: string };
 
   beforeAll(async () => {
     assignE2eDeviceSessionsPgConfig();
@@ -35,8 +36,12 @@ describe('GET /security/devices', () => {
     app = moduleFixture.createNestApplication();
     appSetup(app);
     await app.init();
+  });
 
-    await createTestUser();
+  beforeEach(async () => {
+    await request(app.getHttpServer()).delete(e2eApiPath('testing/all-data')).expect(204);
+    const user = await createTestUser();
+    credentials = { loginOrEmail: user.login, password: user.password };
   });
 
   afterAll(async () => {
@@ -44,7 +49,7 @@ describe('GET /security/devices', () => {
   });
 
   it('should return 200 with array of device sessions after login', async () => {
-    const loginResponse = await loginUserHelper(app);
+    const loginResponse = await loginUserHelper(app, undefined, credentials);
     const refreshToken = extractRefreshToken(loginResponse.headers['set-cookie']);
 
     expect(refreshToken).toBeDefined();
@@ -93,7 +98,7 @@ describe('GET /security/devices', () => {
   });
 
   it('should not change deviceId after /auth/refresh-token; lastActiveDate should be updated', async () => {
-    const loginResponse = await loginUserHelper(app);
+    const loginResponse = await loginUserHelper(app, undefined, credentials);
     const refreshToken = extractRefreshToken(loginResponse.headers['set-cookie']);
     expect(refreshToken).toBeDefined();
 
@@ -111,14 +116,17 @@ describe('GET /security/devices', () => {
 
     await new Promise((r) => setTimeout(r, 10));
 
-    await request(app.getHttpServer())
+    const refreshResponse = await request(app.getHttpServer())
       .post(e2eApiPath('auth/refresh-token'))
       .set('Cookie', `refreshToken=${refreshToken}`)
       .expect(200);
 
+    const rotatedRefreshToken = extractRefreshToken(refreshResponse.headers['set-cookie']);
+    expect(rotatedRefreshToken).toBeDefined();
+
     const devicesAfter = await request(app.getHttpServer())
       .get(ENDPOINT)
-      .set('Cookie', `refreshToken=${refreshToken}`)
+      .set('Cookie', `refreshToken=${rotatedRefreshToken}`)
       .expect(200);
 
     const sessionAfter = devicesAfter.body.find(
@@ -135,7 +143,7 @@ describe('GET /security/devices', () => {
   });
 
   it('Log out device: logout with cookie then device list does not include logged-out device; status 204', async () => {
-    const loginResponse = await loginUserHelper(app);
+    const loginResponse = await loginUserHelper(app, undefined, credentials);
     const refreshToken = extractRefreshToken(loginResponse.headers['set-cookie']);
     expect(refreshToken).toBeDefined();
 
@@ -159,12 +167,12 @@ describe('GET /security/devices', () => {
   });
 
   it('Four devices: login 4 times from different devices, logout one, GET /security/devices returns list without logged-out device', async () => {
-    await new Promise((r) => setTimeout(r, 11000));
+    await new Promise((r) => setTimeout(r, 1100));
 
-    const login1 = await loginUserHelper(app, 'Device-One');
-    await loginUserHelper(app, 'Device-Two');
-    await loginUserHelper(app, 'Device-Three');
-    const login4 = await loginUserHelper(app, 'Device-Four');
+    const login1 = await loginUserHelper(app, 'Device-One', credentials);
+    await loginUserHelper(app, 'Device-Two', credentials);
+    await loginUserHelper(app, 'Device-Three', credentials);
+    const login4 = await loginUserHelper(app, 'Device-Four', credentials);
 
     const refreshToken1 = extractRefreshToken(login1.headers['set-cookie']);
     const refreshToken4 = extractRefreshToken(login4.headers['set-cookie']);
