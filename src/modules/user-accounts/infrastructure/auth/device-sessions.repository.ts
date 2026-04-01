@@ -72,9 +72,12 @@ export class DeviceSessionsRepository {
   async findByUserAndDevice(
     userId: string,
     deviceId: string,
-  ): Promise<{ refreshTokenHash: string } | null> {
-    const result = await this.postgres.db.query<{ refreshTokenHash: string }>(
-      `SELECT refresh_token_hash AS "refreshTokenHash"
+  ): Promise<{ refreshTokenHash: string; ip: string | null } | null> {
+    const result = await this.postgres.db.query<{
+      refreshTokenHash: string;
+      ip: string | null;
+    }>(
+      `SELECT refresh_token_hash AS "refreshTokenHash", ip
        FROM device_sessions
        WHERE user_id = $1 AND device_id = $2`,
       [userId, deviceId],

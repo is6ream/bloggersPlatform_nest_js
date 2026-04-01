@@ -31,6 +31,7 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
       `[/refresh-token] Validating refresh token — userId=${userId}, deviceId=${deviceId}`,
     );
 
+
     const session = await this.deviceSessionsRepository.findByUserAndDevice(
       userId,
       deviceId,

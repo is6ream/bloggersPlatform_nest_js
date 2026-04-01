@@ -1,11 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { DataSource } from 'typeorm';
-import { Model, PipelineStage } from 'mongoose';
-import {
-  Like,
-  LikeDocument,
-} from 'src/modules/bloggers-platform/likes/domain/like-entity';
 import { PaginatedPostsDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/paginated-post.dto';
 import { PostQueryDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-query.dto';
 import { PostViewDto } from 'src/modules/bloggers-platform/posts/infrastructure/dto/post-view.dto';
@@ -27,6 +21,12 @@ type RawPostRow = {
   dislikesCount: number;
 };
 
+type NewestLikeRow = {
+  addedAt: Date | string;
+  userId: string;
+  login: string;
+};
+
 export interface LikesAggregationResult {
   postId: string;
   likesCount: number;
@@ -42,12 +42,14 @@ export interface LikesAggregationResult {
 @Injectable()
 export class PostsRawSqlQueryRepository {
   private readonly tableName = 'posts';
+  private readonly likesTableName = 'likes';
+  private readonly usersTableName = 'users';
 
   private postsTableEnsured = false;
+  private likesTableEnsured = false;
 
   constructor(
     private readonly dataSource: DataSource,
-    @InjectModel(Like.name) private likeModel: Model<LikeDocument>,
     private blogsRepository: BlogsRepository,
   ) {}
 
@@ -72,6 +74,31 @@ export class PostsRawSqlQueryRepository {
     this.postsTableEnsured = true;
   }
 
+  private async ensureLikesTable(): Promise<void> {
+    if (this.likesTableEnsured) {
+      return;
+    }
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS likes (
+        id TEXT PRIMARY KEY,
+        status VARCHAR(10) NOT NULL,
+        "userId" TEXT NOT NULL,
+        "parentId" TEXT NOT NULL,
+        "parentType" VARCHAR(20) NOT NULL,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await this.dataSource.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS likes_unique_user_parent_idx
+      ON likes ("userId", "parentId", "parentType");
+    `);
+    await this.dataSource.query(`
+      CREATE INDEX IF NOT EXISTS likes_parent_idx
+      ON likes ("parentType", "parentId");
+    `);
+    this.likesTableEnsured = true;
+  }
+
   private resolveSortColumn(sortBy: string): string {
     if (sortBy === 'title') {
       return 'p.title';
@@ -81,6 +108,7 @@ export class PostsRawSqlQueryRepository {
 
   async getPostById(id: string, userId: string): Promise<PostViewDto> {
     await this.ensurePostsTable();
+    await this.ensureLikesTable();
     const rows = await this.dataSource.query(
       `
       SELECT
@@ -105,13 +133,7 @@ export class PostsRawSqlQueryRepository {
       throw new DomainException({ code: 1, message: 'Post not Found' });
     }
 
-    const likesAggregation = await this.getLikesAggregation([id], userId);
-    const likesInfo = likesAggregation[0] || {
-      likesCount: 0,
-      dislikesCount: 0,
-      userReaction: 'None',
-      newestLikes: [],
-    };
+    const likesInfo = await this.getLikesInfoByPostId(id, userId);
 
     return {
       id: post.id,
@@ -181,6 +203,7 @@ export class PostsRawSqlQueryRepository {
     queryDto: PostQueryDto,
     userId?: string,
   ): Promise<PaginatedPostsDto> {
+    await this.ensureLikesTable();
     await this.blogsRepository.checkBlogExist(blogId);
 
     const { pageNumber, pageSize, sortBy, sortDirection, searchPostNameTerm } =
@@ -229,50 +252,44 @@ export class PostsRawSqlQueryRepository {
     }
 
     const postRows = posts as RawPostRow[];
-    const postIds = postRows.map((p) => p.id);
-    const likesAggregation = await this.getLikesAggregation(postIds, userId);
-    const likesMap = this.createLikesMap(likesAggregation);
 
-    const items: PostViewDto[] = postRows.map((post) => {
-      const postId = post.id;
-      const postLikes = likesMap[postId] || {
-        userReaction: 'None',
-        newestLikes: [],
-        likesCount: 0,
-        dislikesCount: 0,
-      };
+    const items: PostViewDto[] = await Promise.all(
+      postRows.map(async (post) => {
+        const postId = post.id;
+        const postLikes = await this.getLikesInfoByPostId(postId, userId);
 
-      const newestLikes = [...postLikes.newestLikes]
-        .sort(
-          (a, b) =>
-            new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
-        )
-        .slice(0, 3)
-        .map(
-          (like) =>
-            new NewestLikeDto(
-              like.addedAt,
-              like.userId,
-              like.login || `user${like.userId.slice(0, 4)}`,
-            ),
+        const newestLikes = [...postLikes.newestLikes]
+          .sort(
+            (a, b) =>
+              new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+          )
+          .slice(0, 3)
+          .map(
+            (like) =>
+              new NewestLikeDto(
+                like.addedAt,
+                like.userId,
+                like.login || `user${like.userId.slice(0, 4)}`,
+              ),
+          );
+
+        return new PostViewDto(
+          postId,
+          post.title,
+          post.shortDescription,
+          post.content,
+          post.blogId,
+          post.blogName,
+          new Date(post.createdAt),
+          new ExtendedLikesInfoDto(
+            postLikes.likesCount,
+            postLikes.dislikesCount,
+            userId ? postLikes.userReaction : 'None',
+            newestLikes,
+          ),
         );
-
-      return new PostViewDto(
-        postId,
-        post.title,
-        post.shortDescription,
-        post.content,
-        post.blogId,
-        post.blogName,
-        new Date(post.createdAt),
-        new ExtendedLikesInfoDto(
-          postLikes.likesCount,
-          postLikes.dislikesCount,
-          userId ? postLikes.userReaction : 'None',
-          newestLikes,
-        ),
-      );
-    });
+      }),
+    );
 
     const countParams: unknown[] = [blogId];
     let countSearchClause = '';
@@ -306,6 +323,7 @@ export class PostsRawSqlQueryRepository {
     queryDto: PostQueryDto,
     userId?: string,
   ): Promise<PaginatedPostsDto> {
+    await this.ensureLikesTable();
     const { pageNumber, pageSize, sortBy, sortDirection, searchPostNameTerm } =
       queryDto;
 
@@ -351,50 +369,44 @@ export class PostsRawSqlQueryRepository {
     }
 
     const postRows = posts as RawPostRow[];
-    const postIds = postRows.map((p) => p.id);
-    const likesAggregation = await this.getLikesAggregation(postIds, userId);
-    const likesMap = this.createLikesMap(likesAggregation);
 
-    const items: PostViewDto[] = postRows.map((post) => {
-      const postId = post.id;
-      const postLikes = likesMap[postId] || {
-        userReaction: 'None',
-        newestLikes: [],
-        likesCount: 0,
-        dislikesCount: 0,
-      };
+    const items: PostViewDto[] = await Promise.all(
+      postRows.map(async (post) => {
+        const postId = post.id;
+        const postLikes = await this.getLikesInfoByPostId(postId, userId);
 
-      const newestLikes = [...postLikes.newestLikes]
-        .sort(
-          (a, b) =>
-            new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
-        )
-        .slice(0, 3)
-        .map(
-          (like) =>
-            new NewestLikeDto(
-              like.addedAt,
-              like.userId,
-              like.login || `user${like.userId.slice(0, 4)}`,
-            ),
+        const newestLikes = [...postLikes.newestLikes]
+          .sort(
+            (a, b) =>
+              new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime(),
+          )
+          .slice(0, 3)
+          .map(
+            (like) =>
+              new NewestLikeDto(
+                like.addedAt,
+                like.userId,
+                like.login || `user${like.userId.slice(0, 4)}`,
+              ),
+          );
+
+        return new PostViewDto(
+          postId,
+          post.title,
+          post.shortDescription,
+          post.content,
+          post.blogId,
+          post.blogName,
+          new Date(post.createdAt),
+          new ExtendedLikesInfoDto(
+            postLikes.likesCount,
+            postLikes.dislikesCount,
+            userId ? postLikes.userReaction : 'None',
+            newestLikes,
+          ),
         );
-
-      return new PostViewDto(
-        postId,
-        post.title,
-        post.shortDescription,
-        post.content,
-        post.blogId,
-        post.blogName,
-        new Date(post.createdAt),
-        new ExtendedLikesInfoDto(
-          postLikes.likesCount,
-          postLikes.dislikesCount,
-          userId ? postLikes.userReaction : 'None',
-          newestLikes,
-        ),
-      );
-    });
+      }),
+    );
 
     const countParams: unknown[] = [];
     let countWhere = 'WHERE p."deleteAt" IS NULL';
@@ -418,143 +430,65 @@ export class PostsRawSqlQueryRepository {
     );
   }
 
-  private async getLikesAggregation(
-    postIds: string[],
+  private async getLikesInfoByPostId(
+    postId: string,
     userId?: string,
-  ): Promise<LikesAggregationResult[]> {
-    const pipeline: PipelineStage[] = [
-      {
-        $match: {
-          parentId: { $in: postIds },
-          parentType: 'Post',
-        },
-      },
-      {
-        $lookup: {
-          from: 'users',
-          let: { userIdString: '$userId' },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $eq: ['$_id', { $toObjectId: '$$userIdString' }],
-                },
-              },
-            },
-          ],
-          as: 'user',
-        },
-      },
-      {
-        $sort: { createdAt: -1 },
-      },
-      {
-        $group: {
-          _id: '$parentId',
-          allReactions: { $push: '$$ROOT' },
-          userReaction: {
-            $push: {
-              $cond: [{ $eq: ['$userId', userId] }, '$status', null],
-            },
-          },
-          newestLikes: {
-            $push: {
-              $cond: [
-                { $eq: ['$status', 'Like'] },
-                {
-                  addedAt: '$createdAt',
-                  userId: '$userId',
-                  login: { $arrayElemAt: ['$user.login', 0] },
-                },
-                null,
-              ],
-            },
-          },
-        },
-      },
-      {
-        $project: {
-          postId: '$_id',
-          userReaction: {
-            $arrayElemAt: [
-              {
-                $filter: {
-                  input: '$userReaction',
-                  as: 'reaction',
-                  cond: { $ne: ['$$reaction', null] },
-                },
-              },
-              0,
-            ],
-          },
-          newestLikes: {
-            $slice: [
-              {
-                $filter: {
-                  input: '$newestLikes',
-                  as: 'like',
-                  cond: { $ne: ['$$like', null] },
-                },
-              },
-              0,
-              3,
-            ],
-          },
-          likesCount: {
-            $size: {
-              $filter: {
-                input: '$allReactions',
-                as: 'reaction',
-                cond: { $eq: ['$$reaction.status', 'Like'] },
-              },
-            },
-          },
-          dislikesCount: {
-            $size: {
-              $filter: {
-                input: '$allReactions',
-                as: 'reaction',
-                cond: { $eq: ['$$reaction.status', 'Dislike'] },
-              },
-            },
-          },
-        },
-      },
-    ];
-
-    return (await this.likeModel
-      .aggregate(pipeline)
-      .exec()) as LikesAggregationResult[];
-  }
-
-  private createLikesMap(aggregationResult: LikesAggregationResult[]): Record<
-    string,
-    {
-      userReaction: string;
-      newestLikes: LikesAggregationResult['newestLikes'];
-      likesCount: number;
-      dislikesCount: number;
-    }
-  > {
-    return aggregationResult.reduce(
-      (acc, item) => {
-        acc[item.postId] = {
-          userReaction: item.userReaction || 'None',
-          newestLikes: item.newestLikes || [],
-          likesCount: item.likesCount || 0,
-          dislikesCount: item.dislikesCount || 0,
-        };
-        return acc;
-      },
-      {} as Record<
-        string,
-        {
-          userReaction: string;
-          newestLikes: LikesAggregationResult['newestLikes'];
-          likesCount: number;
-          dislikesCount: number;
-        }
-      >,
+  ): Promise<LikesAggregationResult> {
+    const countRows = await this.dataSource.query(
+      `
+      SELECT
+        COALESCE(SUM(CASE WHEN l.status = 'Like' THEN 1 ELSE 0 END), 0)::int AS "likesCount",
+        COALESCE(SUM(CASE WHEN l.status = 'Dislike' THEN 1 ELSE 0 END), 0)::int AS "dislikesCount"
+      FROM ${this.likesTableName} l
+      WHERE l."parentType" = 'Post'
+        AND l."parentId" = $1;
+      `,
+      [postId],
     );
+
+    const newestRows = await this.dataSource.query(
+      `
+      SELECT
+        l."createdAt" AS "addedAt",
+        l."userId" AS "userId",
+        COALESCE(u.login, 'user' || SUBSTRING(l."userId" FROM 1 FOR 4)) AS "login"
+      FROM ${this.likesTableName} l
+      LEFT JOIN ${this.usersTableName} u ON u.id = l."userId"
+      WHERE l."parentType" = 'Post'
+        AND l."parentId" = $1
+        AND l.status = 'Like'
+      ORDER BY l."createdAt" DESC
+      LIMIT 3;
+      `,
+      [postId],
+    );
+
+    let userReaction = 'None';
+    if (userId) {
+      const myLikeRows = await this.dataSource.query(
+        `
+        SELECT l.status
+        FROM ${this.likesTableName} l
+        WHERE l."parentType" = 'Post'
+          AND l."parentId" = $1
+          AND l."userId" = $2
+        LIMIT 1;
+        `,
+        [postId, userId],
+      );
+      userReaction = myLikeRows[0]?.status ?? 'None';
+    }
+
+    return {
+      postId,
+      likesCount: Number(countRows[0]?.likesCount ?? 0),
+      dislikesCount: Number(countRows[0]?.dislikesCount ?? 0),
+      userReaction,
+      newestLikes: (newestRows as NewestLikeRow[]).map((row: NewestLikeRow) => ({
+        addedAt: new Date(row.addedAt),
+        userId: row.userId,
+        login: row.login,
+      })),
+    };
   }
 }

@@ -9,12 +9,31 @@ export class RefreshJwtStrategy extends PassportStrategy(
   Strategy,
   'jwt-refresh',
 ) {
+  private static extractRefreshToken(request: Request): string | null {
+    const cookieToken = request?.cookies?.['refreshToken'];
+    if (cookieToken) {
+      return cookieToken;
+    }
+
+    const authHeader = request?.headers?.authorization;
+    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      return authHeader.slice(7).trim();
+    }
+
+    const bodyToken =
+      typeof (request as any)?.body?.refreshToken === 'string'
+        ? (request as any).body.refreshToken
+        : null;
+
+    return bodyToken || null;
+  }
+
   constructor(
     private readonly configService: ConfigService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (request) => request?.cookies?.['refreshToken'],
+        (request: Request) => RefreshJwtStrategy.extractRefreshToken(request),
       ]),
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
@@ -23,7 +42,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
   }
 
   async validate(req: Request, payload: { sub: string; deviceId: string }) {
-    const refreshToken = req.cookies?.['refreshToken'];
+    const refreshToken = RefreshJwtStrategy.extractRefreshToken(req);
     return { sub: payload.sub, deviceId: payload.deviceId, refreshToken };
   }
 }

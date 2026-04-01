@@ -1,40 +1,83 @@
 import { LikesRepository } from './../../likes/infrastructure/likes-repository';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import {
-  Comment,
-  CommentDocument,
-  CommentModelType,
-} from '../domain/commentEntity';
+import { DataSource } from 'typeorm';
+import { CommentSqlEntity } from '../domain/commentEntity';
 import { GetCommentsQueryParams } from '../../posts/api/query/qet-comments-query-params';
 import { CommentViewDto } from '../dto/commentViewDto';
 import { PostRepository } from '../../posts/infrastructure/postRepository';
 import { CommentPaginatedViewDto } from '../../posts/api/paginated/paginated.comment.view-dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
-import {
-  Like,
-  LikeDocument,
-  LikeModelType,
-} from '../../likes/domain/like-entity';
-import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
+
+type RawCommentRow = {
+  id: string;
+  content: string;
+  commentatorUserId: string;
+  commentatorUserLogin: string;
+  deleteAt: Date | string | null;
+  createdAt: Date | string;
+  postId: string;
+  likesCount: number;
+  dislikesCount: number;
+};
 
 @Injectable()
 export class CommentsQueryRepository {
   constructor(
-    @InjectModel(Comment.name)
-    private CommentModel: CommentModelType,
-    @InjectModel(Like.name)
-    private likeModel: LikeModelType,
+    private readonly dataSource: DataSource,
     private postsRepository: PostRepository,
     private likesRepository: LikesRepository,
   ) {}
 
-  async findById(id: string): Promise<CommentDocument | null> {
-    return this.CommentModel.findOne({
-      _id: id,
-      deleteAt: null,
-    });
+  private readonly commentsTableName = 'comments';
+  private commentsTableEnsured = false;
+
+  private async ensureCommentsTable(): Promise<void> {
+    if (this.commentsTableEnsured) {
+      return;
+    }
+
+    await this.dataSource.query(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id TEXT PRIMARY KEY,
+        content VARCHAR(300) NOT NULL,
+        "commentatorUserId" TEXT NOT NULL,
+        "commentatorUserLogin" VARCHAR(255) NOT NULL,
+        "postId" TEXT NOT NULL,
+        "deleteAt" TIMESTAMPTZ NULL,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "likesCount" INTEGER NOT NULL DEFAULT 0,
+        "dislikesCount" INTEGER NOT NULL DEFAULT 0
+      );
+    `);
+
+    this.commentsTableEnsured = true;
+  }
+
+  async findById(id: string): Promise<CommentSqlEntity | null> {
+    await this.ensureCommentsTable();
+    const rows = await this.dataSource.query(
+      `
+      SELECT
+        c.id,
+        c.content,
+        c."commentatorUserId",
+        c."commentatorUserLogin",
+        c."deleteAt",
+        c."createdAt",
+        c."postId",
+        c."likesCount",
+        c."dislikesCount"
+      FROM ${this.commentsTableName} c
+      WHERE c.id = $1
+        AND c."deleteAt" IS NULL
+      LIMIT 1;
+      `,
+      [id],
+    );
+
+    const row = (rows as RawCommentRow[])[0];
+    return row ? CommentSqlEntity.fromRow(row) : null;
   }
 
   async getByIdOrNotFoundFail(
@@ -44,21 +87,17 @@ export class CommentsQueryRepository {
     const comment = await this.findById(commentId);
 
     if (!comment) {
-      throw new DomainException({
-        code: DomainExceptionCode.NotFound,
-        message: 'Comment not found',
-      });
+      throw new DomainException({ code: 1, message: 'Comment not found' });
     }
 
-    const like: LikeDocument | null =
-      await this.likesRepository.findByUserIdAndCommentdId(
-        commentId,
-        currentUserId,
-      );
+    const like = await this.likesRepository.findByUserIdAndCommentdId(
+      commentId,
+      currentUserId,
+    );
 
     if (!like) {
       return {
-        id: comment._id.toString(),
+        id: comment.id,
         content: comment.content,
         commentatorInfo: comment.commentatorInfo,
         createdAt: comment.createdAt,
@@ -71,7 +110,7 @@ export class CommentsQueryRepository {
     }
 
     return {
-      id: comment._id.toString(),
+      id: comment.id,
       content: comment.content,
       commentatorInfo: comment.commentatorInfo,
       createdAt: comment.createdAt,
@@ -88,21 +127,37 @@ export class CommentsQueryRepository {
     query: GetCommentsQueryParams,
     userId?: string, // Делаем необязательным
   ): Promise<PaginatedViewDto<CommentViewDto>> {
-
+    await this.ensureCommentsTable();
     const skip = query.calculateSkip();
 
     await this.postsRepository.checkPostExist(postId);
 
-    const filter: Record<string, any> = { postId };
+    const orderDir = query.sortDirection === 'asc' ? 'ASC' : 'DESC';
+    const rows = await this.dataSource.query(
+      `
+      SELECT
+        c.id,
+        c.content,
+        c."commentatorUserId",
+        c."commentatorUserLogin",
+        c."deleteAt",
+        c."createdAt",
+        c."postId",
+        c."likesCount",
+        c."dislikesCount"
+      FROM ${this.commentsTableName} c
+      WHERE c."postId" = $1
+        AND c."deleteAt" IS NULL
+      ORDER BY c."createdAt" ${orderDir}
+      LIMIT $2
+      OFFSET $3;
+      `,
+      [postId, query.pageSize, skip],
+    );
 
-    // 1. Получаем комментарии
-    const comments = await this.CommentModel.find(filter)
-      .skip(skip)
-      .limit(query.pageSize)
-      .sort({ createdAt: query.sortDirection })
-      .lean()
-      .exec();
-
+    const comments = (rows as RawCommentRow[]).map((row: RawCommentRow) =>
+      CommentSqlEntity.fromRow(row),
+    );
     if (!comments.length) {
       return CommentPaginatedViewDto.mapToView({
         items: [],
@@ -112,46 +167,39 @@ export class CommentsQueryRepository {
       });
     }
 
-    const commentIds = comments.map((c) => c._id.toString());
-
-    const likesAggregation = await this.getCommentsLikesAggregation(
-      commentIds,
-      userId,
+    const countRows = await this.dataSource.query(
+      `
+      SELECT COUNT(*)::int AS count
+      FROM ${this.commentsTableName} c
+      WHERE c."postId" = $1
+        AND c."deleteAt" IS NULL;
+      `,
+      [postId],
     );
+    const totalCount = Number(countRows[0]?.count ?? 0);
 
-    const likesMap = likesAggregation.reduce((acc, item) => {
-      acc[item.commentId] = {
-        likesCount: item.likesCount || 0,
-        dislikesCount: item.dislikesCount || 0,
-        myStatus: userId ? item.userReaction || 'None' : 'None',
-      };
-      return acc;
-    }, {});
+    const items = await Promise.all(
+      comments.map(async (comment: CommentSqlEntity) => {
+        const like = userId
+          ? await this.likesRepository.findByUserIdAndCommentdId(comment.id, userId)
+          : null;
 
-    const totalCount = await this.CommentModel.countDocuments(filter);
-
-    const items = comments.map((comment) => {
-      const commentLikes = likesMap[comment._id.toString()] || {
-        likesCount: 0,
-        dislikesCount: 0,
-        myStatus: 'None',
-      };
-
-      return {
-        id: comment._id.toString(),
-        content: comment.content,
-        commentatorInfo: {
-          userId: comment.commentatorInfo.userId,
-          userLogin: comment.commentatorInfo.userLogin,
-        },
-        createdAt: comment.createdAt,
-        likesInfo: {
-          likesCount: commentLikes.likesCount,
-          dislikesCount: commentLikes.dislikesCount,
-          myStatus: commentLikes.myStatus,
-        },
-      };
-    });
+        return {
+          id: comment.id,
+          content: comment.content,
+          commentatorInfo: {
+            userId: comment.commentatorInfo.userId,
+            userLogin: comment.commentatorInfo.userLogin,
+          },
+          createdAt: comment.createdAt,
+          likesInfo: {
+            likesCount: comment.likesInfo.likesCount,
+            dislikesCount: comment.likesInfo.dislikesCount,
+            myStatus: like?.status ?? 'None',
+          },
+        };
+      }),
+    );
 
     return CommentPaginatedViewDto.mapToView({
       items,
@@ -159,102 +207,5 @@ export class CommentsQueryRepository {
       size: query.pageSize,
       totalCount,
     });
-  }
-
-  private async getCommentsLikesAggregation(
-    commentIds: string[],
-    userId?: string,
-  ): Promise<any[]> {
-    const pipeline: any[] = [
-      {
-        $match: {
-          parentId: { $in: commentIds },
-          parentType: 'Comment',
-        },
-      },
-    ];
-
-    if (userId) {
-      pipeline.push(
-        {
-          $facet: {
-            stats: [
-              {
-                $group: {
-                  _id: '$parentId',
-                  likesCount: {
-                    $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
-                  },
-                  dislikesCount: {
-                    $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
-                  },
-                },
-              },
-            ],
-            userReaction: [
-              {
-                $match: {
-                  userId: userId,
-                },
-              },
-              {
-                $group: {
-                  _id: '$parentId',
-                  userReaction: { $first: '$status' },
-                },
-              },
-            ],
-          },
-        },
-        {
-          $project: {
-            combined: {
-              $concatArrays: ['$stats', '$userReaction'],
-            },
-          },
-        },
-        {
-          $unwind: '$combined',
-        },
-        {
-          $group: {
-            _id: '$combined._id',
-            data: { $mergeObjects: '$combined' },
-          },
-        },
-        {
-          $project: {
-            commentId: '$_id',
-            likesCount: { $ifNull: ['$data.likesCount', 0] },
-            dislikesCount: { $ifNull: ['$data.dislikesCount', 0] },
-            userReaction: { $ifNull: ['$data.userReaction', 'None'] },
-          },
-        },
-      );
-    } else {
-      pipeline.push(
-        {
-          $group: {
-            _id: '$parentId',
-            likesCount: {
-              $sum: { $cond: [{ $eq: ['$status', 'Like'] }, 1, 0] },
-            },
-            dislikesCount: {
-              $sum: { $cond: [{ $eq: ['$status', 'Dislike'] }, 1, 0] },
-            },
-          },
-        },
-        {
-          $project: {
-            commentId: '$_id',
-            likesCount: 1,
-            dislikesCount: 1,
-            userReaction: 'None',
-          },
-        },
-      );
-    }
-
-    return await this.likeModel.aggregate(pipeline).exec();
   }
 }

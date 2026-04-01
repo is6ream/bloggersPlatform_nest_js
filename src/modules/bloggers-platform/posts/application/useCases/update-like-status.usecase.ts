@@ -2,10 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostRepository } from '../../infrastructure/postRepository';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
-import { InjectModel } from '@nestjs/mongoose';
-import { Like, LikeDocument } from '../../../likes/domain/like-entity';
-import { LikeModelType } from '../../../likes/domain/like-entity';
 import { LikeStatus } from 'src/modules/bloggers-platform/likes/types/like-status';
+import { LikesRepository } from 'src/modules/bloggers-platform/likes/infrastructure/likes-repository';
+import { LikeSqlEntity } from 'src/modules/bloggers-platform/likes/domain/like-entity';
 
 @Injectable()
 export class UpdatePostLikeStatusCommand {
@@ -19,23 +18,23 @@ export class UpdatePostLikeStatusCommand {
 @CommandHandler(UpdatePostLikeStatusCommand)
 export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeStatusCommand> {
   constructor(
-    @InjectModel(Like.name)
-    private LikeModel: LikeModelType,
     private postRepository: PostRepository,
     private usersRepository: UsersRepository,
+    private likesRepository: LikesRepository,
   ) {}
   async execute(command: UpdatePostLikeStatusCommand): Promise<void> {
     const post = await this.postRepository.findOrNotFoundFail(command.postId);
 
     await this.usersRepository.findByIdOrThrowValidationError(command.userId);
 
-    const like = await this.LikeModel.findOne({
-      userId: command.userId,
-      parentId: command.postId,
-    });
+    const like = await this.likesRepository.findByUserAndParent(
+      command.userId,
+      command.postId,
+      'Post',
+    );
 
     if (!like) {
-      const newLike: LikeDocument = this.LikeModel.createInstance({
+      const newLike = LikeSqlEntity.createForInsert({
         status: command.likeStatus,
         userId: command.userId,
         parentId: command.postId,
@@ -43,7 +42,7 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
       });
       post.updateLikeCounter('None', command.likeStatus);
 
-      await newLike.save();
+      await this.likesRepository.save(newLike);
       await this.postRepository.save(post);
       return;
     }
@@ -53,10 +52,9 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
     }
 
     const oldLikeStatus = like.status;
-    like.status = command.likeStatus;
-    like.createdAt = new Date();
+    like.updateStatus(command.likeStatus);
     post.updateLikeCounter(oldLikeStatus, command.likeStatus);
-    await like.save();
+    await this.likesRepository.save(like);
     await this.postRepository.save(post);
   }
 }

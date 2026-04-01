@@ -23,7 +23,6 @@ import { CommentInputDto } from 'src/modules/bloggers-platform/comments/dto/comm
 import { UpdateCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/update-comment.usecase';
 import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 import { DeleteCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/delete-comment.usecase';
-import { ParseObjectIdPipe } from '@nestjs/mongoose';
 
 @Controller('comments')
 export class CommentsController {
@@ -62,7 +61,7 @@ export class CommentsController {
   @HttpCode(204)
   @UseGuards(JwtAuthGuard)
   async deleteComment(
-    @Param('id', ParseObjectIdPipe) commentId: string,
+    @Param('id') commentId: string,
     @UserIdRequired() userId?: string,
   ): Promise<void> {
     return this.commandBus.execute(new DeleteCommentCommand(commentId, userId));

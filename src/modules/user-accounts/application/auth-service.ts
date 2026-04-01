@@ -16,6 +16,9 @@ import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions
 import { randomUUID } from 'crypto';
 
 dotenv.config();
+const ACCESS_TOKEN_TTL = '10s';
+const REFRESH_TOKEN_TTL = '20s';
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -102,16 +105,16 @@ export class AuthService {
     const deviceId = randomUUID();
 
     const accessPayload = { id: user.id };
-    const refreshPayload = { sub: user.id, deviceId };
+    const refreshPayload = { sub: user.id, deviceId, tokenId: randomUUID() };
 
     const accessToken = await this.jwtService.signAsync(accessPayload, {
       secret: process.env.JWT_SECRET,
-      expiresIn: '10s',
+      expiresIn: ACCESS_TOKEN_TTL,
     });
 
     const refreshToken = this.jwtService.sign(refreshPayload, {
       secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: '20s',
+      expiresIn: REFRESH_TOKEN_TTL,
     });
 
     const refreshTokenHash = await this.bcryptService.generateHash(
@@ -221,16 +224,17 @@ export class AuthService {
     userId: string,
     deviceId: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: userId, deviceId };
+    const accessPayload = { sub: userId, deviceId };
+    const refreshPayload = { sub: userId, deviceId, tokenId: randomUUID() };
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
+      this.jwtService.signAsync(accessPayload, {
         secret: this.configService.getOrThrow('JWT_SECRET'),
-        expiresIn: '10s',
+        expiresIn: ACCESS_TOKEN_TTL,
       }),
-      this.jwtService.signAsync(payload, {
+      this.jwtService.signAsync(refreshPayload, {
         secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
-        expiresIn: '20s',
+        expiresIn: REFRESH_TOKEN_TTL,
       }),
     ]);
 

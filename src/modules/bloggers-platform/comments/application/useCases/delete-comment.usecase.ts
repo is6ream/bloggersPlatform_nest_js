@@ -20,7 +20,6 @@ export class DeleteCommentUseCase implements ICommandHandler<DeleteCommentComman
     const comment = await this.commentRepository.findOrNotFoundFail(
       command.commentId,
     );
-    console.log(command.userId, 'userId check in use case');
     if (comment.commentatorInfo.userId !== command.userId) {
       throw new DomainException({
         code: DomainExceptionCode.Forbidden,

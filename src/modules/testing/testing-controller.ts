@@ -31,11 +31,14 @@ export class TestingController {
   }
 
   private async clearPostgres(): Promise<void> {
-    await this.dataSource.query(
-      `TRUNCATE TABLE users, blogs, posts RESTART IDENTITY CASCADE;`,
-    );
-    await this.deviceSessionsDb.db.query(
-      `TRUNCATE TABLE device_sessions RESTART IDENTITY CASCADE;`,
-    );
+    const pgTables = ['likes', 'comments', 'posts', 'blogs', 'users'];
+    for (const table of pgTables) {
+      await this.dataSource
+        .query(`DELETE FROM ${table};`)
+        .catch(() => undefined);
+    }
+    await this.deviceSessionsDb.db
+      .query(`DELETE FROM device_sessions;`)
+      .catch(() => undefined);
   }
 }

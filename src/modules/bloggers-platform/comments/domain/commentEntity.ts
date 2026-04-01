@@ -1,53 +1,80 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { CommentatorInfo } from './schemas/commentatorInfoSchema';
-import { HydratedDocument, Model } from 'mongoose';
+import { randomUUID } from 'crypto';
 import { CreateCommentDomainDto } from './types/create-comment.domain.dto';
-import { LikesInfo } from '../../likes/domain/likes-info.schema';
-@Schema({
-  timestamps: {
-    createdAt: 'createdAt',
-    updatedAt: false,
-  },
-})
-export class Comment {
-  @Prop({ type: String, required: true })
-  content: string;
+export class CommentSqlEntity {
+  readonly _id = { toString: () => this.id };
 
-  @Prop({ type: CommentatorInfo, required: true })
-  commentatorInfo: CommentatorInfo;
+  private _isNewRecord: boolean;
 
-  @Prop({ type: Date, nullable: true, default: null })
-  deleteAt: Date;
-
-  createdAt: Date;
-
-  @Prop({ type: String, required: true })
-  postId: string;
-
-  @Prop({ type: LikesInfo, required: true })
-  likesInfo: LikesInfo;
-
-  static createInstance(this: CommentModelType, dto: CreateCommentDomainDto) {
-    const comment = new this();
-    comment.content = dto.content;
-    comment.commentatorInfo = dto.commentatorInfo;
-    comment.createdAt = new Date();
-    comment.postId = dto.postId
-    comment.likesInfo = {
-      likesCount: 0,
-      dislikesCount: 0,
-    };
-    return comment as CommentDocument;
+  private constructor(
+    public readonly id: string,
+    public content: string,
+    public commentatorInfo: { userId: string; userLogin: string },
+    public deleteAt: Date | null,
+    public createdAt: Date,
+    public postId: string,
+    public likesInfo: { likesCount: number; dislikesCount: number },
+    isNewRecord: boolean,
+  ) {
+    this._isNewRecord = isNewRecord;
   }
 
-  makeDeleted() {
+  get isNewRecord(): boolean {
+    return this._isNewRecord;
+  }
+
+  static createForInsert(dto: CreateCommentDomainDto): CommentSqlEntity {
+    return new CommentSqlEntity(
+      randomUUID(),
+      dto.content,
+      dto.commentatorInfo,
+      null,
+      new Date(),
+      dto.postId,
+      {
+        likesCount: 0,
+        dislikesCount: 0,
+      },
+      true,
+    );
+  }
+
+  static fromRow(row: {
+    id: string;
+    content: string;
+    commentatorUserId: string;
+    commentatorUserLogin: string;
+    deleteAt: Date | string | null;
+    createdAt: Date | string;
+    postId: string;
+    likesCount: number;
+    dislikesCount: number;
+  }): CommentSqlEntity {
+    return new CommentSqlEntity(
+      row.id,
+      row.content,
+      {
+        userId: row.commentatorUserId,
+        userLogin: row.commentatorUserLogin,
+      },
+      row.deleteAt ? new Date(row.deleteAt) : null,
+      new Date(row.createdAt),
+      row.postId,
+      {
+        likesCount: Number(row.likesCount),
+        dislikesCount: Number(row.dislikesCount),
+      },
+      false,
+    );
+  }
+
+  makeDeleted(): void {
     if (this.deleteAt !== null) {
       throw new Error('Comment already deleted');
     }
     this.deleteAt = new Date();
   }
 
-  updateLikeCounter(oldLikeStatus: string, newLikeStatus: string) {
+  updateLikeCounter(oldLikeStatus: string, newLikeStatus: string): void {
     if (oldLikeStatus === 'Like' && newLikeStatus === 'Dislike') {
       this.likesInfo.likesCount--;
       this.likesInfo.dislikesCount++;
@@ -69,12 +96,10 @@ export class Comment {
       this.likesInfo.dislikesCount++;
     }
   }
+
+  markPersisted(): void {
+    this._isNewRecord = false;
+  }
 }
 
-export const CommentsSchema = SchemaFactory.createForClass(Comment);
-
-CommentsSchema.loadClass(Comment);
-
-export type CommentDocument = HydratedDocument<Comment>;
-
-export type CommentModelType = Model<CommentDocument> & typeof Comment;
+export { CommentSqlEntity as Comment };

@@ -1,14 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
-import {
-  Like,
-  LikeDocument,
-} from 'src/modules/bloggers-platform/likes/domain/like-entity';
+import { LikeSqlEntity } from 'src/modules/bloggers-platform/likes/domain/like-entity';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
-import { InjectModel } from '@nestjs/mongoose';
-import { LikeModelType } from 'src/modules/bloggers-platform/likes/domain/like-entity';
-import { CommentDocument } from '../../domain/commentEntity';
+import { CommentSqlEntity } from '../../domain/commentEntity';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
+import { LikesRepository } from 'src/modules/bloggers-platform/likes/infrastructure/likes-repository';
 @Injectable()
 export class UpdateCommentLikeStatusCommand {
   constructor(
@@ -20,34 +16,33 @@ export class UpdateCommentLikeStatusCommand {
 @CommandHandler(UpdateCommentLikeStatusCommand)
 export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCommentLikeStatusCommand> {
   constructor(
-    @InjectModel(Like.name)
-    private LikeModel: LikeModelType,
     private usersRepository: UsersRepository,
     private commentsRepository: CommentsRepository,
+    private likesRepository: LikesRepository,
   ) {}
 
   async execute(command: UpdateCommentLikeStatusCommand): Promise<any> {
-    const like = await this.LikeModel.findOne({
-      userId: command.userId,
-      parentId: command.commentId,
-    });
+    await this.usersRepository.findByIdOrThrowValidationError(command.userId);
+    const like = await this.likesRepository.findByUserAndParent(
+      command.userId,
+      command.commentId,
+      'Comment',
+    );
 
-    const comment: CommentDocument =
+    const comment: CommentSqlEntity =
       await this.commentsRepository.findOrNotFoundFail(command.commentId);
 
     if (!like) {
-      const newLike: LikeDocument = this.LikeModel.createInstance({
+      const newLike = LikeSqlEntity.createForInsert({
         status: command.likeStatus,
         userId: command.userId,
         parentId: command.commentId,
-        parentType: 'Comment', //сохраняется некорректный parentType
+        parentType: 'Comment',
       });
-
-      console.log(newLike, 'like check if is not exist');
 
       comment.updateLikeCounter('None', command.likeStatus);
 
-      await this.commentsRepository.likeStatusSave(newLike);
+      await this.likesRepository.save(newLike);
       await this.commentsRepository.save(comment);
       return;
     }
@@ -56,11 +51,10 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
       return;
     }
 
-    let oldLikeStatus = like.status;
-    like.status = command.likeStatus;
-    like.createdAt = new Date();
+    const oldLikeStatus = like.status;
+    like.updateStatus(command.likeStatus);
     comment.updateLikeCounter(oldLikeStatus, command.likeStatus);
-    await this.commentsRepository.likeStatusSave(like);
+    await this.likesRepository.save(like);
     await this.commentsRepository.save(comment);
     return;
   }

@@ -30,6 +30,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
 import { UsedRefreshTokenStore } from '../application/used-refresh-token.store';
 
+const REFRESH_TOKEN_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
@@ -42,19 +44,52 @@ export class AuthController {
     private usedRefreshTokenStore: UsedRefreshTokenStore,
   ) {}
 
+  private normalizeIp(rawIp: string): string {
+    const ipWithoutPort = rawIp.includes(':') && rawIp.includes('.')
+      ? rawIp.replace(/^::ffff:/, '')
+      : rawIp;
+
+    if (ipWithoutPort === '::1') {
+      return '127.0.0.1';
+    }
+
+    return ipWithoutPort.trim().toLowerCase();
+  }
+
   private getRefreshTokenCookieOptions(
     req: Request,
     maxAgeMs?: number,
   ): { httpOnly: true; secure: boolean; sameSite: 'strict'; maxAge?: number } {
     const isSecure =
       req.secure || req.get('x-forwarded-proto') === 'https';
-    const secure = isSecure || process.env.NODE_ENV === 'production';
+
+    // В учебной/локальной среде нам важно, чтобы кука отправлялась и по HTTP,
+    // поэтому флаг secure включаем только в продакшене или при реально HTTPS-запросе.
+    const secure =
+      process.env.NODE_ENV === 'production' ? true : isSecure;
+
     return {
       httpOnly: true,
       secure,
       sameSite: 'strict',
       ...(maxAgeMs !== undefined && { maxAge: maxAgeMs }),
     };
+  }
+
+  private extractClientIp(req: Request): string {
+    const xForwardedFor = req.headers['x-forwarded-for'];
+    const forwardedIp = Array.isArray(xForwardedFor)
+      ? xForwardedFor[0]
+      : xForwardedFor?.toString().split(',')[0]?.trim();
+
+    const ip = (
+      forwardedIp ||
+      (req.ip as string) ||
+      (req.socket?.remoteAddress as string) ||
+      'unknown'
+    );
+
+    return this.normalizeIp(ip);
   }
 
   @Post('password-recovery')
@@ -87,11 +122,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   )
     : Promise<{ accessToken: string }> {
-    const ip =
-      (req.ip as string) ||
-      (req.socket?.remoteAddress as string) ||
-      req.headers['x-forwarded-for']?.toString() ||
-      'unknown';
+    const ip = this.extractClientIp(req);
 
     const userAgentHeader = req.headers['user-agent'];
     const userAgent = Array.isArray(userAgentHeader)
@@ -103,7 +134,7 @@ export class AuthController {
       { ip, userAgent },
     );
     res.cookie('refreshToken', refreshToken, {
-      ...this.getRefreshTokenCookieOptions(req, 24 * 60 * 60 * 1000),
+      ...this.getRefreshTokenCookieOptions(req, REFRESH_TOKEN_COOKIE_MAX_AGE_MS),
     });
 
     return { accessToken: accessToken };
@@ -170,7 +201,7 @@ export class AuthController {
     this.usedRefreshTokenStore.add(refreshToken);
 
     res.cookie('refreshToken', tokens.refreshToken, {
-      ...this.getRefreshTokenCookieOptions(req, 7 * 24 * 60 * 60 * 1000),
+      ...this.getRefreshTokenCookieOptions(req, REFRESH_TOKEN_COOKIE_MAX_AGE_MS),
     });
 
     return { accessToken: tokens.accessToken };

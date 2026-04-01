@@ -122,3 +122,35 @@ export async function findE2eUserIdByLogin(
     await pool.end();
   }
 }
+
+export async function findE2eUserConfirmationCode(
+  email: string,
+): Promise<string | null> {
+  await ensureE2eUsersTable();
+  const pool = createPool();
+  try {
+    const res = await pool.query(
+      `SELECT "confirmationCode" FROM users WHERE email = $1 AND "deleteAt" IS NULL LIMIT 1`,
+      [email],
+    );
+    return res.rows[0]?.confirmationCode ?? null;
+  } finally {
+    await pool.end();
+  }
+}
+
+export async function findE2eUserRecoveryCode(
+  email: string,
+): Promise<string | null> {
+  await ensureE2eUsersTable();
+  const pool = createPool();
+  try {
+    const res = await pool.query(
+      `SELECT "recoveryCode" FROM users WHERE email = $1 AND "deleteAt" IS NULL LIMIT 1`,
+      [email],
+    );
+    return res.rows[0]?.recoveryCode ?? null;
+  } finally {
+    await pool.end();
+  }
+}

@@ -1,43 +1,66 @@
-import { Prop, SchemaFactory, Schema } from '@nestjs/mongoose';
-import { LikeStatus } from '../types/like-status';
-import { HydratedDocument, Model } from 'mongoose';
+import { randomUUID } from 'crypto';
 import { CreateLikeDto } from '../types/input/create-like.dto';
 
-@Schema({
-  timestamps: {
-    createdAt: 'createdAt',
-    updatedAt: false,
-  },
-})
-export class Like {
-  @Prop({ type: String, enum: Object.values(LikeStatus), required: true })
-  status: string;
+export class LikeSqlEntity {
+  readonly _id = { toString: () => this.id };
 
-  @Prop({ type: String, required: true })
-  userId: string;
+  private _isNewRecord: boolean;
 
-  @Prop({ type: String, required: true })
-  parentId: string;
+  private constructor(
+    public readonly id: string,
+    public status: string,
+    public userId: string,
+    public parentId: string,
+    public parentType: string,
+    public createdAt: Date,
+    isNewRecord: boolean,
+  ) {
+    this._isNewRecord = isNewRecord;
+  }
 
-  @Prop({ type: String, required: true })
-  parentType: string;
+  get isNewRecord(): boolean {
+    return this._isNewRecord;
+  }
 
-  createdAt: Date;
+  static createForInsert(dto: CreateLikeDto): LikeSqlEntity {
+    return new LikeSqlEntity(
+      randomUUID(),
+      dto.status,
+      dto.userId,
+      dto.parentId,
+      dto.parentType,
+      new Date(),
+      true,
+    );
+  }
 
-  static createInstance(dto: CreateLikeDto): LikeDocument {
-    const like = new this();
-    like.status = dto.status;
-    like.userId = dto.userId;
-    like.parentId = dto.parentId;
-    like.parentType = dto.parentType;
-    return like as LikeDocument;
+  static fromRow(row: {
+    id: string;
+    status: string;
+    userId: string;
+    parentId: string;
+    parentType: string;
+    createdAt: Date | string;
+  }): LikeSqlEntity {
+    return new LikeSqlEntity(
+      row.id,
+      row.status,
+      row.userId,
+      row.parentId,
+      row.parentType,
+      new Date(row.createdAt),
+      false,
+    );
+  }
+
+  updateStatus(status: string): void {
+    this.status = status;
+    this.createdAt = new Date();
+  }
+
+  markPersisted(): void {
+    this._isNewRecord = false;
   }
 }
 
-export const LikeSchema = SchemaFactory.createForClass(Like);
-
-LikeSchema.loadClass(Like);
-
-export type LikeDocument = HydratedDocument<Like>;
-
-export type LikeModelType = Model<LikeDocument> & typeof Like;
+export { LikeSqlEntity as Like };

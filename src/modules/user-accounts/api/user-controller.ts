@@ -19,7 +19,7 @@ import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { UserViewDto } from './dto/output/user.view-dto';
 import { BasicAuthGuard } from '../guards/basic/basic-auth.guard';
 
-@Controller('sa/users')
+@Controller('/users')
 @UseGuards(BasicAuthGuard)
 export class UserController {
   constructor(

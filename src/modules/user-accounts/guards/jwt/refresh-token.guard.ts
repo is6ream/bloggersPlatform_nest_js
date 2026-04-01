@@ -20,10 +20,25 @@ export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+
+    // --- ДИАГНОСТИКА: что пришло в запросе ---
+    const rawCookies = request.headers?.cookie ?? '(no cookie header)';
+    const cookieToken = request.cookies?.['refreshToken'];
+    const authHeader = request.headers?.authorization ?? '(no authorization header)';
+    this.logger.log(
+      `[${request.url}] DIAG incoming cookies: ${rawCookies}`,
+    );
+    this.logger.log(
+      `[${request.url}] DIAG parsed refreshToken cookie: ${cookieToken ? cookieToken.slice(0, 40) + '...' : '(absent)'}`,
+    );
+    this.logger.log(
+      `[${request.url}] DIAG authorization header: ${authHeader}`,
+    );
+
     const parentResult = await super.canActivate(context);
     if (!parentResult) return false;
 
-    const request = context.switchToHttp().getRequest();
     const user = request.user as { sub?: string; deviceId?: string; refreshToken?: string } | undefined;
     if (!user?.sub || !user?.deviceId) return true;
 
@@ -33,11 +48,53 @@ export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
     );
     if (!session) {
       this.logger.warn(
-        `[${request.url}] Refresh token: device session not found (e.g. deleted)`,
+        `[${request.url}] DIAG 401 reason: device session NOT FOUND in DB — userId=${user.sub}, deviceId=${user.deviceId}`,
       );
       throw new UnauthorizedException();
     }
+
+    this.logger.log(
+      `[${request.url}] DIAG session found in DB — userId=${user.sub}, deviceId=${user.deviceId}, sessionIp=${session.ip}`,
+    );
+
+    const requestIp = this.extractClientIp(request);
+    const sessionIp = session.ip ? this.normalizeIp(session.ip) : null;
+
+    if (sessionIp && requestIp !== sessionIp) {
+      this.logger.warn(
+        `[${request.url}] DIAG IP mismatch (not blocking): token ip=${sessionIp}, request ip=${requestIp}`,
+      );
+    }
+
     return true;
+  }
+
+  private normalizeIp(rawIp: string): string {
+    const ipWithoutPort = rawIp.includes(':') && rawIp.includes('.')
+      ? rawIp.replace(/^::ffff:/, '')
+      : rawIp;
+
+    if (ipWithoutPort === '::1') {
+      return '127.0.0.1';
+    }
+
+    return ipWithoutPort.trim().toLowerCase();
+  }
+
+  private extractClientIp(request: any): string {
+    const xForwardedFor = request.headers?.['x-forwarded-for'];
+    const forwardedIp = Array.isArray(xForwardedFor)
+      ? xForwardedFor[0]
+      : xForwardedFor?.toString().split(',')[0]?.trim();
+
+    const ip = (
+      forwardedIp ||
+      request.ip ||
+      request.socket?.remoteAddress ||
+      'unknown'
+    );
+
+    return this.normalizeIp(ip);
   }
 
   handleRequest<TUser = any>(
@@ -50,14 +107,16 @@ export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
 
     if (err || !user) {
       this.logger.warn(
-        `[${path}] Refresh token invalid or missing: ${err?.message ?? (user ? 'no error' : 'no user')}`,
+        `[${path}] DIAG 401 reason: JWT validation FAILED — err=${err?.message ?? 'none'}, user=${user ? 'exists' : 'null/undefined'}. Likely causes: cookie absent, token invalid, or token expired.`,
       );
       throw new UnauthorizedException();
     }
 
     const payload = user as { sub?: string; deviceId?: string; refreshToken?: string };
     if (payload.refreshToken && this.usedRefreshTokenStore.isUsed(payload.refreshToken)) {
-      this.logger.warn(`[${path}] Refresh token already used (replay)`);
+      this.logger.warn(
+        `[${path}] DIAG 401 reason: refresh token ALREADY USED (replay attack protection) — userId=${payload.sub}, deviceId=${payload.deviceId}`,
+      );
       throw new UnauthorizedException();
     }
 

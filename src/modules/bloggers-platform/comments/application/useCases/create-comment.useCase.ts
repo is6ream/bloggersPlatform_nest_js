@@ -1,12 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCommentInputDto } from 'src/modules/bloggers-platform/posts/api/model/input/create-comment.input.dto';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { InjectModel } from '@nestjs/mongoose';
-import { Comment } from '../../domain/commentEntity';
-import { CommentModelType } from '../../domain/commentEntity';
+import { CommentSqlEntity } from '../../domain/commentEntity';
 import { PostRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postRepository';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
-import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
 @Injectable()
 export class CreateCommentCommand {
@@ -20,8 +17,6 @@ export class CreateCommentCommand {
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentUseCase implements ICommandHandler<CreateCommentCommand> {
   constructor(
-    @InjectModel(Comment.name)
-    private CommentModel: CommentModelType,
     private postRepository: PostRepository,
     private commentsRepository: CommentsRepository,
     private usersRepository: UsersRepository,
@@ -32,7 +27,7 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
     const user = await this.usersRepository.findByIdOrThrowValidationError(
       command.userId,
     ); //ищем пользователя, который оставляет комментарий
-    const comment = this.CommentModel.createInstance({
+    const comment = CommentSqlEntity.createForInsert({
       content: command.content.content,
       commentatorInfo: {
         userId: command.userId,
@@ -41,6 +36,6 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
       postId: command.postId,
     });
     await this.commentsRepository.save(comment);
-    return comment._id.toString();
+    return comment.id;
   }
 }
