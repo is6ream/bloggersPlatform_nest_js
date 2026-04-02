@@ -11,7 +11,6 @@ import { EmailAdapter } from '../notifications/email-adapter';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CoreConfig } from 'src/modules/app-module/core-config';
 import { CoreModule } from 'src/core/core.module';
-
 @Module({
   imports: [
     configModule,

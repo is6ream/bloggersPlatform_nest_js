@@ -32,6 +32,7 @@ import { SecurityController } from './api/security.controller';
     CqrsModule,
     PassportModule,
     ConfigModule,
+    ThrottlerModule.forRoot([{ ttl: 10000, limit: 5 }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -40,12 +41,6 @@ import { SecurityController } from './api/security.controller';
         signOptions: { expiresIn: '20s' },
     }),
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 10,
-      },
-    ])
   ],
   controllers: [UserController, AuthController, SecurityController],
   providers: [
@@ -69,7 +64,7 @@ import { SecurityController } from './api/security.controller';
     DeleteDeviceSessionUseCase,
     DeleteAllOtherSessionsUseCase,
   ],
-  exports: [DeviceSessionsPostgresDatabase],
+  exports: [DeviceSessionsPostgresDatabase, ThrottlerModule],
 })
 
 export class UserAccountsModule {}

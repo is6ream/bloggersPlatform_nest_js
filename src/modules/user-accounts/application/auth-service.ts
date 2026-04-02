@@ -17,7 +17,7 @@ import { randomUUID } from 'crypto';
 
 dotenv.config();
 const ACCESS_TOKEN_TTL = '10s';
-const REFRESH_TOKEN_TTL = '20s';
+const REFRESH_TOKEN_TTL = '20d';
 
 @Injectable()
 export class AuthService {
