@@ -10,13 +10,11 @@ import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 import { UserContextOutput } from '../guards/dto/user-context.output.dto';
-import dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
 
-dotenv.config();
-const ACCESS_TOKEN_TTL = '10s';
+const ACCESS_TOKEN_TTL = '10m';
 const REFRESH_TOKEN_TTL = '20d';
 
 @Injectable()
@@ -104,18 +102,19 @@ export class AuthService {
   ) {
     const deviceId = randomUUID();
 
-    const accessPayload = { id: user.id };
+    const accessPayload = { sub: user.id, deviceId };
     const refreshPayload = { sub: user.id, deviceId, tokenId: randomUUID() };
 
-    const accessToken = await this.jwtService.signAsync(accessPayload, {
-      secret: process.env.JWT_SECRET,
-      expiresIn: ACCESS_TOKEN_TTL,
-    });
-
-    const refreshToken = this.jwtService.sign(refreshPayload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: REFRESH_TOKEN_TTL,
-    });
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(accessPayload, {
+        secret: this.configService.getOrThrow('JWT_SECRET'),
+        expiresIn: ACCESS_TOKEN_TTL,
+      }),
+      this.jwtService.signAsync(refreshPayload, {
+        secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
+        expiresIn: REFRESH_TOKEN_TTL,
+      }),
+    ]);
 
     const refreshTokenHash = await this.bcryptService.generateHash(
       refreshToken,
