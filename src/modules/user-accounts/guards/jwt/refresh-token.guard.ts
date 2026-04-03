@@ -7,6 +7,10 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { UsedRefreshTokenStore } from '../../application/used-refresh-token.store';
 import { DeviceSessionsRepository } from '../../infrastructure/auth/device-sessions.repository';
+import {
+  getClientIpFromRequest,
+  normalizeClientIp,
+} from 'src/core/utils/client-ip';
 
 @Injectable()
 export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
@@ -57,8 +61,8 @@ export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
       `[${request.url}] DIAG session found in DB — userId=${user.sub}, deviceId=${user.deviceId}, sessionIp=${session.ip}`,
     );
 
-    const requestIp = this.extractClientIp(request);
-    const sessionIp = session.ip ? this.normalizeIp(session.ip) : null;
+    const requestIp = getClientIpFromRequest(request);
+    const sessionIp = session.ip ? normalizeClientIp(session.ip) : null;
 
     if (sessionIp && requestIp !== sessionIp) {
       this.logger.warn(
@@ -67,34 +71,6 @@ export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
     }
 
     return true;
-  }
-
-  private normalizeIp(rawIp: string): string {
-    const ipWithoutPort = rawIp.includes(':') && rawIp.includes('.')
-      ? rawIp.replace(/^::ffff:/, '')
-      : rawIp;
-
-    if (ipWithoutPort === '::1') {
-      return '127.0.0.1';
-    }
-
-    return ipWithoutPort.trim().toLowerCase();
-  }
-
-  private extractClientIp(request: any): string {
-    const xForwardedFor = request.headers?.['x-forwarded-for'];
-    const forwardedIp = Array.isArray(xForwardedFor)
-      ? xForwardedFor[0]
-      : xForwardedFor?.toString().split(',')[0]?.trim();
-
-    const ip = (
-      forwardedIp ||
-      request.ip ||
-      request.socket?.remoteAddress ||
-      'unknown'
-    );
-
-    return this.normalizeIp(ip);
   }
 
   handleRequest<TUser = any>(

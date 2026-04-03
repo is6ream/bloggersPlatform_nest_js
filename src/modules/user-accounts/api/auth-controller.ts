@@ -29,6 +29,7 @@ import { Request } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
 import { UsedRefreshTokenStore } from '../application/used-refresh-token.store';
+import { getClientIpFromRequest } from 'src/core/utils/client-ip';
 
 const REFRESH_TOKEN_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -43,18 +44,6 @@ export class AuthController {
     private commandBus: CommandBus,
     private usedRefreshTokenStore: UsedRefreshTokenStore,
   ) {}
-
-  private normalizeIp(rawIp: string): string {
-    const ipWithoutPort = rawIp.includes(':') && rawIp.includes('.')
-      ? rawIp.replace(/^::ffff:/, '')
-      : rawIp;
-
-    if (ipWithoutPort === '::1') {
-      return '127.0.0.1';
-    }
-
-    return ipWithoutPort.trim().toLowerCase();
-  }
 
   private getRefreshTokenCookieOptions(
     req: Request,
@@ -74,22 +63,6 @@ export class AuthController {
       sameSite: 'strict',
       ...(maxAgeMs !== undefined && { maxAge: maxAgeMs }),
     };
-  }
-
-  private extractClientIp(req: Request): string {
-    const xForwardedFor = req.headers['x-forwarded-for'];
-    const forwardedIp = Array.isArray(xForwardedFor)
-      ? xForwardedFor[0]
-      : xForwardedFor?.toString().split(',')[0]?.trim();
-
-    const ip = (
-      forwardedIp ||
-      (req.ip as string) ||
-      (req.socket?.remoteAddress as string) ||
-      'unknown'
-    );
-
-    return this.normalizeIp(ip);
   }
 
   @Post('password-recovery')
@@ -122,7 +95,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   )
     : Promise<{ accessToken: string }> {
-    const ip = this.extractClientIp(req);
+    const ip = getClientIpFromRequest(req);
 
     const userAgentHeader = req.headers['user-agent'];
     const userAgent = Array.isArray(userAgentHeader)

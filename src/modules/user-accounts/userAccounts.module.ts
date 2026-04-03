@@ -16,6 +16,7 @@ import { JwtStrategy } from './strategies/jwt-strategy';
 import { BasicAuthStrategy } from './strategies/basic-strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { getClientIpFromRequest } from 'src/core/utils/client-ip';
 import { RefreshJwtStrategy } from 'src/modules/user-accounts/strategies/refresh-token.jwt.strategy';
 import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.repository';
 import { DeviceSessionsQueryRepository } from './infrastructure/auth/device-sessions.query-repository';
@@ -32,7 +33,10 @@ import { SecurityController } from './api/security.controller';
     CqrsModule,
     PassportModule,
     ConfigModule,
-    ThrottlerModule.forRoot([{ ttl: 10000, limit: 5 }]),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 10000, limit: 5 }],
+      getTracker: (req) => getClientIpFromRequest(req),
+    }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

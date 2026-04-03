@@ -6,7 +6,15 @@ import { exceptionFiltersSetup } from './exceptionFilterSetup';
 import { swaggerSetup } from './swaggerSetup';
 import { enableCookiesSetup } from 'src/setup/cookiesSetup';
 
+function enableTrustProxy(app: INestApplication): void {
+  const server = app.getHttpAdapter().getInstance();
+  if (server?.set) {
+    server.set('trust proxy', true);
+  }
+}
+
 export function appSetup(app: INestApplication) {
+  enableTrustProxy(app);
   pipesSetup(app);
   globalPrefixSetup(app);
   enableCors(app);
