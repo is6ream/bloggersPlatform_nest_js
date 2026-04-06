@@ -17,15 +17,18 @@ export function normalizeClientIp(rawIp: string): string {
 
 export function getClientIpFromRequest(req: Record<string, any>): string {
   const xForwardedFor = req.headers?.['x-forwarded-for'];
-  const forwardedIp = Array.isArray(xForwardedFor)
+  const forwardedFirst = Array.isArray(xForwardedFor)
     ? xForwardedFor[0]
     : xForwardedFor?.toString().split(',')[0]?.trim();
 
-  const ip =
-    forwardedIp ||
-    req.ip ||
+  // С trust proxy Express выставляет req.ip по цепочке доверенных прокси.
+  // Сырой первый hop X-Forwarded-For клиент может подставить сам — тогда каждый
+  // запрос получает «другой» IP и throttler никогда не даёт 429 через туннель.
+  const raw =
+    (req.ip != null && String(req.ip).length > 0 ? String(req.ip) : '') ||
+    forwardedFirst ||
     req.socket?.remoteAddress ||
     'unknown';
 
-  return normalizeClientIp(ip);
+  return normalizeClientIp(raw);
 }

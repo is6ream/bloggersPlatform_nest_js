@@ -1,9 +1,8 @@
-import { Controller, Delete, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import { Controller, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { DataSource } from 'typeorm';
 import { DeviceSessionsPostgresDatabase } from '../user-accounts/infrastructure/auth/device-sessions-postgres.database';
-import { ThrottlerStorage } from '@nestjs/throttler';
 
 @Controller('testing')
 export class TestingController {
@@ -11,30 +10,15 @@ export class TestingController {
     @InjectConnection() private readonly mongoConnection: Connection,
     private readonly dataSource: DataSource,
     private readonly deviceSessionsDb: DeviceSessionsPostgresDatabase,
-    @Inject(ThrottlerStorage) private readonly throttlerStorage: ThrottlerStorage,
   ) {}
 
   @Delete('all-data')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAll(): Promise<void> {
-    this.resetThrottler();
     await Promise.all([
       this.clearMongo(),
       this.clearPostgres(),
     ]);
-  }
-
-  private resetThrottler(): void {
-    const s = this.throttlerStorage as any;
-    if (s._storage instanceof Map) {
-      s._storage.clear();  
-    }
-    if (s.timeoutIds instanceof Map) {
-      s.timeoutIds.forEach((timeouts: ReturnType<typeof setTimeout>[]) =>
-        timeouts.forEach(clearTimeout),
-      );
-      s.timeoutIds = new Map();
-    }
   }
 
   private async clearMongo(): Promise<void> {
