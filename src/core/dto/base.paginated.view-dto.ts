@@ -17,10 +17,10 @@ export abstract class PaginatedViewDto<T> {
     totalCount: number;
   }): PaginatedViewDto<T> {
     return {
-      totalCount: data.totalCount,
       pagesCount: Math.ceil(data.totalCount / data.size),
-      page: data.page,
       pageSize: data.size,
+      page: data.page,
+      totalCount: data.totalCount,
       items: data.items,
     };
   }

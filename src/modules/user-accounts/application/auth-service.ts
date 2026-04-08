@@ -13,9 +13,9 @@ import { UserContextOutput } from '../guards/dto/user-context.output.dto';
 import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
-
-const ACCESS_TOKEN_TTL = '10m';
-const REFRESH_TOKEN_TTL = '20d';
+//поставить логи 
+const ACCESS_TOKEN_TTL = '10s';
+const REFRESH_TOKEN_TTL = '20s';
 
 @Injectable()
 export class AuthService {
@@ -66,7 +66,7 @@ export class AuthService {
     const user: UserSqlEntity =
       await this.usersRepository.findOrNotFoundFail(userId);
 
-    await this.emailAdapter
+     this.emailAdapter
       .sendConfirmationCodeEmail(
         user.email,
         user.emailConfirmation.confirmationCode,
@@ -213,7 +213,7 @@ export class AuthService {
     }
     user.requestNewConfirmationCode();
     await this.usersRepository.save(user);
-    await this.emailAdapter.sendConfirmationCodeEmail(
+     this.emailAdapter.sendConfirmationCodeEmail(
       email,
       user.emailConfirmation.confirmationCode,
     );
