@@ -124,12 +124,12 @@ export class UsersRawSqlQueryRepository {
     await this.ensureUsersTable();
 
     const skip = query.calculateSkip();
-    const allowedSortFields: Record<string, string> = {
-      createdAt: '"createdAt"',
-      login: 'login',
-      email: 'email',
+    const orderByExpr: Record<string, string> = {
+      createdAt: 'u."createdAt"',
+      login: 'u.login COLLATE "C"',
+      email: 'u.email COLLATE "C"',
     };
-    const sortBy = allowedSortFields[query.sortBy] ?? '"createdAt"';
+    const orderBy = orderByExpr[query.sortBy] ?? 'u."createdAt"';
     const sortDirection = query.sortDirection === 'asc' ? 'ASC' : 'DESC';
 
     const searchLogin = query.searchLoginTerm?.trim() ?? '';
@@ -151,7 +151,7 @@ export class UsersRawSqlQueryRepository {
         SELECT ${this.selectColumns}
         FROM ${this.tableName} u
         ${whereSql}
-        ORDER BY u.${sortBy} ${sortDirection}
+        ORDER BY ${orderBy} ${sortDirection}
         LIMIT $3
         OFFSET $4;
         `,
