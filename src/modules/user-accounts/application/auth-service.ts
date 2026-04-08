@@ -13,9 +13,9 @@ import { UserContextOutput } from '../guards/dto/user-context.output.dto';
 import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
-//поставить логи 
-const ACCESS_TOKEN_TTL = '10s';
-const REFRESH_TOKEN_TTL = '20s';
+
+const ACCESS_TOKEN_TTL = '10m';
+const REFRESH_TOKEN_TTL = '20m';
 
 @Injectable()
 export class AuthService {
@@ -58,8 +58,17 @@ export class AuthService {
       email: dto.email,
     });
 
-    if (existingUser?.login === dto.login || existingUser?.email === dto.email) {
-      return;
+    if (existingUser) {
+      throw new DomainException({
+        code: DomainExceptionCode.BadRequest,
+        message: 'Login or email already registered',
+        extensions: [
+          {
+            message: 'Login or email already registered',
+            field: 'loginOrEmail',
+          },
+        ],
+      });
     }
 
     const userId: string = await this.usersService.createUser(dto);
