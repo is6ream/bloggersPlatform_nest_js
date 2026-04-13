@@ -5,6 +5,7 @@ import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { GetBlogsQueryParams } from '../api/query/get-blogs-query-params';
 import { BlogViewDto } from '../dto/output/blogViewDto';
 import { BlogPaginatedViewDto } from '../api/paginated/paginated.blog.view-dto';
+import { BlogsQueryRepository } from './blogsQueryRepository';
 
 type RawBlogRow = {
   id: string;
@@ -16,7 +17,7 @@ type RawBlogRow = {
 };
 
 @Injectable()
-export class BlogsRawSqlQueryRepository {
+export class BlogsRawSqlQueryRepository extends BlogsQueryRepository {
   constructor(private readonly dataSource: DataSource) {}
 
   private readonly tableName = 'blogs';
