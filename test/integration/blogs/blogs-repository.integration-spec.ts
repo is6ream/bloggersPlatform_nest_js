@@ -13,7 +13,7 @@ import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { e2eApiPath } from 'test/e2e/helpers/api-path';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
-import { BlogsQueryRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsQueryRepository';
+import { BlogsRawSqlQueryRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogs-raw-sql.query-repository';
 import { BlogSqlEntity } from 'src/modules/bloggers-platform/blogs/domain/blog-sql.entity';
 import { GetBlogsQueryParams } from 'src/modules/bloggers-platform/blogs/api/query/get-blogs-query-params';
 import { SortDirection } from 'src/core/dto/base.query-params.input-dto';
@@ -32,7 +32,7 @@ describe('Blogs repositories (integration)', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let blogsRepository: BlogsRepository;
-  let blogsQueryRepository: BlogsQueryRepository;
+  let blogsQueryRepository: BlogsRawSqlQueryRepository;
 
   beforeAll(async () => {
     ensureIntegrationPgEnv();
@@ -46,7 +46,7 @@ describe('Blogs repositories (integration)', () => {
     await app.init();
 
     blogsRepository = moduleFixture.get(BlogsRepository);
-    blogsQueryRepository = moduleFixture.get(BlogsQueryRepository);
+    blogsQueryRepository = moduleFixture.get(BlogsRawSqlQueryRepository);
   });
 
   beforeEach(async () => {

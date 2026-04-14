@@ -3,7 +3,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { BlogSchema } from './blogs/domain/blogEntity';
 import { Blog } from './blogs/domain/blogEntity';
 import { BlogsController } from './blogs/api/blogs-controller';
-import { BlogsQueryRepository } from './blogs/infrastructure/blogsQueryRepository';
 import { BlogsRepository } from './blogs/infrastructure/blogsRepository';
 import { BlogsRawSqlQueryRepository } from './blogs/infrastructure/blogs-raw-sql.query-repository';
 import { BlogsService } from './blogs/application/blogs-service';
@@ -29,10 +28,6 @@ import { JwtService } from '@nestjs/jwt';
   controllers: [BlogsController, PostsController, CommentsController],
   providers: [
     BlogsRawSqlQueryRepository,
-    {
-      provide: BlogsQueryRepository,
-      useExisting: BlogsRawSqlQueryRepository,
-    },
     BlogsRepository,
     BlogsService,
     PostsRawSqlQueryRepository,

@@ -14,14 +14,14 @@ import {
 } from '@nestjs/common';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
-import { BlogsQueryRepository } from '../infrastructure/blogsQueryRepository';
+import { BlogsRawSqlQueryRepository } from '../infrastructure/blogs-raw-sql.query-repository';
 import { GetBlogsQueryParams } from './query/get-blogs-query-params';
 import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
 import { PostsQueryRepository } from '../../posts/infrastructure/postQueryRepository';
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import { BlogSqlEntity } from '../domain/blog-sql.entity';
 import { PostSqlEntity } from '../../posts/domain/post-sql.entity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
@@ -29,7 +29,6 @@ import { UpdateBlogCommand } from '../application/useCases/update-blog-usecase';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
 import { DeleteBlogCommand } from '../application/useCases/delete-blog-by-id.usecase';
 import { CreateBlogCommand } from '../application/useCases/create-blog.usecase';
-import { GetBlogByIdQuery } from '../application/queries/get-blog-byId.query';
 import { CreatePostForSpecificBlogCommand } from '../application/useCases/create-blog-by-blogId.usecase';
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
 import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
@@ -37,10 +36,9 @@ import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 @Controller('blogs')
 export class BlogsController {
   constructor(
-    private blogsQueryRepository: BlogsQueryRepository,
+    private blogsQueryRepository: BlogsRawSqlQueryRepository,
     private postsQueryRepository: PostsQueryRepository,
     private commandBus: CommandBus,
-    private queryBus: QueryBus,
   ) {}
 
   @Get()
@@ -84,7 +82,7 @@ export class BlogsController {
 
   @Get(':id')
   async getById(@Param('id') id: string): Promise<BlogViewModel> {
-    return this.queryBus.execute(new GetBlogByIdQuery(id));
+    return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
   }
 
   @UseGuards(BasicAuthGuard)
