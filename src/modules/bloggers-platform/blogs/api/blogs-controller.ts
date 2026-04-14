@@ -18,7 +18,7 @@ import { BlogsRawSqlQueryRepository } from '../infrastructure/blogs-raw-sql.quer
 import { GetBlogsQueryParams } from './query/get-blogs-query-params';
 import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
-import { PostsQueryRepository } from '../../posts/infrastructure/postQueryRepository';
+import { PostsRawSqlQueryRepository } from '../../posts/infrastructure/posts-raw-sql.query-repository';
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
 import { CommandBus } from '@nestjs/cqrs';
@@ -37,7 +37,7 @@ import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 export class BlogsController {
   constructor(
     private blogsQueryRepository: BlogsRawSqlQueryRepository,
-    private postsQueryRepository: PostsQueryRepository,
+    private postsQueryRepository: PostsRawSqlQueryRepository,
     private commandBus: CommandBus,
   ) {}
 

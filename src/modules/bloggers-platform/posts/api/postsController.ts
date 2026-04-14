@@ -34,13 +34,13 @@ import { CreateCommentInputDto } from 'src/modules/bloggers-platform/posts/api/m
 import { CreateCommentCommand } from 'src/modules/bloggers-platform/comments/application/useCases/create-comment.usecase';
 import { GetPostsQueryParams } from 'src/modules/bloggers-platform/posts/api/query/get-posts-query-params';
 import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
-import { PostsQueryRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postQueryRepository';
+import { PostsRawSqlQueryRepository } from 'src/modules/bloggers-platform/posts/infrastructure/posts-raw-sql.query-repository';
 import { LikeStatusInputDto } from 'src/modules/bloggers-platform/likes/types/input/like-status.input.dto';
 
 @Controller('posts')
 export class PostsController {
   constructor(
-    private postQueryRepository: PostsQueryRepository,
+    private postQueryRepository: PostsRawSqlQueryRepository,
     private commandBus: CommandBus,
     private commentsQueryRepository: CommentsQueryRepository,
   ) {}
