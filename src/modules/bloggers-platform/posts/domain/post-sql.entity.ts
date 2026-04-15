@@ -1,4 +1,6 @@
 import { randomUUID } from 'crypto';
+import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { CreatePostDomainDto } from '../application/types/create-post-domain.dto';
 import { UpdatePostDto } from './dto/input/updatePostDto';
 
@@ -78,7 +80,10 @@ export class PostSqlEntity {
 
   makeDeleted(): void {
     if (this.deleteAt !== null) {
-      throw new Error('Post already deleted');
+      throw new DomainException({
+        code: DomainExceptionCode.NotFound,
+        message: 'Post not found',
+      });
     }
     this.deleteAt = new Date();
   }
