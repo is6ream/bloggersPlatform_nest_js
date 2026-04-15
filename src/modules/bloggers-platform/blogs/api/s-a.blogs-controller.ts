@@ -31,6 +31,7 @@ import { DeleteBlogCommand } from '../application/useCases/delete-blog-by-id.use
 import { CreateBlogCommand } from '../application/useCases/create-blog.usecase';
 import { CreatePostForSpecificBlogCommand } from '../application/useCases/create-blog-by-blogId.usecase';
 import { UpdatePostForSpecificBlogCommand } from '../application/useCases/update-post-for-specific-blog.usecase';
+import { DeletePostForSpecificBlogCommand } from '../application/useCases/delete-post-for-specific-blog.usecase';
 
 @Controller('/sa/blogs')
 export class BlogsController {
@@ -107,6 +108,20 @@ export class BlogsController {
       new UpdatePostForSpecificBlogCommand(blogId, postId, body),
     );
   }
+
+  @UseGuards(BasicAuthGuard)
+  @Delete(':blogId/posts/:postId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deletePostForSpecificBlog(
+    @Param('blogId') blogId: string,
+    @Param('postId') postId: string,
+  ): Promise<void> {
+    return this.commandBus.execute(
+      new DeletePostForSpecificBlogCommand(blogId, postId),
+    );
+  }
+
+
 
   @Get(':id')
   async getById(@Param('id') id: string): Promise<BlogViewModel> {

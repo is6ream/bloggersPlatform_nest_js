@@ -4,11 +4,13 @@ import { DeleteBlogByIdUseCase } from './useCases/delete-blog-by-id.usecase';
 import { GetBlogByIdQueryHandler } from './queries/get-blog-byId.query';
 import { CreatePostByBlogIdUseCase } from './useCases/create-blog-by-blogId.usecase';
 import { UpdatePostForSpecificBlogUseCase } from './useCases/update-post-for-specific-blog.usecase';
+import { DeletePostForSpecificBlogUseCase } from './useCases/delete-post-for-specific-blog.usecase';
 
 export const blogCommandHandlers = [
   CreateBlogUseCase,
   CreatePostByBlogIdUseCase,
   UpdatePostForSpecificBlogUseCase,
+  DeletePostForSpecificBlogUseCase,
   UpdateBlogUseCase,
   DeleteBlogByIdUseCase,
   GetBlogByIdQueryHandler,
