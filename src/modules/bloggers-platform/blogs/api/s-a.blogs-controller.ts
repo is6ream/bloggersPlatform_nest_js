@@ -10,7 +10,6 @@ import {
   Put,
   Query,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
@@ -21,6 +20,7 @@ import { UpdateBlogDto } from '../dto/input/updateBlogDto';
 import { PostsRawSqlQueryRepository } from '../../posts/infrastructure/posts-raw-sql.query-repository';
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
+import { PaginatedPostsDto } from '../../posts/infrastructure/dto/paginated-post.dto';
 import { CommandBus } from '@nestjs/cqrs';
 import { BlogSqlEntity } from '../domain/blog-sql.entity';
 import { PostSqlEntity } from '../../posts/domain/post-sql.entity';
@@ -30,8 +30,7 @@ import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-aut
 import { DeleteBlogCommand } from '../application/useCases/delete-blog-by-id.usecase';
 import { CreateBlogCommand } from '../application/useCases/create-blog.usecase';
 import { CreatePostForSpecificBlogCommand } from '../application/useCases/create-blog-by-blogId.usecase';
-import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
-import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
+import { UpdatePostForSpecificBlogCommand } from '../application/useCases/update-post-for-specific-blog.usecase';
 
 @Controller('/sa/blogs')
 export class BlogsController {
@@ -39,23 +38,13 @@ export class BlogsController {
     private blogsQueryRepository: BlogsRawSqlQueryRepository,
     private postsQueryRepository: PostsRawSqlQueryRepository,
     private commandBus: CommandBus,
-  ) { }
+  ) {}
 
   @Get()
   async getAll(
     @Query() query: GetBlogsQueryParams,
   ): Promise<BlogPaginatedViewDto> {
     return this.blogsQueryRepository.getAll(query);
-  }
-  @Get(':id/posts')
-  @UseInterceptors(UserExtractorInterceptor)
-  async getAllPostsForBlog(
-    @Param('id') blogId: string,
-    @Query()
-    query: GetPostsQueryParams,
-    @UserIdOptional() userId?: string,
-  ) {
-    return this.postsQueryRepository.getAllPostsForBlog(blogId, query, userId);
   }
 
   @UseGuards(BasicAuthGuard)
@@ -66,7 +55,6 @@ export class BlogsController {
     );
     return blog.toViewModel(blog.id);
   }
-
 
   @UseGuards(BasicAuthGuard)
   @Put(':id')
@@ -98,6 +86,27 @@ export class BlogsController {
     return this.postsQueryRepository.getCreatedPost(post.id);
   }
 
+  @UseGuards(BasicAuthGuard)
+  @Get(':id/posts')
+  async getPostsForSpecificBlog(
+    @Param('id') id: string,
+    @Query() query: GetPostsQueryParams,
+  ): Promise<PaginatedPostsDto> {
+    return this.postsQueryRepository.getAllPostsForBlog(id, query, undefined);
+  }
+
+  @UseGuards(BasicAuthGuard)
+  @Put(':blogId/posts/:postId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updatePostForSpecificBlog(
+    @Param('blogId') blogId: string,
+    @Param('postId') postId: string,
+    @Body() body: CreatePostByBlogIdInputDto,
+  ): Promise<void> {
+    return this.commandBus.execute(
+      new UpdatePostForSpecificBlogCommand(blogId, postId, body),
+    );
+  }
 
   @Get(':id')
   async getById(@Param('id') id: string): Promise<BlogViewModel> {
