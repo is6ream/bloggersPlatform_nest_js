@@ -14,8 +14,8 @@ import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
 
-const ACCESS_TOKEN_TTL = '10m';
-const REFRESH_TOKEN_TTL = '20m';
+const ACCESS_TOKEN_TTL = '10s';
+const REFRESH_TOKEN_TTL = '20s';
 
 @Injectable()
 export class AuthService {
@@ -83,7 +83,7 @@ export class AuthService {
     const user: UserSqlEntity =
       await this.usersRepository.findOrNotFoundFail(userId);
 
-     this.emailAdapter
+    this.emailAdapter
       .sendConfirmationCodeEmail(
         user.email,
         user.emailConfirmation.confirmationCode,
@@ -95,6 +95,7 @@ export class AuthService {
   async passwordRecovery(email: string) {
     const user: UserSqlEntity | null =
       await this.usersRepository.findByEmail(email);
+    console.log("USER check", user)
     if (!user) {
       return null;
     }
@@ -102,8 +103,10 @@ export class AuthService {
     user.requestPasswordRecovery();
     await this.usersRepository.save(user);
 
+    console.log("CODE check" ,user.passwordRecovery?.code)
+
     try {
-      await this.emailAdapter.sendConfirmationCodeEmail(
+      this.emailAdapter.sendConfirmationCodeEmail(
         email,
         user.passwordRecovery?.code!
       );
@@ -230,7 +233,7 @@ export class AuthService {
     }
     user.requestNewConfirmationCode();
     await this.usersRepository.save(user);
-     this.emailAdapter.sendConfirmationCodeEmail(
+    this.emailAdapter.sendConfirmationCodeEmail(
       email,
       user.emailConfirmation.confirmationCode,
     );

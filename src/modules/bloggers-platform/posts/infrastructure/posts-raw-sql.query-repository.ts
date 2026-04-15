@@ -204,54 +204,70 @@ export class PostsRawSqlQueryRepository {
     userId?: string,
   ): Promise<PaginatedPostsDto> {
     await this.ensureLikesTable();
+    await this.ensurePostsTable();
     await this.blogsRepository.checkBlogExist(blogId);
 
     const { pageNumber, pageSize, sortBy, sortDirection, searchPostNameTerm } =
       queryDto;
     const skip = (pageNumber - 1) * pageSize;
-    const orderDir = sortDirection === 'asc' ? 'ASC' : 'DESC';
-    const sortCol = this.resolveSortColumn(sortBy);
+    const allowedSortFields: Record<string, string> = {
+      createdAt: '"createdAt"',
+      title: 'title',
+      blogName: '"blogName"',
+    };
+    const sortByColumn = allowedSortFields[sortBy] ?? '"createdAt"';
+    const sortDirectionSql = sortDirection === 'asc' ? 'ASC' : 'DESC';
+    const searchTerm = searchPostNameTerm?.trim() ?? '';
 
-    await this.ensurePostsTable();
+    const whereSql = `
+      WHERE p."deleteAt" IS NULL
+      AND p."blogId" = $1
+      AND ($2 = '' OR p.title ILIKE '%' || $2 || '%')
+    `;
 
-    const params: unknown[] = [blogId];
-    let searchClause = '';
-    if (searchPostNameTerm) {
-      params.push(`%${searchPostNameTerm}%`);
-      searchClause = `AND p.title ILIKE $${params.length}`;
-    }
-    params.push(pageSize, skip);
-
-    const limitIdx = params.length - 1;
-    const offsetIdx = params.length;
-    const posts = await this.dataSource.query(
-      `
-      SELECT
-        p.id,
-        p.title,
-        p."shortDescription",
-        p.content,
-        p."blogId",
-        p."blogName",
-        p."deleteAt",
-        p."createdAt",
-        p."likesCount",
-        p."dislikesCount"
-      FROM ${this.tableName} p
-      WHERE p."blogId" = $1
-        AND p."deleteAt" IS NULL
-        ${searchClause}
-      ORDER BY ${sortCol} ${orderDir}
-      LIMIT $${limitIdx} OFFSET $${offsetIdx};
-      `,
-      params,
-    );
-
-    if (!(posts as RawPostRow[]).length) {
-      return new PaginatedPostsDto(0, pageNumber, pageSize, 0, []);
-    }
+    const [posts, countRows] = await Promise.all([
+      this.dataSource.query(
+        `
+        SELECT
+          p.id,
+          p.title,
+          p."shortDescription",
+          p.content,
+          p."blogId",
+          p."blogName",
+          p."deleteAt",
+          p."createdAt",
+          p."likesCount",
+          p."dislikesCount"
+        FROM ${this.tableName} p
+        ${whereSql}
+        ORDER BY p.${sortByColumn} ${sortDirectionSql}
+        LIMIT $3
+        OFFSET $4;
+        `,
+        [blogId, searchTerm, pageSize, skip],
+      ),
+      this.dataSource.query(
+        `
+        SELECT COUNT(*)::int AS c
+        FROM ${this.tableName} p
+        ${whereSql};
+        `,
+        [blogId, searchTerm],
+      ),
+    ]);
 
     const postRows = posts as RawPostRow[];
+    const totalCount = Number((countRows as { c: number }[])[0]?.c ?? 0);
+    if (!postRows.length) {
+      return new PaginatedPostsDto(
+        Math.ceil(totalCount / pageSize),
+        pageNumber,
+        pageSize,
+        totalCount,
+        [],
+      );
+    }
 
     const items: PostViewDto[] = await Promise.all(
       postRows.map(async (post) => {
@@ -290,24 +306,6 @@ export class PostsRawSqlQueryRepository {
         );
       }),
     );
-
-    const countParams: unknown[] = [blogId];
-    let countSearchClause = '';
-    if (searchPostNameTerm) {
-      countParams.push(`%${searchPostNameTerm}%`);
-      countSearchClause = `AND p.title ILIKE $${countParams.length}`;
-    }
-    const countRows = await this.dataSource.query(
-      `
-      SELECT COUNT(*)::int AS c
-      FROM ${this.tableName} p
-      WHERE p."blogId" = $1
-        AND p."deleteAt" IS NULL
-        ${countSearchClause};
-      `,
-      countParams,
-    );
-    const totalCount = Number((countRows as { c: number }[])[0]?.c ?? 0);
     const pagesCount = Math.ceil(totalCount / pageSize);
 
     return new PaginatedPostsDto(

@@ -37,7 +37,7 @@ function expectPostShape(
     shortDescription: expected.shortDescription,
     content: expected.content,
     blogId: expected.blogId,
-    blogName: expected.blogName,
+    blogName: expected.blogName,  
   });
   expect(typeof body.createdAt).toBe('string');
   expect(body.extendedLikesInfo).toEqual(

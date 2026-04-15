@@ -33,13 +33,13 @@ import { CreatePostForSpecificBlogCommand } from '../application/useCases/create
 import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
 import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 
-@Controller('blogs')
+@Controller('/sa/blogs')
 export class BlogsController {
   constructor(
     private blogsQueryRepository: BlogsRawSqlQueryRepository,
     private postsQueryRepository: PostsRawSqlQueryRepository,
     private commandBus: CommandBus,
-  ) {}
+  ) { }
 
   @Get()
   async getAll(
@@ -59,19 +59,6 @@ export class BlogsController {
   }
 
   @UseGuards(BasicAuthGuard)
-  @Post(':id/posts')
-  async createPostForSpecificBlog(
-    @Param('id') id: string,
-    @Body() body: CreatePostByBlogIdInputDto,
-  ): Promise<PostViewModel> {
-    const post: PostSqlEntity = await this.commandBus.execute(
-      new CreatePostForSpecificBlogCommand(id, body),
-    );
-
-    return this.postsQueryRepository.getCreatedPost(post.id);
-  }
-
-  @UseGuards(BasicAuthGuard)
   @Post()
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
     const blog: BlogSqlEntity = await this.commandBus.execute(
@@ -80,10 +67,6 @@ export class BlogsController {
     return blog.toViewModel(blog.id);
   }
 
-  @Get(':id')
-  async getById(@Param('id') id: string): Promise<BlogViewModel> {
-    return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
-  }
 
   @UseGuards(BasicAuthGuard)
   @Put(':id')
@@ -100,5 +83,24 @@ export class BlogsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteBlog(@Param('id') id: string): Promise<void> {
     return this.commandBus.execute(new DeleteBlogCommand(id));
+  }
+
+  @UseGuards(BasicAuthGuard)
+  @Post(':id/posts')
+  async createPostForSpecificBlog(
+    @Param('id') id: string,
+    @Body() body: CreatePostByBlogIdInputDto,
+  ): Promise<PostViewModel> {
+    const post: PostSqlEntity = await this.commandBus.execute(
+      new CreatePostForSpecificBlogCommand(id, body),
+    );
+
+    return this.postsQueryRepository.getCreatedPost(post.id);
+  }
+
+
+  @Get(':id')
+  async getById(@Param('id') id: string): Promise<BlogViewModel> {
+    return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
   }
 }

@@ -67,7 +67,7 @@ export class AuthController {
 
   @Post('password-recovery')
   @Throttle({
-    default: { limit: 5, ttl: 60000 },
+    default: { limit: 5, ttl: 10000 },
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
