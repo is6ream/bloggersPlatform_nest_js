@@ -39,8 +39,8 @@ export class SaBlogsController {
     private blogsQueryRepository: BlogsRawSqlQueryRepository,
     private postsQueryRepository: PostsRawSqlQueryRepository,
     private commandBus: CommandBus,
-  ) {}
-
+  ) { }
+  @UseGuards(BasicAuthGuard)
   @Get()
   async getAll(
     @Query() query: GetBlogsQueryParams,

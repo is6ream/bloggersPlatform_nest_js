@@ -100,10 +100,13 @@ export class PostsRawSqlQueryRepository {
   }
 
   private resolveSortColumn(sortBy: string): string {
-    if (sortBy === 'title') {
-      return 'p.title';
-    }
-    return 'p."createdAt"';
+    const allowedSortFields: Record<string, string> = {
+      createdAt: 'p."createdAt"',
+      title: 'p.title',
+      blogName: 'p."blogName"',
+    };
+
+    return allowedSortFields[sortBy] ?? 'p."createdAt"';
   }
 
   async getPostById(id: string, userId: string): Promise<PostViewDto> {

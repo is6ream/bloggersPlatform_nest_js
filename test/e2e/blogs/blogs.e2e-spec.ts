@@ -15,7 +15,8 @@ import { e2eApiPath } from '../helpers/api-path';
 
 const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
 const TESTING_PATH = e2eApiPath('testing/all-data');
-const BLOGS_PATH = e2eApiPath('sa/blogs');
+const SA_BLOGS_PATH = e2eApiPath('sa/blogs');
+const BLOGS_PATH = e2eApiPath('blogs');
 const NON_EXISTENT_BLOG_ID = '00000000-0000-4000-8000-000000000099';
 const NON_EXISTENT_POST_ID = '00000000-0000-4000-8000-000000000088';
 
@@ -43,7 +44,7 @@ describe('Blogs API (e2e)', () => {
 
   const createBlog = async (input: BlogInput = VALID_BLOG_INPUT) => {
     const res = await request(app.getHttpServer())
-      .post(BLOGS_PATH)
+      .post(SA_BLOGS_PATH)
       .set('Authorization', BASIC_AUTH)
       .send(input)
       .expect(201);
@@ -152,14 +153,14 @@ describe('Blogs API (e2e)', () => {
   describe('POST /blogs', () => {
     it('401 — without Basic Auth', async () => {
       await request(app.getHttpServer())
-        .post(BLOGS_PATH)
+        .post(SA_BLOGS_PATH)
         .send(VALID_BLOG_INPUT)
         .expect(401);
     });
 
     it('400 — invalid payload', async () => {
       await request(app.getHttpServer())
-        .post(BLOGS_PATH)
+        .post(SA_BLOGS_PATH)
         .set('Authorization', BASIC_AUTH)
         .send({
           name: 'x'.repeat(16),
@@ -171,7 +172,7 @@ describe('Blogs API (e2e)', () => {
 
     it('201 — creates blog', async () => {
       const res = await request(app.getHttpServer())
-        .post(BLOGS_PATH)
+        .post(SA_BLOGS_PATH)
         .set('Authorization', BASIC_AUTH)
         .send(VALID_BLOG_INPUT)
         .expect(201);
@@ -192,14 +193,14 @@ describe('Blogs API (e2e)', () => {
       const created = await createBlog();
 
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${created.id}`)
+        .put(`${SA_BLOGS_PATH}/${created.id}`)
         .send(VALID_BLOG_INPUT)
         .expect(401);
     });
 
     it('404 — for non-existent blog', async () => {
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}`)
+        .put(`${SA_BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}`)
         .set('Authorization', BASIC_AUTH)
         .send(VALID_BLOG_INPUT)
         .expect(404);
@@ -214,7 +215,7 @@ describe('Blogs API (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${created.id}`)
+        .put(`${SA_BLOGS_PATH}/${created.id}`)
         .set('Authorization', BASIC_AUTH)
         .send(updateBody)
         .expect(204);
@@ -232,13 +233,13 @@ describe('Blogs API (e2e)', () => {
       const created = await createBlog();
 
       await request(app.getHttpServer())
-        .delete(`${BLOGS_PATH}/${created.id}`)
+        .delete(`${SA_BLOGS_PATH}/${created.id}`)
         .expect(401);
     });
 
     it('404 — for non-existent blog', async () => {
       await request(app.getHttpServer())
-        .delete(`${BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}`)
+        .delete(`${SA_BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}`)
         .set('Authorization', BASIC_AUTH)
         .expect(404);
     });
@@ -247,7 +248,7 @@ describe('Blogs API (e2e)', () => {
       const created = await createBlog();
 
       await request(app.getHttpServer())
-        .delete(`${BLOGS_PATH}/${created.id}`)
+        .delete(`${SA_BLOGS_PATH}/${created.id}`)
         .set('Authorization', BASIC_AUTH)
         .expect(204);
 
@@ -267,7 +268,7 @@ describe('Blogs API (e2e)', () => {
       const blog = await createBlog();
 
       const createPostRes = await request(app.getHttpServer())
-        .post(`${BLOGS_PATH}/${blog.id}/posts`)
+        .post(`${SA_BLOGS_PATH}/${blog.id}/posts`)
         .set('Authorization', BASIC_AUTH)
         .send(VALID_POST_BODY)
         .expect(201);
@@ -279,7 +280,7 @@ describe('Blogs API (e2e)', () => {
       });
 
       const getPostsRes = await request(app.getHttpServer())
-        .get(`${BLOGS_PATH}/${blog.id}/posts`)
+        .get(`${SA_BLOGS_PATH}/${blog.id}/posts`)
         .set('Authorization', BASIC_AUTH)
         .expect(200);
 
@@ -289,7 +290,7 @@ describe('Blogs API (e2e)', () => {
 
     it('404 — create post for non-existent blog', async () => {
       await request(app.getHttpServer())
-        .post(`${BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}/posts`)
+        .post(`${SA_BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}/posts`)
         .set('Authorization', BASIC_AUTH)
         .send(VALID_POST_BODY)
         .expect(404);
@@ -298,14 +299,60 @@ describe('Blogs API (e2e)', () => {
     it('401 — GET blog posts without Basic Auth', async () => {
       const blog = await createBlog();
       await request(app.getHttpServer())
-        .get(`${BLOGS_PATH}/${blog.id}/posts`)
+        .get(`${SA_BLOGS_PATH}/${blog.id}/posts`)
         .expect(401);
     });
 
     it('404 — GET posts for non-existent blog', async () => {
       await request(app.getHttpServer())
-        .get(`${BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}/posts`)
+        .get(`${SA_BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}/posts`)
         .set('Authorization', BASIC_AUTH)
+        .expect(404);
+    });
+  });
+
+  describe('GET /blogs/:blogId/posts (public)', () => {
+    it('200 — returns paginated posts for existing blog', async () => {
+      const blog = await createBlog();
+
+      await request(app.getHttpServer())
+        .post(`${SA_BLOGS_PATH}/${blog.id}/posts`)
+        .set('Authorization', BASIC_AUTH)
+        .send({
+          title: 'alpha-post',
+          shortDescription: 'alpha-short',
+          content: 'alpha-content',
+        })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .post(`${SA_BLOGS_PATH}/${blog.id}/posts`)
+        .set('Authorization', BASIC_AUTH)
+        .send({
+          title: 'beta-post',
+          shortDescription: 'beta-short',
+          content: 'beta-content',
+        })
+        .expect(201);
+
+      const res = await request(app.getHttpServer())
+        .get(`${BLOGS_PATH}/${blog.id}/posts`)
+        .query({ pageNumber: 1, pageSize: 1, sortBy: 'createdAt', sortDirection: 'desc' })
+        .expect(200);
+
+      expect(res.body.page).toBe(1);
+      expect(res.body.pageSize).toBe(1);
+      expect(res.body.totalCount).toBe(2);
+      expect(res.body.pagesCount).toBe(2);
+      expect(res.body.items).toHaveLength(1);
+      expect(res.body.items[0]).toMatchObject({
+        blogId: blog.id,
+      });
+    });
+
+    it('404 — blog not found', async () => {
+      await request(app.getHttpServer())
+        .get(`${BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}/posts`)
         .expect(404);
     });
   });
@@ -314,7 +361,7 @@ describe('Blogs API (e2e)', () => {
     it('204 — обновляет пост и отражается в списке постов блога', async () => {
       const blog = await createBlog();
       const createPostRes = await request(app.getHttpServer())
-        .post(`${BLOGS_PATH}/${blog.id}/posts`)
+        .post(`${SA_BLOGS_PATH}/${blog.id}/posts`)
         .set('Authorization', BASIC_AUTH)
         .send(VALID_POST_BODY)
         .expect(201);
@@ -326,13 +373,13 @@ describe('Blogs API (e2e)', () => {
       };
 
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${blog.id}/posts/${createPostRes.body.id}`)
+        .put(`${SA_BLOGS_PATH}/${blog.id}/posts/${createPostRes.body.id}`)
         .set('Authorization', BASIC_AUTH)
         .send(updateBody)
         .expect(204);
 
       const listRes = await request(app.getHttpServer())
-        .get(`${BLOGS_PATH}/${blog.id}/posts`)
+        .get(`${SA_BLOGS_PATH}/${blog.id}/posts`)
         .set('Authorization', BASIC_AUTH)
         .expect(200);
 
@@ -347,13 +394,13 @@ describe('Blogs API (e2e)', () => {
     it('401 — без Basic Auth', async () => {
       const blog = await createBlog();
       const createPostRes = await request(app.getHttpServer())
-        .post(`${BLOGS_PATH}/${blog.id}/posts`)
+        .post(`${SA_BLOGS_PATH}/${blog.id}/posts`)
         .set('Authorization', BASIC_AUTH)
         .send(VALID_POST_BODY)
         .expect(201);
 
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${blog.id}/posts/${createPostRes.body.id}`)
+        .put(`${SA_BLOGS_PATH}/${blog.id}/posts/${createPostRes.body.id}`)
         .send({ title: 't', shortDescription: 's', content: 'c' })
         .expect(401);
     });
@@ -361,13 +408,13 @@ describe('Blogs API (e2e)', () => {
     it('400 — некорректное тело', async () => {
       const blog = await createBlog();
       const createPostRes = await request(app.getHttpServer())
-        .post(`${BLOGS_PATH}/${blog.id}/posts`)
+        .post(`${SA_BLOGS_PATH}/${blog.id}/posts`)
         .set('Authorization', BASIC_AUTH)
         .send(VALID_POST_BODY)
         .expect(201);
 
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${blog.id}/posts/${createPostRes.body.id}`)
+        .put(`${SA_BLOGS_PATH}/${blog.id}/posts/${createPostRes.body.id}`)
         .set('Authorization', BASIC_AUTH)
         .send({
           title: '',
@@ -379,7 +426,7 @@ describe('Blogs API (e2e)', () => {
 
     it('404 — блог не существует', async () => {
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}/posts/${NON_EXISTENT_POST_ID}`)
+        .put(`${SA_BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}/posts/${NON_EXISTENT_POST_ID}`)
         .set('Authorization', BASIC_AUTH)
         .send({
           title: 't',
@@ -392,7 +439,7 @@ describe('Blogs API (e2e)', () => {
     it('404 — пост не существует', async () => {
       const blog = await createBlog();
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${blog.id}/posts/${NON_EXISTENT_POST_ID}`)
+        .put(`${SA_BLOGS_PATH}/${blog.id}/posts/${NON_EXISTENT_POST_ID}`)
         .set('Authorization', BASIC_AUTH)
         .send({
           title: 't',
@@ -411,13 +458,13 @@ describe('Blogs API (e2e)', () => {
       });
 
       const createPostRes = await request(app.getHttpServer())
-        .post(`${BLOGS_PATH}/${blogA.id}/posts`)
+        .post(`${SA_BLOGS_PATH}/${blogA.id}/posts`)
         .set('Authorization', BASIC_AUTH)
         .send(VALID_POST_BODY)
         .expect(201);
 
       await request(app.getHttpServer())
-        .put(`${BLOGS_PATH}/${blogB.id}/posts/${createPostRes.body.id}`)
+        .put(`${SA_BLOGS_PATH}/${blogB.id}/posts/${createPostRes.body.id}`)
         .set('Authorization', BASIC_AUTH)
         .send({
           title: 't',
