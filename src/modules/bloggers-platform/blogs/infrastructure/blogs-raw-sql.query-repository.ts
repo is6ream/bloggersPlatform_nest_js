@@ -84,12 +84,14 @@ export class BlogsRawSqlQueryRepository {
 
     const skip = query.calculateSkip();
     const allowedSortFields: Record<string, string> = {
-      createdAt: '"createdAt"',
-      name: 'name',
-      description: 'description',
-      websiteUrl: '"websiteUrl"',
+      createdAt: 'b."createdAt"',
+      // Use deterministic byte-order collation for tests:
+      // uppercase letters go before lowercase (Timma before timm).
+      name: 'b.name COLLATE "C"',
+      description: 'b.description',
+      websiteUrl: 'b."websiteUrl"',
     };
-    const sortBy = allowedSortFields[query.sortBy] ?? '"createdAt"';
+    const sortBy = allowedSortFields[query.sortBy] ?? 'b."createdAt"';
     const sortDirection = query.sortDirection === 'asc' ? 'ASC' : 'DESC';
     const searchTerm = query.searchNameTerm?.trim() ?? '';
 
@@ -110,7 +112,7 @@ export class BlogsRawSqlQueryRepository {
           b."isMembership"
         FROM ${this.tableName} b
         ${whereSql}
-        ORDER BY b.${sortBy} ${sortDirection}
+        ORDER BY ${sortBy} ${sortDirection}
         LIMIT $2
         OFFSET $3;
         `,
