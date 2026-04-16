@@ -34,7 +34,7 @@ import { UpdatePostForSpecificBlogCommand } from '../application/useCases/update
 import { DeletePostForSpecificBlogCommand } from '../application/useCases/delete-post-for-specific-blog.usecase';
 
 @Controller('/sa/blogs')
-export class BlogsController {
+export class SaBlogsController {
   constructor(
     private blogsQueryRepository: BlogsRawSqlQueryRepository,
     private postsQueryRepository: PostsRawSqlQueryRepository,

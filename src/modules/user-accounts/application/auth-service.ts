@@ -14,8 +14,8 @@ import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
 
-const ACCESS_TOKEN_TTL = '10s';
-const REFRESH_TOKEN_TTL = '20s';
+const ACCESS_TOKEN_TTL = '5m';
+const REFRESH_TOKEN_TTL = '10m';
 
 @Injectable()
 export class AuthService {

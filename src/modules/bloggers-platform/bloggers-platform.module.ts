@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BlogSchema } from './blogs/domain/blogEntity';
 import { Blog } from './blogs/domain/blogEntity';
-import { BlogsController } from './blogs/api/s-a.blogs-controller';
+import { SaBlogsController } from './blogs/api/s-a.blogs-controller';
+import { BlogsController } from './blogs/api/blogs-controller';
 import { BlogsRepository } from './blogs/infrastructure/blogsRepository';
 import { BlogsRawSqlQueryRepository } from './blogs/infrastructure/blogs-raw-sql.query-repository';
 import { BlogsService } from './blogs/application/blogs-service';
@@ -25,7 +26,7 @@ import { JwtService } from '@nestjs/jwt';
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
     CqrsModule,
   ],
-  controllers: [BlogsController, PostsController, CommentsController],
+  controllers: [SaBlogsController, BlogsController, PostsController, CommentsController],
   providers: [
     BlogsRawSqlQueryRepository,
     BlogsRepository,
