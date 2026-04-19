@@ -1,63 +1,53 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import { Connection, connect } from 'mongoose';
-import { getModelToken } from '@nestjs/mongoose';
-import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
-import { AppModule } from 'src/modules/app-module/app-module';
-import request from 'supertest';
-import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
-import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
 import {
-  createTestUser,
-  deleteAllE2eUsers,
-  findE2eUserIdByLogin,
-} from '../../helpers/factory/user-factory';
-import { e2eApiPath } from '../helpers/api-path';
-import { createTestBlog } from '../../helpers/factory/blog-factory';
-import { createTestPost } from '../../helpers/factory/post-factory';
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from '@jest/globals';
+import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
+import { DataSource } from 'typeorm';
+import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
+import { createTestUser } from '../../helpers/factory/user-factory';
+import { e2eApiPath } from '../helpers/api-path';
+
+const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
+const TESTING_PATH = e2eApiPath('testing/all-data');
 
 describe('Comments E2E Tests', () => {
   let app: INestApplication;
-  let mongoServer: MongoMemoryServer;
-  let mongoConnection: Connection;
   let moduleFixture: TestingModule;
-  let commentModel: any;
-  let postModel: any;
-  let blogModel: any;
+  let dataSource: DataSource;
   let authToken: string;
   let testPostId: string;
   let testUserId: string;
 
-  // Константы для URL
   const POSTS_BASE = e2eApiPath('posts');
   const COMMENTS_BASE = e2eApiPath('comments');
+  const BLOGS_BASE = e2eApiPath('blogs');
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    mongoConnection = (await connect(mongoUri)).connection;
-
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
-    })
-      .overrideProvider('MONGO_CONNECTION')
-      .useValue(mongoConnection)
-      .compile();
+    }).compile();
 
     app = moduleFixture.createNestApplication();
     appSetup(app);
     await app.init();
+    dataSource = moduleFixture.get(DataSource);
+  });
 
-    // Инициализируем модели
-    postModel = moduleFixture.get(getModelToken(PostEntity.name));
-    commentModel = moduleFixture.get(getModelToken(Comment.name));
-    blogModel = moduleFixture.get(getModelToken(Blog.name));
+  beforeEach(async () => {
+    await request(app.getHttpServer()).delete(TESTING_PATH).expect(204);
 
-    await deleteAllE2eUsers();
-
-    const testUser = await createTestUser();
+    const testUser = await createTestUser({
+      login: 'testuser',
+      email: `testuser_${Date.now()}@example.com`,
+    });
     testUserId = testUser.id;
 
     const loginResponse = await request(app.getHttpServer())
@@ -65,30 +55,38 @@ describe('Comments E2E Tests', () => {
       .send({
         loginOrEmail: 'testuser',
         password: 'testpassword',
-      });
+      })
+      .expect(200);
     authToken = loginResponse.body.accessToken;
 
-    // Создаем блог и пост
-    const testBlog = await createTestBlog(blogModel);
-    const testPost = await createTestPost(
-      postModel,
-      testBlog._id.toString(),
-      testBlog.name,
-    );
-    testPostId = testPost._id.toString();
-  });
+    const blogRes = await request(app.getHttpServer())
+      .post(BLOGS_BASE)
+      .set('Authorization', BASIC_AUTH)
+      .send({
+        name: 'cmt-e2e-blog',
+        description: 'blog for comments e2e',
+        websiteUrl: 'https://example.com',
+      })
+      .expect(201);
+    const blogId = blogRes.body.id as string;
 
-  beforeEach(async () => {
-    await commentModel.deleteMany({});
+    const postRes = await request(app.getHttpServer())
+      .post(POSTS_BASE)
+      .set('Authorization', BASIC_AUTH)
+      .send({
+        title: 'Post for comments e2e',
+        shortDescription: 'short desc for comments',
+        content: 'Main post content '.repeat(25),
+        blogId,
+      })
+      .expect(201);
+    testPostId = postRes.body.id as string;
   });
 
   afterAll(async () => {
-    await mongoConnection.close();
-    await mongoServer.stop();
     await app.close();
   });
 
-  // --------------------- Группа 1: Валидация контента (400 ошибки) ---------------------
   describe('POST /posts/:postId/comments - Content validation', () => {
     const getCommentUrl = (postId = testPostId) =>
       `${POSTS_BASE}/${postId}/comments`;
@@ -105,7 +103,7 @@ describe('Comments E2E Tests', () => {
       await request(app.getHttpServer())
         .post(getCommentUrl())
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ content: 'a'.repeat(401) })
+        .send({ content: 'a'.repeat(301) })
         .expect(400);
     });
 
@@ -118,7 +116,6 @@ describe('Comments E2E Tests', () => {
     });
   });
 
-  // --------------------- Группа 2: Авторизация (401 ошибки) ---------------------
   describe('POST /posts/:postId/comments - Authorization', () => {
     const getCommentUrl = () => `${POSTS_BASE}/${testPostId}/comments`;
     const validCommentData = {
@@ -141,7 +138,6 @@ describe('Comments E2E Tests', () => {
     });
   });
 
-  // --------------------- Группа 3: Валидация поста (404 ошибки) ---------------------
   describe('POST /posts/:postId/comments - Post validation', () => {
     const validCommentData = {
       content: 'Valid comment content with enough length',
@@ -158,7 +154,6 @@ describe('Comments E2E Tests', () => {
     });
   });
 
-  // --------------------- Группа 4: Успешные операции ---------------------
   describe('POST /posts/:postId/comments - Success cases', () => {
     const getCommentUrl = () => `${POSTS_BASE}/${testPostId}/comments`;
 
@@ -177,137 +172,154 @@ describe('Comments E2E Tests', () => {
           .expect(201);
       }
 
-      // Опционально: проверить что все создались
-      const allComments = await commentModel.find({});
-      expect(allComments).toHaveLength(3);
+      const countRows = await dataSource.query(
+        `SELECT COUNT(*)::int AS count FROM comments WHERE "postId" = $1 AND "deleteAt" IS NULL`,
+        [testPostId],
+      );
+      expect(Number(countRows[0]?.count ?? 0)).toBe(3);
     });
   });
 
-  // --------------------- Группа 5: Обновление комментариев ---------------------
+  describe('GET /posts/:postId/comments', () => {
+    const getCommentsUrl = (postId = testPostId) =>
+      `${POSTS_BASE}/${postId}/comments`;
+
+    it('returns paginated comments for the post after creating several via POST', async () => {
+      const contents = [
+        'Alpha comment text meets minimum length',
+        'Bravo comment text meets minimum length',
+        'Charlie comment text meets minimum length',
+      ];
+      const createdIds: string[] = [];
+
+      for (const content of contents) {
+        const res = await request(app.getHttpServer())
+          .post(`${POSTS_BASE}/${testPostId}/comments`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({ content })
+          .expect(201);
+        createdIds.push(res.body.id);
+        expect(res.body.content).toBe(content);
+      }
+
+      const listRes = await request(app.getHttpServer())
+        .get(getCommentsUrl())
+        .expect(200);
+
+      expect(listRes.body).toMatchObject({
+        page: 1,
+        pageSize: 10,
+        totalCount: 3,
+        pagesCount: 1,
+      });
+      expect(listRes.body.items).toHaveLength(3);
+
+      const returnedIds = listRes.body.items.map((i: { id: string }) => i.id);
+      expect(returnedIds.sort()).toEqual([...createdIds].sort());
+
+      // По умолчанию сортировка по createdAt desc — последний созданный первый
+      expect(listRes.body.items[0].id).toBe(createdIds[2]);
+      expect(listRes.body.items[2].id).toBe(createdIds[0]);
+
+      for (const item of listRes.body.items) {
+        expect(item).toMatchObject({
+          id: expect.any(String),
+          content: expect.any(String),
+          commentatorInfo: {
+            userId: testUserId,
+            userLogin: 'testuser',
+          },
+          createdAt: expect.any(String),
+          likesInfo: {
+            likesCount: expect.any(Number),
+            dislikesCount: expect.any(Number),
+            myStatus: 'None',
+          },
+        });
+      }
+    });
+  });
+
   describe('PUT /comments/:id - Update operations', () => {
     it('should reject update when content is not a string (400)', async () => {
-      // Создаем тестовый комментарий
-      const comment = await commentModel.create({
-        content: 'Original comment content',
-        commentatorInfo: {
-          userId: testUserId,
-          userLogin: 'testuser',
-        },
-        likesInfo: {
-          likesCount: 0,
-          dislikesCount: 0,
-        },
-        postId: testPostId,
-      });
+      const createRes = await request(app.getHttpServer())
+        .post(`${POSTS_BASE}/${testPostId}/comments`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ content: 'Original comment content long enough' })
+        .expect(201);
 
-      const commentUrl = `${COMMENTS_BASE}/${comment._id.toString()}`;
-
-      // Пытаемся обновить с контентом типа number вместо string
-      const invalidUpdateDto = { content: 123456789 }; // number вместо string
+      const commentUrl = `${COMMENTS_BASE}/${createRes.body.id}`;
 
       await request(app.getHttpServer())
         .put(commentUrl)
         .set('Authorization', `Bearer ${authToken}`)
-        .send(invalidUpdateDto)
+        .send({ content: 123456789 })
         .expect(400);
     });
 
     it('should require authorization for updating comment (401)', async () => {
-      // Создаем тестовый комментарий
-      const comment = await commentModel.create({
-        content: 'testtestttesttesttesttest',
-        commentatorInfo: {
-          userId: 'testuserId',
-          userLogin: 'testuserLogin',
-        },
-        likesInfo: {
-          likesCount: 0,
-          dislikesCount: 0,
-        },
-      });
+      const createRes = await request(app.getHttpServer())
+        .post(`${POSTS_BASE}/${testPostId}/comments`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ content: 'testtestttesttesttesttest long enough' })
+        .expect(201);
 
-      const commentUrl = `${COMMENTS_BASE}/${comment._id.toString()}`;
-      const updateCommentDto = { content: '12345678910111213141515616' };
+      const commentUrl = `${COMMENTS_BASE}/${createRes.body.id}`;
 
-      // Пытаемся обновить без авторизации
       await request(app.getHttpServer())
         .put(commentUrl)
-        .send(updateCommentDto)
+        .send({ content: '12345678910111213141515616' })
         .expect(401);
     });
 
     it("should return 403 Forbidden when updating another user's comment", async () => {
-      // Создаем отдельного пользователя с его комментарием
       const anotherUser = await createTestUser({
         login: 'another',
-        email: 'another@example.com',
+        email: `another_${Date.now()}@example.com`,
       });
 
-      const anotherUserComment = await commentModel.create({
-        content: 'Comment from another user',
-        commentatorInfo: {
-          userId: anotherUser.id,
-          userLogin: 'another',
-        },
-        likesInfo: { likesCount: 0, dislikesCount: 0 },
-        postId: testPostId,
-      });
+      const anotherLogin = await request(app.getHttpServer())
+        .post(e2eApiPath('auth/login'))
+        .send({
+          loginOrEmail: anotherUser.login,
+          password: anotherUser.password,
+        })
+        .expect(200);
 
-      // Основной пользователь пытается обновить чужой комментарий
+      const createRes = await request(app.getHttpServer())
+        .post(`${POSTS_BASE}/${testPostId}/comments`)
+        .set('Authorization', `Bearer ${anotherLogin.body.accessToken}`)
+        .send({ content: 'Comment from another user long enough' })
+        .expect(201);
+
       await request(app.getHttpServer())
-        .put(`${COMMENTS_BASE}/${anotherUserComment._id.toString()}`)
+        .put(`${COMMENTS_BASE}/${createRes.body.id}`)
         .set('Authorization', `Bearer ${authToken}`)
-        .send({ content: "Trying to update someone else's comment" })
+        .send({ content: "Trying to update someone else's comment long" })
         .expect(403);
     });
 
     it('should return 404 when updating non-existent comment', async () => {
       const nonExistentCommentId = '507f1f77bcf86cd799439011';
 
-      const validUpdateDto = {
-        content: 'This comment does not exist',
-      };
-
       await request(app.getHttpServer())
         .put(`${COMMENTS_BASE}/${nonExistentCommentId}`)
         .set('Authorization', `Bearer ${authToken}`)
-        .send(validUpdateDto)
+        .send({ content: 'This comment does not exist long enough' })
         .expect(404);
     });
 
     it('should return 204 successfully', async () => {
-      await deleteAllE2eUsers();
-      const testUser = await createTestUser({
-        login: 'updusr',
-        email: 'updusr@test.com',
-      });
-      testUserId = testUser.id;
-      const loginResponse = await request(app.getHttpServer())
-        .post(e2eApiPath('auth/login'))
-        .send({
-          loginOrEmail: 'updusr',
-          password: 'testpassword',
-        });
-      authToken = loginResponse.body.accessToken;
-      console.log(authToken, 'auth token before comment created');
-      //создали комментарий этим пользователем
-      const comment = await commentModel.create({
-        content: 'Original comment content',
-        commentatorInfo: {
-          userId: testUserId,
-          userLogin: 'updusr',
-        },
-        likesInfo: {
-          likesCount: 0,
-          dislikesCount: 0,
-        },
-        postId: testPostId,
-      });
+      const createRes = await request(app.getHttpServer())
+        .post(`${POSTS_BASE}/${testPostId}/comments`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ content: 'Original comment content long enough' })
+        .expect(201);
 
       const content = { content: 't'.repeat(22) };
-      const commentId = comment._id.toString();
+      const commentId = createRes.body.id as string;
       const url = `${COMMENTS_BASE}/${commentId}`;
-      console.log(authToken, 'auth token before comment updated');
+
       await request(app.getHttpServer())
         .put(url)
         .set('Authorization', `Bearer ${authToken}`)
@@ -317,71 +329,51 @@ describe('Comments E2E Tests', () => {
   });
 
   describe('DELETE /comments/:id', () => {
-    beforeEach(async () => {
-      commentModel.deleteMany({});
-    });
     describe('Success cases', () => {
       it('should delete own comment - 204 No Content', async () => {
-        // Создаем комментарий текущего пользователя
-        const comment = await commentModel.create({
-          content: 'Comment to be deleted',
-          commentatorInfo: {
-            userId: testUserId,
-            userLogin: 'testuser',
-          },
-          likesInfo: {
-            likesCount: 0,
-            dislikesCount: 0,
-          },
-          postId: testPostId,
-        });
+        const createRes = await request(app.getHttpServer())
+          .post(`${POSTS_BASE}/${testPostId}/comments`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({ content: 'Comment to be deleted long enough' })
+          .expect(201);
 
-        const commentUrl = `${COMMENTS_BASE}/${comment._id.toString()}`;
+        const commentUrl = `${COMMENTS_BASE}/${createRes.body.id}`;
 
-        // Удаляем свой комментарий
         await request(app.getHttpServer())
           .delete(commentUrl)
           .set('Authorization', `Bearer ${authToken}`)
           .expect(204);
 
-        // Проверяем, что комментарий помечен как удаленный (soft delete)
-        const deletedComment = await commentModel.findById(comment._id);
-        expect(deletedComment.deleteAt).not.toBeNull();
-        expect(deletedComment.deleteAt).toBeInstanceOf(Date);
+        const deletedCommentRows = await dataSource.query(
+          `SELECT "deleteAt" FROM comments WHERE id = $1`,
+          [createRes.body.id],
+        );
+        expect(deletedCommentRows[0]?.deleteAt).not.toBeNull();
       });
     });
 
     describe('Authorization errors', () => {
       it('should return 401 Unauthorized without token', async () => {
-        const comment = await commentModel.create({
-          content: 'Comment',
-          commentatorInfo: {
-            userId: testUserId,
-            userLogin: 'testuser',
-          },
-          likesInfo: { likesCount: 0, dislikesCount: 0 },
-          postId: testPostId,
-        });
+        const createRes = await request(app.getHttpServer())
+          .post(`${POSTS_BASE}/${testPostId}/comments`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({ content: 'Comment for auth test long enough' })
+          .expect(201);
 
         await request(app.getHttpServer())
-          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
-          // Нет Authorization header
+          .delete(`${COMMENTS_BASE}/${createRes.body.id}`)
           .expect(401);
       });
 
       it('should return 401 Unauthorized with invalid token', async () => {
-        const comment = await commentModel.create({
-          content: 'Comment',
-          commentatorInfo: {
-            userId: testUserId,
-            userLogin: 'testuser',
-          },
-          likesInfo: { likesCount: 0, dislikesCount: 0 },
-          postId: testPostId,
-        });
+        const createRes = await request(app.getHttpServer())
+          .post(`${POSTS_BASE}/${testPostId}/comments`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({ content: 'Comment for invalid token long' })
+          .expect(201);
 
         await request(app.getHttpServer())
-          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .delete(`${COMMENTS_BASE}/${createRes.body.id}`)
           .set('Authorization', 'Bearer invalid_token_here')
           .expect(401);
       });
@@ -389,12 +381,12 @@ describe('Comments E2E Tests', () => {
 
     describe('Ownership errors', () => {
       let otherUserToken: string;
-      let otherUserComment: any;
+      let otherUserCommentId: string;
 
-      beforeAll(async () => {
+      beforeEach(async () => {
         await createTestUser({
           login: 'otheruser',
-          email: 'other@example.com',
+          email: `otheruser_${Date.now()}@example.com`,
         });
 
         const loginResponse = await request(app.getHttpServer())
@@ -402,45 +394,34 @@ describe('Comments E2E Tests', () => {
           .send({
             loginOrEmail: 'otheruser',
             password: 'testpassword',
-          });
+          })
+          .expect(200);
         otherUserToken = loginResponse.body.accessToken;
-      });
 
-      beforeEach(async () => {
-        const otherUserId = await findE2eUserIdByLogin('otheruser');
-        if (!otherUserId) {
-          throw new Error('otheruser not found');
-        }
-        otherUserComment = await commentModel.create({
-          content: 'Comment from other user',
-          commentatorInfo: {
-            userId: otherUserId,
-            userLogin: 'otheruser',
-          },
-          likesInfo: { likesCount: 0, dislikesCount: 0 },
-          postId: testPostId,
-        });
+        const createRes = await request(app.getHttpServer())
+          .post(`${POSTS_BASE}/${testPostId}/comments`)
+          .set('Authorization', `Bearer ${otherUserToken}`)
+          .send({ content: 'Comment from other user long enough' })
+          .expect(201);
+        otherUserCommentId = createRes.body.id as string;
       });
 
       it("should return 403 Forbidden when deleting someone else's comment", async () => {
-        // Первый пользователь пытается удалить чужой комментарий
         await request(app.getHttpServer())
-          .delete(`${COMMENTS_BASE}/${otherUserComment._id.toString()}`)
+          .delete(`${COMMENTS_BASE}/${otherUserCommentId}`)
           .set('Authorization', `Bearer ${authToken}`)
           .expect(403);
       });
 
       it('should allow owner to delete their own comment', async () => {
-        // Владелец удаляет свой комментарий
         await request(app.getHttpServer())
-          .delete(`${COMMENTS_BASE}/${otherUserComment._id.toString()}`)
+          .delete(`${COMMENTS_BASE}/${otherUserCommentId}`)
           .set('Authorization', `Bearer ${otherUserToken}`)
           .expect(204);
       });
     });
 
     describe('Not found errors', () => {
-      beforeEach;
       it('should return 404 for non-existent comment', async () => {
         const nonExistentId = '507f1f77bcf86cd799439011';
 
@@ -451,19 +432,19 @@ describe('Comments E2E Tests', () => {
       });
 
       it('should return 404 for already deleted comment', async () => {
-        const comment = await commentModel.create({
-          content: 'Already deleted comment',
-          commentatorInfo: {
-            userId: testUserId,
-            userLogin: 'testuser',
-          },
-          likesInfo: { likesCount: 0, dislikesCount: 0 },
-          postId: testPostId,
-          deleteAt: new Date(), // уже удален
-        });
+        const createRes = await request(app.getHttpServer())
+          .post(`${POSTS_BASE}/${testPostId}/comments`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({ content: 'Already deleted comment long enough' })
+          .expect(201);
+
+        await dataSource.query(
+          `UPDATE comments SET "deleteAt" = NOW() WHERE id = $1`,
+          [createRes.body.id],
+        );
 
         await request(app.getHttpServer())
-          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .delete(`${COMMENTS_BASE}/${createRes.body.id}`)
           .set('Authorization', `Bearer ${authToken}`)
           .expect(404);
       });
@@ -478,50 +459,43 @@ describe('Comments E2E Tests', () => {
 
     describe('Edge cases', () => {
       it('should handle deleting comment with likes', async () => {
-        // Создаем комментарий с лайками
-        const comment = await commentModel.create({
-          content: 'Popular comment',
-          commentatorInfo: {
-            userId: testUserId,
-            userLogin: 'testuser',
-          },
-          likesInfo: {
-            likesCount: 10,
-            dislikesCount: 3,
-          },
-          postId: testPostId,
-        });
+        const createRes = await request(app.getHttpServer())
+          .post(`${POSTS_BASE}/${testPostId}/comments`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({ content: 'Popular comment text long enough' })
+          .expect(201);
+
+        await dataSource.query(
+          `UPDATE comments SET "likesCount" = 10, "dislikesCount" = 3 WHERE id = $1`,
+          [createRes.body.id],
+        );
 
         await request(app.getHttpServer())
-          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .delete(`${COMMENTS_BASE}/${createRes.body.id}`)
           .set('Authorization', `Bearer ${authToken}`)
           .expect(204);
 
-        // Проверяем что удалился
-        const deletedComment = await commentModel.findById(comment._id);
-        expect(deletedComment.deleteAt).not.toBeNull();
+        const deletedCommentRows = await dataSource.query(
+          `SELECT "deleteAt" FROM comments WHERE id = $1`,
+          [createRes.body.id],
+        );
+        expect(deletedCommentRows[0]?.deleteAt).not.toBeNull();
       });
 
       it('should not delete comment twice', async () => {
-        const comment = await commentModel.create({
-          content: 'Comment for double delete',
-          commentatorInfo: {
-            userId: testUserId,
-            userLogin: 'testuser',
-          },
-          likesInfo: { likesCount: 0, dislikesCount: 0 },
-          postId: testPostId,
-        });
+        const createRes = await request(app.getHttpServer())
+          .post(`${POSTS_BASE}/${testPostId}/comments`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({ content: 'Comment for double delete long enough' })
+          .expect(201);
 
-        // Первое удаление - успешно
         await request(app.getHttpServer())
-          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .delete(`${COMMENTS_BASE}/${createRes.body.id}`)
           .set('Authorization', `Bearer ${authToken}`)
           .expect(204);
 
-        // Второе удаление - 404 (уже удален)
         await request(app.getHttpServer())
-          .delete(`${COMMENTS_BASE}/${comment._id.toString()}`)
+          .delete(`${COMMENTS_BASE}/${createRes.body.id}`)
           .set('Authorization', `Bearer ${authToken}`)
           .expect(404);
       });

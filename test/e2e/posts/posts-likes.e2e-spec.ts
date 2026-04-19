@@ -21,7 +21,7 @@ describe('Posts Likes E2E Test', () => {
   let moduleFixture: TestingModule;
 
   const POSTS_BASE = e2eApiPath('posts');
-  const BLOGS_BASE = e2eApiPath('blogs');
+  const BLOGS_BASE = e2eApiPath('sa/blogs');
   const SA_USERS = e2eApiPath('sa/users');
   const AUTH_LOGIN = e2eApiPath('auth/login');
 
@@ -74,6 +74,8 @@ describe('Posts Likes E2E Test', () => {
       .expect(200);
 
     userToken = loginResponse.body.accessToken;
+
+    console.log("base path: ", BLOGS_BASE)
 
     const blogResponse = await request(app.getHttpServer())
       .post(BLOGS_BASE)
