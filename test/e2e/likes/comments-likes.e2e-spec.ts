@@ -1,120 +1,125 @@
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from '@jest/globals';
+import { randomUUID } from 'crypto';
 import { INestApplication } from '@nestjs/common';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import { connect, Connection } from 'mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
+import request from 'supertest';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
-import { getModelToken } from '@nestjs/mongoose';
-import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
-import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
-import { createTestUser, deleteAllE2eUsers } from '../../helpers/factory/user-factory';
 import { e2eApiPath } from '../helpers/api-path';
-import request from 'supertest';
-import { createTestBlog } from '../../helpers/factory/blog-factory';
-import { createTestPost } from '../../helpers/factory/post-factory';
-import { createTestCommentForLikes } from '../../helpers/factory/comments-factory';
-import { Comment } from 'src/modules/bloggers-platform/comments/domain/commentEntity';
-import { expect } from '@jest/globals';
-import { Like } from 'src/modules/bloggers-platform/likes/domain/like-entity';
 
-describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
+const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
+const TESTING_PATH = e2eApiPath('testing/all-data');
+
+describe('Comments Likes E2E Tests - One user, one comment scenarios (raw SQL)', () => {
   let app: INestApplication;
-  let mongoServer: MongoMemoryServer;
-  let mongoConnection: Connection;
   let moduleFixture: TestingModule;
-  let commentModel: any;
-  let postModel: any;
-  let blogModel: any;
-  let userModel: any;
-  let likeModel: any;
 
-  // Общие данные для всех тестов
-  let testUser: any;
-  let testUserId: string;
-  let testPostId: string;
+  const POSTS_BASE = e2eApiPath('posts');
+  const SA_BLOGS_BASE = e2eApiPath('sa/blogs');
+  const SA_USERS = e2eApiPath('sa/users');
+  const AUTH_LOGIN = e2eApiPath('auth/login');
+  const COMMENTS_BASE = e2eApiPath('comments');
+
   let authToken: string;
+  let testPostId: string;
+
+  const basicAuthHeader = (login: string, password: string) =>
+    `Basic ${Buffer.from(`${login}:${password}`).toString('base64')}`;
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-
-    mongoConnection = (await connect(mongoUri)).connection;
-
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
-    })
-      .overrideProvider('MONGO_CONNECTION')
-      .useValue(mongoConnection)
-      .compile();
+    }).compile();
 
     app = moduleFixture.createNestApplication();
     appSetup(app);
     await app.init();
-
-    commentModel = moduleFixture.get(getModelToken(Comment.name));
-    postModel = moduleFixture.get(getModelToken(PostEntity.name));
-    blogModel = moduleFixture.get(getModelToken(Blog.name));
-    likeModel = moduleFixture.get(getModelToken(Like.name));
-
-    await deleteAllE2eUsers();
-    await blogModel.deleteMany({});
-    await postModel.deleteMany({});
-    await commentModel.deleteMany({});
-    await likeModel.deleteMany({});
-
-    // Создаем общие данные (пользователь, блог, пост)
-    testUser = await createTestUser();
-    testUserId = testUser.id;
-
-    // Получаем токен
-    const loginResponse = await request(app.getHttpServer())
-      .post(e2eApiPath('auth/login'))
-      .send({
-        loginOrEmail: 'testuser',
-        password: 'testpassword',
-      });
-    authToken = loginResponse.body.accessToken;
-
-    // Создаем блог и пост (один на все тесты)
-    const testBlog = await createTestBlog(blogModel);
-    const testPost = await createTestPost(
-      postModel,
-      testBlog._id.toString(),
-      testBlog.name,
-    );
-    testPostId = testPost._id.toString();
-  });
-
-  afterAll(async () => {
-    await mongoConnection.close();
-    await mongoServer.stop();
-    await app.close();
   });
 
   beforeEach(async () => {
-    // Перед КАЖДЫМ тестом очищаем только комментарии и лайки
-    // Пользователь, блог и пост остаются (они созданы в beforeAll)
-    await commentModel.deleteMany({});
-    await likeModel.deleteMany({});
+    await request(app.getHttpServer()).delete(TESTING_PATH).expect(204);
+
+    const suffix = randomUUID().replace(/-/g, '').slice(0, 8);
+    const userLogin = `u${suffix}`.slice(0, 10);
+    const userPassword = 'testpass12';
+    const adminLogin = 'admin';
+    const adminPassword = 'qwerty';
+
+    await request(app.getHttpServer())
+      .post(SA_USERS)
+      .set('Authorization', basicAuthHeader(adminLogin, adminPassword))
+      .send({
+        login: userLogin,
+        password: userPassword,
+        email: `${suffix}@example.com`,
+      })
+      .expect(201);
+
+    const loginResponse = await request(app.getHttpServer())
+      .post(AUTH_LOGIN)
+      .send({
+        loginOrEmail: userLogin,
+        password: userPassword,
+      })
+      .expect(200);
+
+    authToken = loginResponse.body.accessToken;
+
+    const blogResponse = await request(app.getHttpServer())
+      .post(SA_BLOGS_BASE)
+      .set('Authorization', BASIC_AUTH)
+      .send({
+        name: 'test-blog',
+        description: 'blog for comment likes e2e',
+        websiteUrl: 'https://testblog.com',
+      })
+      .expect(201);
+
+    const blogId = blogResponse.body.id;
+
+    const postResponse = await request(app.getHttpServer())
+      .post(POSTS_BASE)
+      .set('Authorization', BASIC_AUTH)
+      .send({
+        title: 'Post for comment likes',
+        shortDescription: 'Short',
+        content: 'Full content for comment likes e2e',
+        blogId,
+      })
+      .expect(201);
+
+    testPostId = postResponse.body.id;
   });
 
-  // Тест 1: Нет лайка → шлем Like → статус Like
-  it('1. No like → send Like → should set Like status', async () => {
-    // Создаем новый комментарий для этого теста
-    const testComment = await createTestCommentForLikes(
-      commentModel,
-      testPostId,
-      testUserId,
-      testUser.login,
-      {
-        content: 'Comment for like test 1',
-      },
-    );
-    const testCommentId = testComment._id.toString();
+  afterAll(async () => {
+    if (app) {
+      await app.close();
+    }
+  });
 
-    // 1. Проверяем начальный статус (должен быть None)
+  async function createCommentViaApi(content: string): Promise<string> {
+    const res = await request(app.getHttpServer())
+      .post(`${POSTS_BASE}/${testPostId}/comments`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ content })
+      .expect(201);
+    return res.body.id as string;
+  }
+
+  it('1. No like → send Like → should set Like status', async () => {
+    const testCommentId = await createCommentViaApi(
+      'Comment for like test 1',
+    );
+
     const initialResponse = await request(app.getHttpServer())
-      .get(e2eApiPath(`comments/${testCommentId}`))
+      .get(`${COMMENTS_BASE}/${testCommentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
@@ -122,18 +127,16 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
     expect(initialResponse.body.likesInfo.likesCount).toBe(0);
     expect(initialResponse.body.likesInfo.dislikesCount).toBe(0);
 
-    // 2. Шлем Like
     await request(app.getHttpServer())
-      .put(e2eApiPath(`comments/${testCommentId}/like-status`))
+      .put(`${COMMENTS_BASE}/${testCommentId}/like-status`)
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         likeStatus: 'Like',
       })
       .expect(204);
 
-    // 3. Проверяем, что статус изменился на Like
     const finalResponse = await request(app.getHttpServer())
-      .get(e2eApiPath(`comments/${testCommentId}`))
+      .get(`${COMMENTS_BASE}/${testCommentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
@@ -142,32 +145,21 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
     expect(finalResponse.body.likesInfo.dislikesCount).toBe(0);
   });
 
-  // Тест 2: Есть Like → шлем Dislike → статус Dislike
   it('3. Has Like → send Dislike → should set Dislike status', async () => {
-    // Создаем новый комментарий для этого теста
-    const testComment = await createTestCommentForLikes(
-      commentModel,
-      testPostId,
-      testUserId,
-      testUser.login,
-      {
-        content: 'Comment for like test 3',
-      },
+    const testCommentId = await createCommentViaApi(
+      'Comment for like test 3',
     );
-    const testCommentId = testComment._id.toString();
 
-    // 1. Сначала ставим Like
     await request(app.getHttpServer())
-      .put(e2eApiPath(`comments/${testCommentId}/like-status`))
+      .put(`${COMMENTS_BASE}/${testCommentId}/like-status`)
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         likeStatus: 'Like',
       })
       .expect(204);
 
-    // 2. Проверяем, что Like установился
     const afterLike = await request(app.getHttpServer())
-      .get(e2eApiPath(`comments/${testCommentId}`))
+      .get(`${COMMENTS_BASE}/${testCommentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
@@ -175,18 +167,16 @@ describe('Comments Likes E2E Tests - One user, one comment scenarios', () => {
     expect(afterLike.body.likesInfo.likesCount).toBe(1);
     expect(afterLike.body.likesInfo.dislikesCount).toBe(0);
 
-    // 3. Шлем Dislike (должен заменить Like на Dislike)
     await request(app.getHttpServer())
-      .put(e2eApiPath(`comments/${testCommentId}/like-status`))
+      .put(`${COMMENTS_BASE}/${testCommentId}/like-status`)
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         likeStatus: 'Dislike',
       })
       .expect(204);
 
-    // 4. Проверяем, что статус изменился на Dislike
     const finalResponse = await request(app.getHttpServer())
-      .get(e2eApiPath(`comments/${testCommentId}`))
+      .get(`${COMMENTS_BASE}/${testCommentId}`)
       .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
