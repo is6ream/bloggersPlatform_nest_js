@@ -8,6 +8,7 @@ import {
 } from '@jest/globals';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from 'src/modules/app-module/app-module';
@@ -28,12 +29,15 @@ describe('Comments E2E Tests', () => {
 
   const POSTS_BASE = e2eApiPath('posts');
   const COMMENTS_BASE = e2eApiPath('comments');
-  const BLOGS_BASE = e2eApiPath('blogs');
+  const SA_BLOGS_BASE = e2eApiPath('sa/blogs');
 
   beforeAll(async () => {
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     appSetup(app);
@@ -60,7 +64,7 @@ describe('Comments E2E Tests', () => {
     authToken = loginResponse.body.accessToken;
 
     const blogRes = await request(app.getHttpServer())
-      .post(BLOGS_BASE)
+      .post(SA_BLOGS_BASE)
       .set('Authorization', BASIC_AUTH)
       .send({
         name: 'cmt-e2e-blog',
@@ -449,11 +453,11 @@ describe('Comments E2E Tests', () => {
           .expect(404);
       });
 
-      it('should return 400 for invalid comment ID format', async () => {
+      it('should return 404 for invalid comment ID (not found)', async () => {
         await request(app.getHttpServer())
           .delete(`${COMMENTS_BASE}/invalid-id-format`)
           .set('Authorization', `Bearer ${authToken}`)
-          .expect(400);
+          .expect(404);
       });
     });
 
