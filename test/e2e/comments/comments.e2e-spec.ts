@@ -261,6 +261,25 @@ describe('Comments E2E Tests', () => {
         .expect(400);
     });
 
+    it('should  reject update when content is too short (400)', async () => {
+      const createRes = await request(app.getHttpServer())
+        .post(`${POSTS_BASE}/${testPostId}/comments`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ content: 'Original comment content long enough' })
+        .expect(201);
+
+      const commentUrl = `${COMMENTS_BASE}/${createRes.body.id}`;
+      const shortContent = 'short'
+
+      await request(app.getHttpServer())
+        .put(commentUrl)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ content: shortContent })
+        .expect(400);
+
+
+    })
+
     it('should require authorization for updating comment (401)', async () => {
       const createRes = await request(app.getHttpServer())
         .post(`${POSTS_BASE}/${testPostId}/comments`)
