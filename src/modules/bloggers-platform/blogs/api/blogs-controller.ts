@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { BlogsRawSqlQueryRepository } from '../infrastructure/blogs-raw-sql.query-repository';
 import { BlogViewDto } from '../dto/output/blogViewDto';
 import { GetBlogsQueryParams } from './query/get-blogs-query-params';
@@ -6,6 +6,8 @@ import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
 import { PostsRawSqlQueryRepository } from '../../posts/infrastructure/posts-raw-sql.query-repository';
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
 import { PaginatedPostsDto } from '../../posts/infrastructure/dto/paginated-post.dto';
+import { UserExtractorInterceptor } from 'src/core/interceptors/user-extractor.inteceptor';
+import { UserIdOptional } from 'src/core/decorators/user-id.optional.decorator';
 
 @Controller('blogs')
 export class BlogsController {
@@ -22,11 +24,13 @@ export class BlogsController {
   }
 
   @Get(':blogId/posts')
+  @UseInterceptors(UserExtractorInterceptor)
   async getPostsForSpecificBlog(
     @Param('blogId') blogId: string,
     @Query() query: GetPostsQueryParams,
+    @UserIdOptional() userId: string,
   ): Promise<PaginatedPostsDto> {
-    return this.postsQueryRepository.getAllPostsForBlog(blogId, query, undefined);
+    return this.postsQueryRepository.getAllPostsForBlog(blogId, query, userId);
   }
 
   @Get(':id')
