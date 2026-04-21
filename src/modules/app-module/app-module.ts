@@ -11,10 +11,26 @@ import { EmailAdapter } from '../notifications/email-adapter';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CoreConfig } from 'src/modules/app-module/core-config';
 import { CoreModule } from 'src/core/core.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 @Module({
   imports: [
     configModule,
     CoreModule,
+    TypeOrmModule.forRootAsync({
+      imports: [CoreModule],
+      inject: [CoreConfig],
+      useFactory: (coreConfig: CoreConfig) => ({
+        type: 'postgres' as const,
+        host: coreConfig.pgHost,
+        port: coreConfig.pgPort,
+        username: coreConfig.pgUser,
+        password: coreConfig.pgPassword,
+        database: coreConfig.pgDatabase,
+        synchronize: false,
+        autoLoadEntities: true,
+      }),
+    }),
     MongooseModule.forRootAsync({
       useFactory: (coreConfig: CoreConfig) => {
         return {
