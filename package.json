@@ -34,6 +34,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "github:nestjs/swagger",
     "@nestjs/throttler": "^6.5.0",
+    "@nestjs/typeorm": "^11.0.1",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "bcrypt": "^6.0.0",
