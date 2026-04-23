@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
-import { UserSqlEntity } from '../../domain/user-sql.entity';
-import { LoginOrEmailDto } from '../dto/login-or-email.dto';
+import { UserSqlEntity } from '../../../domain/user-sql.entity';
+import { LoginOrEmailDto } from '../../dto/login-or-email.dto';
 
 type RawUserRow = {
   id: string;

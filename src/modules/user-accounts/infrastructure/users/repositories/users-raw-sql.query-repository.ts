@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { GetUsersQueryParams } from '../../api/dto/output/get-users-query-params.input.dto';
-import { UserPaginatedViewDto } from '../../api/dto/output/paginatied.user.view-dto';
+import { GetUsersQueryParams } from '../../../api/dto/output/get-users-query-params.input.dto';
+import { UserPaginatedViewDto } from '../../../api/dto/output/paginatied.user.view-dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
-import { UserViewDto } from '../../api/dto/output/user.view-dto';
-import { UserSqlEntity } from '../../domain/user-sql.entity';
+import { UserViewDto } from '../../../api/dto/output/user.view-dto';
+import { UserSqlEntity } from '../../../domain/user-sql.entity';
 
 type RawUserRow = {
   id: string;

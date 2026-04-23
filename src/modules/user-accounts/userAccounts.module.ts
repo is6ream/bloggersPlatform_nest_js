@@ -1,8 +1,8 @@
+import { UsersRawSqlQueryRepository } from './infrastructure/users/repositories/users-raw-sql.query-repository';
+import { UsersRawSqlRepository } from './infrastructure/users/repositories/users-raw-sql.repository';
 import { Module } from '@nestjs/common';
 import { UserController } from './api/user-controller';
-import { UsersQueryRepository } from './infrastructure/users/usersQueryRepository';
 import { UsersService } from './application/user-service';
-import { UsersRepository } from './infrastructure/users/usersRepository';
 import { BcryptService } from './application/bcrypt-service';
 import { AuthController } from './api/auth-controller';
 import { AuthService } from './application/auth-service';
@@ -51,8 +51,8 @@ import { SecurityController } from './api/security.controller';
     JwtStrategy,
     LocalStrategy,
     RefreshJwtStrategy,
-    UsersQueryRepository,
-    UsersRepository,
+    UsersRawSqlQueryRepository,
+    UsersRawSqlRepository,
     UsersService,
     BcryptService,
     AuthService,

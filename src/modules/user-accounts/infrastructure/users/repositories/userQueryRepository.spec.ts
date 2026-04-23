@@ -1,7 +1,7 @@
 import { TestingModule, Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import { UsersRawSqlQueryRepository } from './users-raw-sql.query-repository';
-import { GetUsersQueryParams } from '../../api/dto/output/get-users-query-params.input.dto';
+import { GetUsersQueryParams } from '../../../api/dto/output/get-users-query-params.input.dto';
 
 describe('UsersRawSqlQueryRepository', () => {
   let repository: UsersRawSqlQueryRepository;
