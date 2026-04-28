@@ -1,22 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { UsersRepository } from '../infrastructure/users/usersRepository';
 import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
 import { BcryptService } from './bcrypt-service';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 import { UserSqlEntity } from '../domain/user-sql.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as dotenv from 'dotenv';
+import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
+import { UserOrmEntity } from '../infrastructure/users/entities/user.orm-entity';
 dotenv.config();
 
 @Injectable()
 export class UsersService {
   constructor(
-    private usersRepository: UsersRepository,
     private bcryptService: BcryptService,
-  ) {}
+    private repository: UsersRepository
+  ) { }
 
   async createUser(dto: CreateUserDto): Promise<string> {
-    const userWithSameLogin = await this.usersRepository.findByLogin(dto.login);
+    const userWithSameLogin = await this.repository.findByLogin(dto.login);
 
     if (userWithSameLogin) {
       throw new DomainException({
@@ -27,13 +29,9 @@ export class UsersService {
 
     const passwordHash = await this.bcryptService.generateHash(dto.password);
 
-    const user = UserSqlEntity.createForInsert({
-      email: dto.email,
-      login: dto.login,
-      password: passwordHash,
-    });
+    const user = UserOrmEntity.create({ login: dto.login, email: dto.email, passwordHash: passwordHash })
 
-    await this.usersRepository.save(user);
+    await this.repository.save(user)
 
     return user.id;
   }

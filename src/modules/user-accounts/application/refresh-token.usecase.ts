@@ -1,5 +1,4 @@
 import { AuthService } from 'src/modules/user-accounts/application/auth-service';
-import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
 import { Injectable, Logger } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
@@ -22,7 +21,6 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
 
   constructor(
     private readonly authService: AuthService,
-    private readonly usersRepository: UsersRepository,
     private readonly deviceSessionsRepository: DeviceSessionsRepository,
   ) {}
 

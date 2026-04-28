@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostRepository } from '../../infrastructure/postRepository';
-import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
+import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
 import { LikeStatus } from 'src/modules/bloggers-platform/likes/types/like-status';
 import { LikesRepository } from 'src/modules/bloggers-platform/likes/infrastructure/likes-repository';
 import { LikeSqlEntity } from 'src/modules/bloggers-platform/likes/domain/like-entity';

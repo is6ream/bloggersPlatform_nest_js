@@ -124,9 +124,7 @@ export class UserSqlEntity {
     }
 
     const recoveryCode = this.generateRecoveryCode();
-
-    console.log( "recovery code check", recoveryCode)
-
+    
     this.passwordRecovery = {
       code: recoveryCode,
       expiresAt: new Date(Date.now() + 3600000),

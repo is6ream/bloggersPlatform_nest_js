@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { GetMeOutputDto } from '../../api/dto/output/get-me-output.dto';
-import { UsersRepository } from '../users/usersRepository';
+import { UsersRawSqlRepository } from '../users/repositories/users-raw-sql.repository';
 
 @Injectable()
 export class AuthQueryRepository {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(private readonly usersRepository: UsersRawSqlRepository) {}
 
   async getMe(id: string): Promise<GetMeOutputDto> {
     const user = await this.usersRepository.findById(id);

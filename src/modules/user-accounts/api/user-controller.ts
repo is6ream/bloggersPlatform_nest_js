@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { UsersQueryRepository } from '../infrastructure/users/usersQueryRepository';
+import { UsersRawSqlQueryRepository } from '../infrastructure/users/repositories/users-raw-sql.query-repository';
 import { UsersService } from '../application/user-service';
 import { UserViewModel } from '../types/output/userViewModel';
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
@@ -23,7 +23,7 @@ import { BasicAuthGuard } from '../guards/basic/basic-auth.guard';
 @UseGuards(BasicAuthGuard)
 export class UserController {
   constructor(
-    private usersQueryRepository: UsersQueryRepository,
+    private usersQueryRepository: UsersRawSqlQueryRepository,
     private usersService: UsersService,
   ) {}
   @Get()

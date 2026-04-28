@@ -16,7 +16,7 @@ import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';
 import { blogCommandHandlers } from './blogs/application/blog-command-handlers';
 import { postCommandHandlers } from './posts/application/post-command-handlers';
-import { UsersRepository } from '../user-accounts/infrastructure/users/usersRepository';
+import { UsersRepository } from '../user-accounts/infrastructure/users/repositories/users-repository';
 import { commentsCommandHadnler } from './comments/application/useCases/comments-command-handler';
 import { CommentsRepository } from './comments/infrastructure/comments-repository';
 import { LikesRepository } from './likes/infrastructure/likes-repository';

@@ -99,11 +99,13 @@ export class AuthService {
   }
   
   async passwordRecovery(email: string) {
+    //достаем сырые данные из sql
     const row = await this.userOrmRepository.findOne({ where: { email } });
     if (!row) {
       return null;
     }
 
+    //с помощью доменного метода превращаем сырые данные в доменную сущность
     const user = UserSqlEntity.fromRow({
       id: row.id,
       login: row.login,
@@ -120,6 +122,8 @@ export class AuthService {
       refreshTokenHash: row.refreshTokenHash,
     });
 
+
+//с помощью доменного метода создаем объект восстановления пароля
     user.requestPasswordRecovery();
     if (!user.passwordRecovery) {
       return null;

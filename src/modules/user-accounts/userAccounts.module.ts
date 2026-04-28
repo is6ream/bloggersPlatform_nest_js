@@ -29,6 +29,7 @@ import { DeleteAllOtherSessionsUseCase } from './application/delete-all-other-se
 import { SecurityController } from './api/security.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserOrmEntity } from './infrastructure/users/entities/user.orm-entity';
+import { UsersRepository } from './infrastructure/users/repositories/users-repository';
 
 @Module({
   imports: [
@@ -70,8 +71,9 @@ import { UserOrmEntity } from './infrastructure/users/entities/user.orm-entity';
     RefreshTokensUseCase,
     DeleteDeviceSessionUseCase,
     DeleteAllOtherSessionsUseCase,
+    UsersRepository
   ],
   exports: [DeviceSessionsPostgresDatabase, ThrottlerModule],
 })
 
-export class UserAccountsModule {}
+export class UserAccountsModule { }

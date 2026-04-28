@@ -4,7 +4,7 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { CommentSqlEntity } from '../../domain/commentEntity';
 import { PostRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postRepository';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
-import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
+import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
 @Injectable()
 export class CreateCommentCommand {
   constructor(

@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { LikeSqlEntity } from 'src/modules/bloggers-platform/likes/domain/like-entity';
-import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/usersRepository';
+import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
 import { CommentSqlEntity } from '../../domain/commentEntity';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
 import { LikesRepository } from 'src/modules/bloggers-platform/likes/infrastructure/likes-repository';
