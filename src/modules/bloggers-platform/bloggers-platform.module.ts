@@ -16,7 +16,7 @@ import { CommentsController } from './comments/api/commentsController';
 import { CqrsModule } from '@nestjs/cqrs';
 import { blogCommandHandlers } from './blogs/application/blog-command-handlers';
 import { postCommandHandlers } from './posts/application/post-command-handlers';
-import { UsersRepository } from '../user-accounts/infrastructure/users/repositories/users-repository';
+import { UserAccountsModule } from '../user-accounts/userAccounts.module';
 import { commentsCommandHadnler } from './comments/application/useCases/comments-command-handler';
 import { CommentsRepository } from './comments/infrastructure/comments-repository';
 import { LikesRepository } from './likes/infrastructure/likes-repository';
@@ -25,6 +25,7 @@ import { JwtService } from '@nestjs/jwt';
   imports: [
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
     CqrsModule,
+    UserAccountsModule,
   ],
   controllers: [SaBlogsController, BlogsController, PostsController, CommentsController],
   providers: [
@@ -37,7 +38,6 @@ import { JwtService } from '@nestjs/jwt';
     JwtService,
     CommentsQueryRepository,
     CommentsRepository,
-    UsersRepository,
     LikesRepository,
     ...blogCommandHandlers,
     ...postCommandHandlers,

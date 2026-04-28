@@ -31,6 +31,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserOrmEntity } from './infrastructure/users/entities/user.orm-entity';
 import { UsersRepository } from './infrastructure/users/repositories/users-repository';
 
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserOrmEntity]),
@@ -71,9 +72,9 @@ import { UsersRepository } from './infrastructure/users/repositories/users-repos
     RefreshTokensUseCase,
     DeleteDeviceSessionUseCase,
     DeleteAllOtherSessionsUseCase,
-    UsersRepository
+    UsersRepository,
   ],
-  exports: [DeviceSessionsPostgresDatabase, ThrottlerModule],
+  exports: [DeviceSessionsPostgresDatabase, ThrottlerModule, UsersRepository],
 })
 
 export class UserAccountsModule { }
