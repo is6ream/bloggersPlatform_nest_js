@@ -1,7 +1,10 @@
 import { CreateUserDto } from 'src/modules/user-accounts/dto/UserInputDto';
 import { Injectable, Logger } from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
-import { UsersRepository } from '../infrastructure/users/usersRepository';
+import { UsersRawSqlRepository } from '../infrastructure/users/repositories/users-raw-sql.repository';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserOrmEntity } from '../infrastructure/users/entities/user.orm-entity';
 import { JwtService } from '@nestjs/jwt';
 import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { UsersService } from './user-service';
@@ -22,14 +25,16 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private usersRepository: UsersRepository,
+    private usersRepository: UsersRawSqlRepository,
     private usersService: UsersService,
     private jwtService: JwtService,
     private bcryptService: BcryptService,
     private emailAdapter: EmailAdapter,
     private configService: ConfigService,
     private deviceSessionsRepository: DeviceSessionsRepository,
-  ) { }
+    @InjectRepository(UserOrmEntity)
+    private readonly userOrmRepository: Repository<UserOrmEntity>,
+  ) {}
 
   async validateUser(
     loginOrEmail: string,
@@ -92,28 +97,48 @@ export class AuthService {
         console.error(`Error sending email: ${error}`);
       });
   }
+  
   async passwordRecovery(email: string) {
-    const user: UserSqlEntity | null =
-      await this.usersRepository.findByEmail(email);
-    console.log("USER check", user)
-    if (!user) {
+    const row = await this.userOrmRepository.findOne({ where: { email } });
+    if (!row) {
       return null;
     }
 
+    const user = UserSqlEntity.fromRow({
+      id: row.id,
+      login: row.login,
+      email: row.email,
+      passwordHash: row.passwordHash,
+      confirmationCode: row.confirmationCode,
+      confirmationExpiration: row.confirmationExpiration,
+      isEmailConfirmed: row.isEmailConfirmed,
+      recoveryCode: row.recoveryCode,
+      recoveryExpiresAt: row.recoveryExpiresAt,
+      recoveryIsUsed: row.recoveryIsUsed,
+      createdAt: row.createdAt,
+      deleteAt: row.deleteAt,
+      refreshTokenHash: row.refreshTokenHash,
+    });
+
     user.requestPasswordRecovery();
-    await this.usersRepository.save(user);
-
-    console.log("CODE check" ,user.passwordRecovery?.code)
-
-    try {
-      this.emailAdapter.sendConfirmationCodeEmail(
-        email,
-        user.passwordRecovery?.code!
-      );
-    } catch (e) {
-      console.error('Error sending recovery email: ', e)
+    if (!user.passwordRecovery) {
+      return null;
     }
 
+    await this.userOrmRepository.update(row.id, {
+      recoveryCode: user.passwordRecovery.code,
+      recoveryExpiresAt: user.passwordRecovery.expiresAt,
+      recoveryIsUsed: user.passwordRecovery.isUsed,
+    });
+
+    try {
+      await this.emailAdapter.sendConfirmationCodeEmail(
+        email,
+        user.passwordRecovery.code,
+      );
+    } catch (e) {
+      this.logger.error('Error sending recovery email', e);
+    }
   }
 
   async loginUser(

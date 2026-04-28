@@ -11,7 +11,8 @@ export class CreateBlogCommand {
 @CommandHandler(CreateBlogCommand)
 export class CreateBlogUseCase implements ICommandHandler<CreateBlogCommand> {
   constructor(private blogsRepository: BlogsRepository) {}
-
+//команда не должна возврашать сущность
+//вернуть id
   async execute(command: CreateBlogCommand): Promise<BlogSqlEntity> {
     const blog = BlogSqlEntity.createForInsert(command.dto);
     await this.blogsRepository.save(blog);

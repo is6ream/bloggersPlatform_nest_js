@@ -128,3 +128,4 @@ export class SaBlogsController {
     return this.blogsQueryRepository.getByIdOrNotFoundFail(id);
   }
 }
+

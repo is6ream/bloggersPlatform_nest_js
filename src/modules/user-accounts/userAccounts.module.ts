@@ -27,9 +27,12 @@ import { UsedRefreshTokenStore } from './application/used-refresh-token.store';
 import { DeleteDeviceSessionUseCase } from './application/delete-device-session.usecase';
 import { DeleteAllOtherSessionsUseCase } from './application/delete-all-other-sessions.usecase';
 import { SecurityController } from './api/security.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserOrmEntity } from './infrastructure/users/entities/user.orm-entity';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([UserOrmEntity]),
     CqrsModule,
     PassportModule,
     ConfigModule,
@@ -43,7 +46,7 @@ import { SecurityController } from './api/security.controller';
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '20s' },
-    }),
+      }),
     }),
   ],
   controllers: [UserController, AuthController, SecurityController],

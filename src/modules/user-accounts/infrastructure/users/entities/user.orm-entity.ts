@@ -2,7 +2,7 @@ import { BaseDBEntity } from 'src/core/database/base-db.entity';
 import { Column, Entity } from 'typeorm';
 
 @Entity('users')
-export class User extends BaseDBEntity {
+export class UserOrmEntity extends BaseDBEntity {
   @Column({ type: 'varchar', length: 255 })
   login!: string;
 
