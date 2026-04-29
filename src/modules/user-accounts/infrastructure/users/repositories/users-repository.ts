@@ -1,5 +1,5 @@
 import { UserOrmEntity } from './../entities/user.orm-entity';
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 
@@ -12,6 +12,14 @@ export class UsersRepository {
 
     async findById(id: string): Promise<UserOrmEntity | null> {
         return this.repo.findOne({ where: { id } });
+    }
+
+    async findByIdOrThrowValidationError(id: string): Promise<UserOrmEntity> {
+        const user = await this.repo.findOne({ where: { id } });
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+        return user;
     }
 
     async findOrNotFoundFail(id: string): Promise<UserOrmEntity> {
@@ -29,4 +37,5 @@ export class UsersRepository {
     async save(user: UserOrmEntity): Promise<void> {
         await this.repo.save(user);
     }
+
 }
