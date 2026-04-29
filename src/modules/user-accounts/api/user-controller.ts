@@ -25,7 +25,7 @@ export class UserController {
   constructor(
     private usersQueryRepository: UsersRawSqlQueryRepository,
     private usersService: UsersService,
-  ) {}
+  ) { }
   @Get()
   async getAll(
     @Query() query: GetUsersQueryParams,
@@ -35,6 +35,7 @@ export class UserController {
 
   @Post()
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewModel> {
+    console.log("create user API method check")
     const userId: string = await this.usersService.createUser(body);
     return this.usersQueryRepository.getByIdOrNotFoundFail(userId);
   }

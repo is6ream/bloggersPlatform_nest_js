@@ -140,8 +140,7 @@ export class UsersRawSqlQueryRepository {
         ($1 = '' AND $2 = '')
         OR (($1 <> '') AND u.login ILIKE '%' || $1 || '%')
         OR (($2 <> '') AND u.email ILIKE '%' || $2 || '%')
-      )
-    `;
+      )`;
 
     const whereSql = `WHERE u."deleteAt" IS NULL ${searchSql}`;
 

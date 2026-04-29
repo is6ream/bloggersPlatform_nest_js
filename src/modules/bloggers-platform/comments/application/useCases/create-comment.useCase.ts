@@ -5,6 +5,7 @@ import { CommentSqlEntity } from '../../domain/commentEntity';
 import { PostRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postRepository';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
+
 @Injectable()
 export class CreateCommentCommand {
   constructor(
@@ -21,6 +22,8 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
     private commentsRepository: CommentsRepository,
     private usersRepository: UsersRepository,
   ) {}
+
+  //разобраться почему здесь падает 400 ошибка!
 
   async execute(command: CreateCommentCommand): Promise<string> {
     await this.postRepository.findOrNotFoundFail(command.postId);

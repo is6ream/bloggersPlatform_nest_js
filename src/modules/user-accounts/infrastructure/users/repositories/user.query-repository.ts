@@ -24,6 +24,8 @@ export class UsersOrmQueryRepository {
             login: 'u.login',
             email: 'u.email',
         };
+
+        // по дефолту стоит поле createdAt
         const orderByField = sortByMap[query.sortBy] ?? 'u.createdAt';
 
         const qb = this.repo
