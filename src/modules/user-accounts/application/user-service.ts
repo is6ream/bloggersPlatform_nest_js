@@ -3,12 +3,8 @@ import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
 import { BcryptService } from './bcrypt-service';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
-import { UserSqlEntity } from '../domain/user-sql.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import * as dotenv from 'dotenv';
 import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
 import { UserOrmEntity } from '../infrastructure/users/entities/user.orm-entity';
-dotenv.config();
 
 @Injectable()
 export class UsersService {
@@ -37,20 +33,20 @@ export class UsersService {
   }
 
   async updateUser(id: string, dto: UpdateUserDto): Promise<string> {
-    const user = await this.usersRepository.findOrNotFoundFail(id);
+    const user = await this.repository.findOrNotFoundFail(id);
 
     user.update(dto);
 
-    await this.usersRepository.save(user);
+    await this.repository.save(user);
 
     return user.id;
   }
 
-  async deleteUser(id: string) {
-    const user = await this.usersRepository.findOrNotFoundFail(id);
+  async deleteUser(id: string): Promise<void> {
+    const user = await this.repository.findOrNotFoundFail(id);
 
     user.makeDeleted();
 
-    await this.usersRepository.save(user);
+    await this.repository.save(user);
   }
 }
