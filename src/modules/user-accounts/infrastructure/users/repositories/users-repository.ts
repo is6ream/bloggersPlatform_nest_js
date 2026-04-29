@@ -30,6 +30,7 @@ export class UsersRepository {
         return user;
     }
 
+
     async findByLogin(login: string): Promise<UserOrmEntity | null> {
         return this.repo.findOne({ where: { login } });
     }

@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, IsNull, Repository } from 'typeorm';
 import { UserOrmEntity } from '../entities/user.orm-entity';
 import { GetUsersQueryParams } from 'src/modules/user-accounts/api/dto/output/get-users-query-params.input.dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
@@ -13,6 +13,14 @@ export class UsersOrmQueryRepository {
         @InjectRepository(UserOrmEntity)
         private readonly repo: Repository<UserOrmEntity>
     ) { }
+
+    async getByIdOrNotFoundFail(id: string): Promise<UserViewDto> {
+        const user = await this.repo.findOne({ where: { id, deleteAt: IsNull() } });
+        if (!user) {
+            throw new NotFoundException('user not found');
+        }
+        return UserViewDto.fromOrm(user);
+    }
 
     async getAll(query: GetUsersQueryParams): Promise<PaginatedViewDto<UserViewDto>> {
         const searchLogin = query.searchLoginTerm?.trim() ?? '';

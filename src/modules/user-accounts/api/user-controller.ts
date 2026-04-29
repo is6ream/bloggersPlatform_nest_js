@@ -10,9 +10,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { UsersRawSqlQueryRepository } from '../infrastructure/users/repositories/users-raw-sql.query-repository';
+import { UsersOrmQueryRepository } from '../infrastructure/users/repositories/user.query-repository';
 import { UsersService } from '../application/user-service';
-import { UserViewModel } from '../types/output/userViewModel';
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
 import { GetUsersQueryParams } from './dto/output/get-users-query-params.input.dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
@@ -23,9 +22,10 @@ import { BasicAuthGuard } from '../guards/basic/basic-auth.guard';
 @UseGuards(BasicAuthGuard)
 export class UserController {
   constructor(
-    private usersQueryRepository: UsersRawSqlQueryRepository,
+    private usersQueryRepository: UsersOrmQueryRepository,
     private usersService: UsersService,
   ) { }
+
   @Get()
   async getAll(
     @Query() query: GetUsersQueryParams,
@@ -34,8 +34,7 @@ export class UserController {
   }
 
   @Post()
-  async createUser(@Body() body: CreateUserInputDto): Promise<UserViewModel> {
-    console.log("create user API method check")
+  async createUser(@Body() body: CreateUserInputDto): Promise<UserViewDto> {
     const userId: string = await this.usersService.createUser(body);
     return this.usersQueryRepository.getByIdOrNotFoundFail(userId);
   }

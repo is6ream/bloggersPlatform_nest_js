@@ -30,6 +30,7 @@ import { SecurityController } from './api/security.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserOrmEntity } from './infrastructure/users/entities/user.orm-entity';
 import { UsersRepository } from './infrastructure/users/repositories/users-repository';
+import { UsersOrmQueryRepository } from './infrastructure/users/repositories/user.query-repository';
 
 
 @Module({
@@ -56,6 +57,7 @@ import { UsersRepository } from './infrastructure/users/repositories/users-repos
     JwtStrategy,
     LocalStrategy,
     RefreshJwtStrategy,
+    UsersOrmQueryRepository,
     UsersRawSqlQueryRepository,
     UsersRawSqlRepository,
     UsersService,
