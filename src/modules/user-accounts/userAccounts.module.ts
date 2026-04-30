@@ -1,5 +1,3 @@
-import { UsersRawSqlQueryRepository } from './infrastructure/users/repositories/users-raw-sql.query-repository';
-import { UsersRawSqlRepository } from './infrastructure/users/repositories/users-raw-sql.repository';
 import { Module } from '@nestjs/common';
 import { UserController } from './api/user-controller';
 import { UsersService } from './application/user-service';
@@ -58,8 +56,6 @@ import { UsersOrmQueryRepository } from './infrastructure/users/repositories/use
     LocalStrategy,
     RefreshJwtStrategy,
     UsersOrmQueryRepository,
-    UsersRawSqlQueryRepository,
-    UsersRawSqlRepository,
     UsersService,
     BcryptService,
     AuthService,

@@ -1,14 +1,9 @@
 import { CreateUserDto } from 'src/modules/user-accounts/dto/UserInputDto';
 import { Injectable, Logger } from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
-import { UsersRawSqlRepository } from '../infrastructure/users/repositories/users-raw-sql.repository';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { UserOrmEntity } from '../infrastructure/users/entities/user.orm-entity';
 import { JwtService } from '@nestjs/jwt';
 import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { UsersService } from './user-service';
-import { UserSqlEntity } from '../domain/user-sql.entity';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
@@ -16,6 +11,7 @@ import { UserContextOutput } from '../guards/dto/user-context.output.dto';
 import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
+import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
 
 
 const ACCESS_TOKEN_TTL = '5m';
@@ -26,26 +22,23 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private usersRepository: ,
+    private usersRepository: UsersRepository,
     private usersService: UsersService,
     private jwtService: JwtService,
     private bcryptService: BcryptService,
     private emailAdapter: EmailAdapter,
     private configService: ConfigService,
     private deviceSessionsRepository: DeviceSessionsRepository,
-    @InjectRepository(UserOrmEntity)
-    private readonly userOrmRepository: Repository<UserOrmEntity>,
   ) {}
 
   async validateUser(
     loginOrEmail: string,
     password: string,
   ): Promise<UserContextOutput | null> {
-    const user: UserSqlEntity | null =
-      await this.usersRepository.findUserByLoginOrEmail({
-        login: loginOrEmail,
-        email: loginOrEmail,
-      });
+    const user = await this.usersRepository.findUserByLoginOrEmail({
+      login: loginOrEmail,
+      email: loginOrEmail,
+    });
     if (!user) {
       return null;
     }
@@ -56,8 +49,9 @@ export class AuthService {
     if (!isPasswordValid) {
       return null;
     }
-    return { id: user.id, loginOrEmail: loginOrEmail };
+    return { id: user.id, loginOrEmail };
   }
+
   async registerUser(dto: CreateUserDto) {
     const existingUser = await this.usersRepository.findUserByLoginOrEmail({
       login: dto.login,
@@ -86,43 +80,30 @@ export class AuthService {
     }
 
     const userId: string = await this.usersService.createUser(dto);
-    const user: UserSqlEntity =
-      await this.usersRepository.findOrNotFoundFail(userId);
+    const user = await this.usersRepository.findOrNotFoundFail(userId);
 
     this.emailAdapter
-      .sendConfirmationCodeEmail(
-        user.email,
-        user.emailConfirmation.confirmationCode,
-      )
+      .sendConfirmationCodeEmail(user.email, user.confirmationCode)
       .catch((error) => {
         console.error(`Error sending email: ${error}`);
       });
   }
-  
+
   async passwordRecovery(email: string) {
-    const row = await this.userOrmRepository.findOne({ where: { email } });
-    if (!row) {
+    const user = await this.usersRepository.findByEmail(email);
+    if (!user) {
       return null;
     }
-
-    const user = UserSqlEntity.fromRow(row);
 
     user.requestPasswordRecovery();
-    if (!user.passwordRecovery) {
+    if (!user.recoveryCode) {
       return null;
     }
 
-    await this.userOrmRepository.update(row.id, {
-      recoveryCode: user.passwordRecovery.code,
-      recoveryExpiresAt: user.passwordRecovery.expiresAt,
-      recoveryIsUsed: user.passwordRecovery.isUsed,
-    });
+    await this.usersRepository.save(user);
 
     try {
-      await this.emailAdapter.sendConfirmationCodeEmail(
-        email,
-        user.passwordRecovery.code,
-      );
+      await this.emailAdapter.sendConfirmationCodeEmail(email, user.recoveryCode);
     } catch (e) {
       this.logger.error('Error sending recovery email', e);
     }
@@ -167,27 +148,25 @@ export class AuthService {
     newPassword: string,
     recoveryCode: string,
   ): Promise<void> {
-    const user: UserSqlEntity | null =
-      await this.usersRepository.findByRecoveryCode(recoveryCode);
+    const user = await this.usersRepository.findByRecoveryCode(recoveryCode);
 
     if (!user) {
       throw new DomainException({ code: 1, message: 'User not found' });
     }
 
-    if (user.passwordRecovery?.expiresAt! < new Date(Date.now())) {
+    if (user.recoveryExpiresAt! < new Date(Date.now())) {
       throw new DomainException({
         code: 2,
         message: 'Recovery code expired',
       });
     }
-    const newPasswordHash = await this.bcryptService.generateHash(newPassword);
-    user.passwordHash = newPasswordHash;
+
+    user.passwordHash = await this.bcryptService.generateHash(newPassword);
     await this.usersRepository.save(user);
   }
 
   async confirmRegistration(code: string): Promise<void> {
-    const user: UserSqlEntity | null =
-      await this.usersRepository.findByConfirmationCode(code);
+    const user = await this.usersRepository.findByConfirmationCode(code);
     if (!user) {
       throw new DomainException({
         code: 2,
@@ -195,16 +174,16 @@ export class AuthService {
         extensions: [{ message: 'User not found', field: 'code' }],
       });
     }
-    if (user.emailConfirmation.confirmationCode !== code) {
+    if (user.confirmationCode !== code) {
       throw new DomainException({
         code: 2,
         message: 'Invalid confirmation code',
       });
     }
-    if (user.emailConfirmation.expirationDate < new Date(Date.now())) {
+    if (user.confirmationExpiration < new Date(Date.now())) {
       throw new DomainException({ code: 2, message: 'Code is expired' });
     }
-    if (user.emailConfirmation.isConfirmed) {
+    if (user.isEmailConfirmed) {
       throw new DomainException({
         code: 2,
         message: 'User already confirmed',
@@ -216,13 +195,12 @@ export class AuthService {
         ],
       });
     }
-    user.emailConfirmation.isConfirmed = true;
+    user.isEmailConfirmed = true;
     await this.usersRepository.save(user);
   }
 
   async emailResending(email: string) {
-    const user: UserSqlEntity | null =
-      await this.usersRepository.findByEmail(email);
+    const user = await this.usersRepository.findByEmail(email);
     if (!user) {
       throw new DomainException({
         code: 2,
@@ -231,7 +209,7 @@ export class AuthService {
       });
     }
 
-    if (user.emailConfirmation.isConfirmed) {
+    if (user.isEmailConfirmed) {
       throw new DomainException({
         code: 2,
         message: 'Email already confirmed',
@@ -247,7 +225,7 @@ export class AuthService {
     await this.usersRepository.save(user);
     this.emailAdapter.sendConfirmationCodeEmail(
       email,
-      user.emailConfirmation.confirmationCode,
+      user.confirmationCode,
     );
   }
 

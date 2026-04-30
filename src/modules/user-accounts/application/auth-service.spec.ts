@@ -1,14 +1,12 @@
 import { EmailAdapter } from './../../notifications/email-adapter';
 import { AuthService } from './auth-service';
-import { UsersRawSqlRepository } from '../infrastructure/users/repositories/users-raw-sql.repository';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { UserOrmEntity } from '../infrastructure/users/entities/user.orm-entity';
 import { Test } from '@nestjs/testing';
 import { UsersService } from './user-service';
 import { JwtService } from '@nestjs/jwt';
 import { BcryptService } from './bcrypt-service';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { ConfigService } from '@nestjs/config';
+import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
 
 describe('AuthService - Password Recovery', () => {
   let authService: AuthService;
@@ -16,8 +14,13 @@ describe('AuthService - Password Recovery', () => {
     findByEmail: jest.Mock;
     findByRecoveryCode: jest.Mock;
     save: jest.Mock;
+    findOrNotFoundFail: jest.Mock;
+    findUserByLoginOrEmail: jest.Mock;
+    findByConfirmationCode: jest.Mock;
+    findById: jest.Mock;
+    findByLogin: jest.Mock;
+    findByIdOrThrowValidationError: jest.Mock;
   };
-  let userOrmRepository: { findOne: jest.Mock; update: jest.Mock };
   let emailAdapter: EmailAdapter;
 
   beforeEach(async () => {
@@ -25,7 +28,7 @@ describe('AuthService - Password Recovery', () => {
       providers: [
         AuthService,
         {
-          provide: UsersRawSqlRepository,
+          provide: UsersRepository,
           useValue: {
             findByEmail: jest.fn(),
             findByRecoveryCode: jest.fn(),
@@ -34,17 +37,8 @@ describe('AuthService - Password Recovery', () => {
             findOrNotFoundFail: jest.fn(),
             findUserByLoginOrEmail: jest.fn(),
             findByConfirmationCode: jest.fn(),
-            updateRefreshTokenHash: jest.fn(),
-            findByIdOrThrowValidationError: jest.fn(),
-            findOrThrowValidationErrorWithExtenstions: jest.fn(),
             findByLogin: jest.fn(),
-          },
-        },
-        {
-          provide: getRepositoryToken(UserOrmEntity),
-          useValue: {
-            findOne: jest.fn(),
-            update: jest.fn().mockResolvedValue(undefined),
+            findByIdOrThrowValidationError: jest.fn(),
           },
         },
         {
@@ -84,49 +78,58 @@ describe('AuthService - Password Recovery', () => {
     }).compile();
 
     authService = moduleRef.get(AuthService);
-    usersRepository = moduleRef.get(
-      UsersRawSqlRepository,
-    ) as typeof usersRepository;
-    userOrmRepository = moduleRef.get(getRepositoryToken(UserOrmEntity));
+    usersRepository = moduleRef.get(UsersRepository) as typeof usersRepository;
     emailAdapter = moduleRef.get(EmailAdapter);
   });
 
-  it('should send recovery email for existing user', async () => {
-    const mockOrmRow = {
+  it('should send recovery email for existing confirmed user', async () => {
+    const recoveryCode = 'generated-recovery-code';
+    const mockUser = {
       id: '123',
-      login: 'user',
       email: 'user@example.com',
-      passwordHash: 'hash',
-      confirmationCode: 'abc-123-def',
-      confirmationExpiration: new Date(),
       isEmailConfirmed: true,
-      recoveryCode: null,
-      recoveryExpiresAt: null,
-      recoveryIsUsed: null,
-      createdAt: new Date(),
-      deleteAt: null,
-      refreshTokenHash: null,
+      recoveryCode: null as string | null,
+      recoveryExpiresAt: null as Date | null,
+      recoveryIsUsed: null as boolean | null,
+      requestPasswordRecovery: jest.fn().mockImplementation(function (this: typeof mockUser) {
+        this.recoveryCode = recoveryCode;
+        this.recoveryExpiresAt = new Date(Date.now() + 3600000);
+        this.recoveryIsUsed = false;
+      }),
     };
 
-    userOrmRepository.findOne.mockResolvedValue(mockOrmRow);
+    usersRepository.findByEmail.mockResolvedValue(mockUser);
+    usersRepository.save.mockResolvedValue(undefined);
 
     await authService.passwordRecovery('user@example.com');
 
-    expect(userOrmRepository.findOne).toHaveBeenCalledWith({
-      where: { email: 'user@example.com' },
-    });
-    expect(userOrmRepository.update).toHaveBeenCalledWith(
-      '123',
-      expect.objectContaining({
-        recoveryIsUsed: false,
-        recoveryCode: expect.any(String),
-        recoveryExpiresAt: expect.any(Date),
-      }),
-    );
+    expect(usersRepository.findByEmail).toHaveBeenCalledWith('user@example.com');
+    expect(mockUser.requestPasswordRecovery).toHaveBeenCalled();
+    expect(usersRepository.save).toHaveBeenCalledWith(mockUser);
     expect(emailAdapter.sendConfirmationCodeEmail).toHaveBeenCalledWith(
-      mockOrmRow.email,
-      expect.any(String),
+      'user@example.com',
+      recoveryCode,
     );
+  });
+
+  it('should not send email when user email is not confirmed', async () => {
+    const mockUser = {
+      id: '123',
+      email: 'user@example.com',
+      isEmailConfirmed: false,
+      recoveryCode: null as string | null,
+      requestPasswordRecovery: jest.fn().mockImplementation(function (this: typeof mockUser) {
+        // isEmailConfirmed is false, so no code is set
+      }),
+    };
+
+    usersRepository.findByEmail.mockResolvedValue(mockUser);
+
+    const result = await authService.passwordRecovery('user@example.com');
+
+    expect(result).toBeNull();
+    expect(usersRepository.save).not.toHaveBeenCalled();
+    expect(emailAdapter.sendConfirmationCodeEmail).not.toHaveBeenCalled();
   });
 
   it('should confirm new password', async () => {
@@ -137,7 +140,9 @@ describe('AuthService - Password Recovery', () => {
 
     const expiresAt = new Date(Date.now() + 60_000);
     const mockUser = {
-      passwordRecovery: { expiresAt, code: mockDto.recoveryCode, isUsed: false },
+      recoveryExpiresAt: expiresAt,
+      recoveryCode: mockDto.recoveryCode,
+      recoveryIsUsed: false,
       passwordHash: 'old',
     };
 
@@ -146,9 +151,7 @@ describe('AuthService - Password Recovery', () => {
 
     await authService.resetPassword(mockDto.newPassword, mockDto.recoveryCode);
 
-    expect(usersRepository.findByRecoveryCode).toHaveBeenCalledWith(
-      mockDto.recoveryCode,
-    );
+    expect(usersRepository.findByRecoveryCode).toHaveBeenCalledWith(mockDto.recoveryCode);
     expect(usersRepository.save).toHaveBeenCalledWith(mockUser);
     expect(mockUser.passwordHash).toBe('new-hash');
   });

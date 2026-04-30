@@ -38,6 +38,18 @@ export class UserOrmEntity extends BaseDBEntity {
   @Column({ type: 'text', nullable: true, default: null })
   refreshTokenHash!: string | null;
 
+  requestPasswordRecovery(): void {
+    if (!this.isEmailConfirmed) return;
+    this.recoveryCode = randomUUID();
+    this.recoveryExpiresAt = new Date(Date.now() + 3600000);
+    this.recoveryIsUsed = false;
+  }
+
+  requestNewConfirmationCode(): void {
+    this.confirmationCode = randomUUID();
+    this.confirmationExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  }
+
   makeDeleted(): void {
     if (this.deleteAt !== null) {
       throw new Error('Entity already deleted');
