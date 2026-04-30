@@ -17,6 +17,7 @@ import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
 
+
 const ACCESS_TOKEN_TTL = '5m';
 const REFRESH_TOKEN_TTL = '10m';
 
@@ -25,7 +26,7 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private usersRepository: UsersRawSqlRepository,
+    private usersRepository: ,
     private usersService: UsersService,
     private jwtService: JwtService,
     private bcryptService: BcryptService,
@@ -99,31 +100,13 @@ export class AuthService {
   }
   
   async passwordRecovery(email: string) {
-    //достаем сырые данные из sql
     const row = await this.userOrmRepository.findOne({ where: { email } });
     if (!row) {
       return null;
     }
 
-    //с помощью доменного метода превращаем сырые данные в доменную сущность
-    const user = UserSqlEntity.fromRow({
-      id: row.id,
-      login: row.login,
-      email: row.email,
-      passwordHash: row.passwordHash,
-      confirmationCode: row.confirmationCode,
-      confirmationExpiration: row.confirmationExpiration,
-      isEmailConfirmed: row.isEmailConfirmed,
-      recoveryCode: row.recoveryCode,
-      recoveryExpiresAt: row.recoveryExpiresAt,
-      recoveryIsUsed: row.recoveryIsUsed,
-      createdAt: row.createdAt,
-      deleteAt: row.deleteAt,
-      refreshTokenHash: row.refreshTokenHash,
-    });
+    const user = UserSqlEntity.fromRow(row);
 
-
-//с помощью доменного метода создаем объект восстановления пароля
     user.requestPasswordRecovery();
     if (!user.passwordRecovery) {
       return null;
