@@ -86,6 +86,61 @@ describe('SA users (e2e)', () => {
         true,
       );
     });
+
+    it('200 — фильтрует по searchLoginTerm и searchEmailTerm (совпадение по логину ИЛИ email)', async () => {
+      const onlyByLogin = {
+        login: 'abSer01',
+        password: '12345678',
+        email: 'onlylogin@ex.org',
+      };
+      const onlyByEmail = {
+        login: 'plain02',
+        password: '12345678',
+        email: 'u@host.com',
+      };
+      const noMatch = {
+        login: 'plain03',
+        password: '12345678',
+        email: 'none@ex.org',
+      };
+
+      for (const body of [onlyByLogin, onlyByEmail, noMatch]) {
+        await request(app.getHttpServer())
+          .post(SA_USERS_PATH)
+          .set('Authorization', BASIC_AUTH)
+          .send(body)
+          .expect(201);
+      }
+
+      const res = await request(app.getHttpServer())
+        .get(SA_USERS_PATH)
+        .query({
+          searchLoginTerm: 'seR',
+          searchEmailTerm: '.com',
+          pageNumber: 1,
+          pageSize: 20,
+          sortBy: 'createdAt',
+          sortDirection: 'desc',
+        })
+        .set('Authorization', BASIC_AUTH)
+        .expect(200);
+
+      const loginsInResponse = new Set<string>(
+        res.body.items.map((u: { login: string }) => u.login),
+      );
+
+      expect(loginsInResponse.has(onlyByLogin.login)).toBe(true);
+      expect(loginsInResponse.has(onlyByEmail.login)).toBe(true);
+      expect(loginsInResponse.has(noMatch.login)).toBe(false);
+
+      for (const u of res.body.items as { login: string; email: string }[]) {
+        const loginHit = u.login.toLowerCase().includes('ser');
+        const emailHit = u.email.toLowerCase().includes('.com');
+        expect(loginHit || emailHit).toBe(true);
+      }
+
+      expect(res.body.totalCount).toBe(2);
+    });
   });
 
   describe('POST /sa/users', () => {
