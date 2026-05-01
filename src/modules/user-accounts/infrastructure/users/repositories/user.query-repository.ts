@@ -55,7 +55,12 @@ export class UsersOrmQueryRepository {
             qb.andWhere('u.email ILIKE :email', { email: `%${searchEmail}%` });
         }
 
-        qb.orderBy(orderByField, sortDirection)
+        const textFields = new Set(['u.login', 'u.email']);
+        const orderExpr = textFields.has(orderByField)
+            ? `${orderByField} COLLATE "C"`
+            : orderByField;
+
+        qb.orderBy(orderExpr, sortDirection)
             .skip(query.calculateSkip())
             .take(query.pageSize);
 

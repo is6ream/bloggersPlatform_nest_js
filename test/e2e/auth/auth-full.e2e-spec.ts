@@ -165,7 +165,7 @@ describe('POST /auth/registration', () => {
     await request(app.getHttpServer())
       .post(REGISTRATION_PATH)
       .send({ ...DEFAULT_USER, email: 'other@example.com' })
-      .expect(204);
+      .expect(400);
 
     expect(emailSpy).toHaveBeenCalledTimes(0);
   });
