@@ -1,29 +1,42 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-
-import * as dotenv from 'dotenv';
-dotenv.config();
-
-const configVariables = {
-  SMTP_USER: process.env.SMTP_USER,
-  SMTP_PASSWORD: process.env.SMTP_PASSWORD,
-  SMTP_HOST: process.env.SMTP_HOST,
-  SMTP_PORT: process.env.SMTP_PORT,
-  SMTP_SERVICE: process.env.SMTP_SERVICE,
-};
 
 @Injectable()
 export class EmailAdapter {
   private transporter: nodemailer.Transporter;
+  private readonly smtpFromUser: string;
 
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'd.ilyasovunibell@gmail.com',
-        pass: configVariables.SMTP_PASSWORD,
-      },
-    });
+  constructor(private readonly configService: ConfigService) {
+    const smtpUser =
+      this.configService.get<string>('SMTP_USER')?.trim() ||
+      'd.ilyasovunibell@gmail.com';
+    const smtpPassword = this.configService.get<string>('SMTP_PASSWORD');
+    const smtpHost = this.configService.get<string>('SMTP_HOST')?.trim();
+    const smtpPort = this.configService.get<string>('SMTP_PORT');
+    const smtpService =
+      this.configService.get<string>('SMTP_SERVICE')?.trim() || 'gmail';
+
+    this.smtpFromUser = smtpUser;
+
+    this.transporter = nodemailer.createTransport(
+      smtpHost
+        ? {
+            host: smtpHost,
+            port: smtpPort ? Number(smtpPort) : 587,
+            auth: {
+              user: smtpUser,
+              pass: smtpPassword,
+            },
+          }
+        : {
+            service: smtpService,
+            auth: {
+              user: smtpUser,
+              pass: smtpPassword,
+            },
+          },
+    );
   }
 
   async sendConfirmationCodeEmail(
@@ -31,7 +44,7 @@ export class EmailAdapter {
     code: string,
   ) /*: Promise<void>*/ {
     await this.transporter.sendMail({
-      from: '"Confirm email" <d.ilyasovunibell@gmail.com>',
+      from: `"Confirm email" <${this.smtpFromUser}>`,
       to: email,
       subject: 'Confirmation Code',
       html: `<h1>Thank for your registration</h1>
@@ -43,7 +56,7 @@ export class EmailAdapter {
 
   async sendRecoveryCodeEmail(email: string, code: string) /*: Promise<void>*/ {
     await this.transporter.sendMail({
-      from: '"Recovery code" <d.ilyasovunibell@gmail.com>',
+      from: `"Recovery code" <${this.smtpFromUser}>`,
       to: email,
       subject: 'Password Recovery',
       html: `<h1>Password recovery</h1>
