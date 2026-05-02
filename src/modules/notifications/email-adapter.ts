@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import SMTPTransport = require('nodemailer/lib/smtp-transport');
 
 @Injectable()
 export class EmailAdapter {
@@ -41,7 +42,7 @@ export class EmailAdapter {
     smtpPortRaw: string | undefined;
     smtpSecureRaw: string | undefined;
     smtpService: string;
-  }): nodemailer.TransportOptions {
+  }): SMTPTransport.Options {
     const {
       smtpUser,
       smtpPassword,
