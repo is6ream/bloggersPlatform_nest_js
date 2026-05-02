@@ -1,7 +1,7 @@
 import { UserOrmEntity } from './../entities/user.orm-entity';
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import { LoginOrEmailDto } from '../../dto/login-or-email.dto';
 
 @Injectable()
@@ -33,23 +33,28 @@ export class UsersRepository {
 
 
     async findByLogin(login: string): Promise<UserOrmEntity | null> {
-        return this.repo.findOne({ where: { login } });
+        return this.repo.findOne({ where: { login, deleteAt: IsNull() } });
     }
 
     async findByEmail(email: string): Promise<UserOrmEntity | null> {
-        return this.repo.findOne({ where: { email } });
+        return this.repo.findOne({ where: { email, deleteAt: IsNull() } });
     }
 
     async findUserByLoginOrEmail(dto: LoginOrEmailDto): Promise<UserOrmEntity | null> {
-        return this.repo.findOne({ where: [{ login: dto.login }, { email: dto.email }] });
+        return this.repo.findOne({
+            where: [
+                { login: dto.login, deleteAt: IsNull() },
+                { email: dto.email, deleteAt: IsNull() },
+            ],
+        });
     }
 
     async findByRecoveryCode(code: string): Promise<UserOrmEntity | null> {
-        return this.repo.findOne({ where: { recoveryCode: code } });
+        return this.repo.findOne({ where: { recoveryCode: code, deleteAt: IsNull() } });
     }
 
     async findByConfirmationCode(code: string): Promise<UserOrmEntity | null> {
-        return this.repo.findOne({ where: { confirmationCode: code } });
+        return this.repo.findOne({ where: { confirmationCode: code, deleteAt: IsNull() } });
     }
 
     async save(user: UserOrmEntity): Promise<void> {
