@@ -13,30 +13,79 @@ export class EmailAdapter {
       'd.ilyasovunibell@gmail.com';
     const smtpPassword = this.configService.get<string>('SMTP_PASSWORD');
     const smtpHost = this.configService.get<string>('SMTP_HOST')?.trim();
-    const smtpPort = this.configService.get<string>('SMTP_PORT');
+    const smtpPortRaw = this.configService.get<string>('SMTP_PORT')?.trim();
+    const smtpSecureRaw = this.configService
+      .get<string>('SMTP_SECURE')
+      ?.trim()
+      ?.toLowerCase();
     const smtpService =
       this.configService.get<string>('SMTP_SERVICE')?.trim() || 'gmail';
 
     this.smtpFromUser = smtpUser;
-
     this.transporter = nodemailer.createTransport(
-      smtpHost
-        ? {
-            host: smtpHost,
-            port: smtpPort ? Number(smtpPort) : 587,
-            auth: {
-              user: smtpUser,
-              pass: smtpPassword,
-            },
-          }
-        : {
-            service: smtpService,
-            auth: {
-              user: smtpUser,
-              pass: smtpPassword,
-            },
-          },
+      this.buildSmtpOptions({
+        smtpUser,
+        smtpPassword,
+        smtpHost,
+        smtpPortRaw,
+        smtpSecureRaw,
+        smtpService,
+      }),
     );
+  }
+
+  private buildSmtpOptions(params: {
+    smtpUser: string;
+    smtpPassword: string | undefined;
+    smtpHost: string | undefined;
+    smtpPortRaw: string | undefined;
+    smtpSecureRaw: string | undefined;
+    smtpService: string;
+  }): nodemailer.TransportOptions {
+    const {
+      smtpUser,
+      smtpPassword,
+      smtpHost,
+      smtpPortRaw,
+      smtpSecureRaw,
+      smtpService,
+    } = params;
+
+    const auth = { user: smtpUser, pass: smtpPassword };
+    const connectionTimeout = 25_000;
+
+    if (smtpHost) {
+      const port = smtpPortRaw ? Number(smtpPortRaw) : 587;
+      const secure =
+        smtpSecureRaw === 'true' ||
+        (smtpSecureRaw !== 'false' && port === 465);
+      return {
+        host: smtpHost,
+        port,
+        secure,
+        requireTLS: !secure && port !== 465,
+        auth,
+        connectionTimeout,
+      };
+    }
+
+    // `service: 'gmail'` uses port 465 by default — often blocked; 587 + STARTTLS works more often.
+    if (smtpService.toLowerCase() === 'gmail') {
+      return {
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        requireTLS: true,
+        auth,
+        connectionTimeout,
+      };
+    }
+
+    return {
+      service: smtpService,
+      auth,
+      connectionTimeout,
+    };
   }
 
   async sendConfirmationCodeEmail(
