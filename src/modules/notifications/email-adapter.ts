@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import SMTPTransport = require('nodemailer/lib/smtp-transport');
 
 @Injectable()
 export class EmailAdapter {
+  private readonly logger = new Logger(EmailAdapter.name);
   private transporter: nodemailer.Transporter;
   private readonly smtpFromUser: string;
 
@@ -21,6 +22,10 @@ export class EmailAdapter {
       ?.toLowerCase();
     const smtpService =
       this.configService.get<string>('SMTP_SERVICE')?.trim() || 'gmail';
+
+    this.logger.log(
+      `SMTP config — user: "${smtpUser}", password set: ${Boolean(smtpPassword)}, host: "${smtpHost ?? '—'}", port: "${smtpPortRaw ?? '—'}", secure: "${smtpSecureRaw ?? '—'}", service: "${smtpService}"`,
+    );
 
     this.smtpFromUser = smtpUser;
     this.transporter = nodemailer.createTransport(

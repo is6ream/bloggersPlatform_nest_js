@@ -18,7 +18,7 @@ import { getClientIpFromRequest } from 'src/core/utils/client-ip';
 import { RefreshJwtStrategy } from 'src/modules/user-accounts/strategies/refresh-token.jwt.strategy';
 import { DeviceSessionsRepository } from './infrastructure/auth/device-sessions.repository';
 import { DeviceSessionsQueryRepository } from './infrastructure/auth/device-sessions.query-repository';
-import { DeviceSessionsPostgresDatabase } from './infrastructure/auth/device-sessions-postgres.database';
+import { DeviceSessionOrmEntity } from './infrastructure/auth/device-session.orm-entity';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RefreshTokensUseCase } from './application/refresh-token.usecase';
 import { UsedRefreshTokenStore } from './application/used-refresh-token.store';
@@ -33,7 +33,7 @@ import { UsersOrmQueryRepository } from './infrastructure/users/repositories/use
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserOrmEntity]),
+    TypeOrmModule.forFeature([UserOrmEntity, DeviceSessionOrmEntity]),
     CqrsModule,
     PassportModule,
     ConfigModule,
@@ -62,7 +62,6 @@ import { UsersOrmQueryRepository } from './infrastructure/users/repositories/use
     AuthQueryRepository,
     JwtService,
     EmailAdapter,
-    DeviceSessionsPostgresDatabase,
     DeviceSessionsRepository,
     DeviceSessionsQueryRepository,
     BasicAuthStrategy,
@@ -72,7 +71,7 @@ import { UsersOrmQueryRepository } from './infrastructure/users/repositories/use
     DeleteAllOtherSessionsUseCase,
     UsersRepository,
   ],
-  exports: [DeviceSessionsPostgresDatabase, ThrottlerModule, UsersRepository],
+  exports: [ThrottlerModule, UsersRepository],
 })
 
 export class UserAccountsModule { }

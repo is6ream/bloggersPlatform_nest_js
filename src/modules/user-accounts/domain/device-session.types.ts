@@ -2,7 +2,7 @@
 export interface DeviceSessionRow {
   deviceId: string;
   userId: string;
-  ip: string;
+  ip: string | null;
   userAgent: string;
   refreshTokenHash: string;
   expiresAt: Date | null;

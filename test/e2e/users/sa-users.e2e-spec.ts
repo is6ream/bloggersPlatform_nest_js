@@ -129,6 +129,8 @@ describe('SA users (e2e)', () => {
         res.body.items.map((u: { login: string }) => u.login),
       );
 
+      console.log("loginInResponse: ", loginsInResponse)
+
       expect(loginsInResponse.has(onlyByLogin.login)).toBe(true);
       expect(loginsInResponse.has(onlyByEmail.login)).toBe(true);
       expect(loginsInResponse.has(noMatch.login)).toBe(false);

@@ -2,14 +2,12 @@ import { Controller, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { DataSource } from 'typeorm';
-import { DeviceSessionsPostgresDatabase } from '../user-accounts/infrastructure/auth/device-sessions-postgres.database';
 
 @Controller('testing')
 export class TestingController {
   constructor(
     @InjectConnection() private readonly mongoConnection: Connection,
     private readonly dataSource: DataSource,
-    private readonly deviceSessionsDb: DeviceSessionsPostgresDatabase,
   ) {}
 
   @Delete('all-data')
@@ -31,14 +29,11 @@ export class TestingController {
   }
 
   private async clearPostgres(): Promise<void> {
-    const pgTables = ['likes', 'comments', 'posts', 'blogs', 'users'];
+    const pgTables = ['device_sessions', 'likes', 'comments', 'posts', 'blogs', 'users'];
     for (const table of pgTables) {
       await this.dataSource
         .query(`DELETE FROM ${table};`)
         .catch(() => undefined);
     }
-    await this.deviceSessionsDb.db
-      .query(`DELETE FROM device_sessions;`)
-      .catch(() => undefined);
   }
 }

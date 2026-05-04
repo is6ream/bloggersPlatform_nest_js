@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { DeviceSessionsPostgresDatabase } from './device-sessions-postgres.database';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { DeviceSessionOrmEntity } from './device-session.orm-entity';
 
 @Injectable()
 export class DeviceSessionsRepository {
-  constructor(private readonly postgres: DeviceSessionsPostgresDatabase) {}
+  constructor(
+    @InjectRepository(DeviceSessionOrmEntity)
+    private readonly repo: Repository<DeviceSessionOrmEntity>,
+  ) {}
 
   async createSession(params: {
     userId: string;
@@ -13,20 +18,15 @@ export class DeviceSessionsRepository {
     refreshTokenHash: string;
     expiresAt?: Date;
   }): Promise<void> {
-    const expiresAt =
-      params.expiresAt != null ? params.expiresAt.toISOString() : null;
-    await this.postgres.db.query(
-      `INSERT INTO device_sessions (device_id, user_id, ip, user_agent, refresh_token_hash, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [
-        params.deviceId,
-        params.userId,
-        params.ip,
-        params.userAgent,
-        params.refreshTokenHash,
-        expiresAt,
-      ],
-    );
+    const entity = this.repo.create({
+      deviceId: params.deviceId,
+      userId: params.userId,
+      ip: params.ip,
+      userAgent: params.userAgent,
+      refreshTokenHash: params.refreshTokenHash,
+      expiresAt: params.expiresAt ?? null,
+    });
+    await this.repo.save(entity);
   }
 
   /**
@@ -38,50 +38,48 @@ export class DeviceSessionsRepository {
     currentRefreshTokenHash: string;
     newRefreshTokenHash: string;
   }): Promise<boolean> {
-    const result = await this.postgres.db.query(
-      `UPDATE device_sessions
-       SET refresh_token_hash = $1, last_active_date = NOW()
-       WHERE user_id = $2 AND device_id = $3 AND refresh_token_hash = $4`,
-      [
-        params.newRefreshTokenHash,
-        params.userId,
-        params.deviceId,
-        params.currentRefreshTokenHash,
-      ],
-    );
-    return result.rowCount === 1;
+    const result = await this.repo
+      .createQueryBuilder()
+      .update(DeviceSessionOrmEntity)
+      .set({
+        refreshTokenHash: params.newRefreshTokenHash,
+        lastActiveDate: () => 'NOW()',
+      })
+      .where(
+        'user_id = :userId AND device_id = :deviceId AND refresh_token_hash = :currentHash',
+        {
+          userId: params.userId,
+          deviceId: params.deviceId,
+          currentHash: params.currentRefreshTokenHash,
+        },
+      )
+      .execute();
+    return result.affected === 1;
   }
 
   async deleteSession(userId: string, deviceId: string): Promise<void> {
-    await this.postgres.db.query(
-      `DELETE FROM device_sessions WHERE user_id = $1 AND device_id = $2`,
-      [userId, deviceId],
-    );
+    await this.repo.delete({ userId, deviceId });
   }
 
   async deleteAllSessionsExceptCurrent(
     userId: string,
     deviceId: string,
   ): Promise<void> {
-    await this.postgres.db.query(
-      `DELETE FROM device_sessions WHERE user_id = $1 AND device_id != $2`,
-      [userId, deviceId],
-    );
+    await this.repo
+      .createQueryBuilder()
+      .delete()
+      .where('user_id = :userId AND device_id != :deviceId', { userId, deviceId })
+      .execute();
   }
 
   async findByUserAndDevice(
     userId: string,
     deviceId: string,
   ): Promise<{ refreshTokenHash: string; ip: string | null } | null> {
-    const result = await this.postgres.db.query<{
-      refreshTokenHash: string;
-      ip: string | null;
-    }>(
-      `SELECT refresh_token_hash AS "refreshTokenHash", ip
-       FROM device_sessions
-       WHERE user_id = $1 AND device_id = $2`,
-      [userId, deviceId],
-    );
-    return result.rows[0] ?? null;
+    const session = await this.repo.findOne({
+      where: { userId, deviceId },
+      select: ['refreshTokenHash', 'ip'],
+    });
+    return session ?? null;
   }
 }
