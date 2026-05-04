@@ -14,8 +14,8 @@ import { randomUUID } from 'crypto';
 import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
 
 
-const ACCESS_TOKEN_TTL = '5m';
-const REFRESH_TOKEN_TTL = '10m';
+const ACCESS_TOKEN_TTL = '10s';
+const REFRESH_TOKEN_TTL = '20s';
 
 @Injectable()
 export class AuthService {
