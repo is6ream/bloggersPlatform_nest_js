@@ -21,9 +21,12 @@ export class TestingController {
 
   private async clearMongo(): Promise<void> {
     const collections = await this.mongoConnection.listCollections();
+    const db = this.mongoConnection.db;
+    if (!db) return;
+
     await Promise.all(
       collections.map((col) =>
-        this.mongoConnection.collection(col.name).deleteMany({}),
+        db.collection(col.name).deleteMany({}),
       ),
     );
   }

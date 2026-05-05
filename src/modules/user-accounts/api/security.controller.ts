@@ -8,13 +8,18 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokenGuard } from '../guards/jwt/refresh-token.guard';
 import { DeviceSessionsQueryRepository } from '../infrastructure/auth/device-sessions.query-repository';
 import { DeviceSessionViewDto } from './dto/output/device-session.view-dto';
 import { DeleteDeviceSessionCommand } from '../application/delete-device-session.usecase';
 import { DeleteAllOtherSessionsCommand } from '../application/delete-all-other-sessions.usecase';
+import { HttpRequestWithUser } from 'src/core/types/http.types';
+
+type RefreshTokenRequestUser = {
+  sub: string;
+  deviceId: string;
+};
 
 @Controller('security')
 export class SecurityController {
@@ -26,8 +31,10 @@ export class SecurityController {
   @Get('devices')
   @HttpCode(HttpStatus.OK)
   @UseGuards(RefreshTokenGuard)
-  async getDevices(@Req() req: Request): Promise<DeviceSessionViewDto[]> {
-    const userId = (req.user as any).sub;
+  async getDevices(
+    @Req() req: HttpRequestWithUser<RefreshTokenRequestUser>,
+  ): Promise<DeviceSessionViewDto[]> {
+    const userId = req.user!.sub;
     const sessions = await this.deviceSessionsQueryRepository.findAllByUserId(userId);
     return sessions.map(DeviceSessionViewDto.mapToView);
   }
@@ -35,9 +42,11 @@ export class SecurityController {
   @Delete('devices')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RefreshTokenGuard)
-  async deleteAllOtherDevices(@Req() req: Request): Promise<void> {
-    const userId = (req.user as any).sub;
-    const deviceId = (req.user as any).deviceId;
+  async deleteAllOtherDevices(
+    @Req() req: HttpRequestWithUser<RefreshTokenRequestUser>,
+  ): Promise<void> {
+    const userId = req.user!.sub;
+    const deviceId = req.user!.deviceId;
     await this.commandBus.execute(new DeleteAllOtherSessionsCommand(userId, deviceId));
   }
 
@@ -46,9 +55,9 @@ export class SecurityController {
   @UseGuards(RefreshTokenGuard)
   async deleteDevice(
     @Param('deviceId') deviceId: string,
-    @Req() req: Request,
+    @Req() req: HttpRequestWithUser<RefreshTokenRequestUser>,
   ): Promise<void> {
-    const userId = (req.user as any).sub;
+    const userId = req.user!.sub;
     await this.commandBus.execute(new DeleteDeviceSessionCommand(userId, deviceId));
   }
 }

@@ -17,6 +17,13 @@ import { UsersRepository } from '../infrastructure/users/repositories/users-repo
 const ACCESS_TOKEN_TTL = '10s';
 const REFRESH_TOKEN_TTL = '20s';
 
+function getRequiredStringConfig(
+  configService: ConfigService,
+  key: string,
+): string {
+  return configService.getOrThrow<string>(key);
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -117,14 +124,19 @@ export class AuthService {
 
     const accessPayload = { sub: user.id, deviceId };
     const refreshPayload = { sub: user.id, deviceId, tokenId: randomUUID() };
+    const jwtSecret = getRequiredStringConfig(this.configService, 'JWT_SECRET');
+    const jwtRefreshSecret = getRequiredStringConfig(
+      this.configService,
+      'JWT_REFRESH_SECRET',
+    );
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(accessPayload, {
-        secret: this.configService.getOrThrow('JWT_SECRET'),
+        secret: jwtSecret,
         expiresIn: ACCESS_TOKEN_TTL,
       }),
       this.jwtService.signAsync(refreshPayload, {
-        secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
+        secret: jwtRefreshSecret,
         expiresIn: REFRESH_TOKEN_TTL,
       }),
     ]);
@@ -235,14 +247,19 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const accessPayload = { sub: userId, deviceId };
     const refreshPayload = { sub: userId, deviceId, tokenId: randomUUID() };
+    const jwtSecret = getRequiredStringConfig(this.configService, 'JWT_SECRET');
+    const jwtRefreshSecret = getRequiredStringConfig(
+      this.configService,
+      'JWT_REFRESH_SECRET',
+    );
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(accessPayload, {
-        secret: this.configService.getOrThrow('JWT_SECRET'),
+        secret: jwtSecret,
         expiresIn: ACCESS_TOKEN_TTL,
       }),
       this.jwtService.signAsync(refreshPayload, {
-        secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
+        secret: jwtRefreshSecret,
         expiresIn: REFRESH_TOKEN_TTL,
       }),
     ]);

@@ -1,9 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Request } from 'express';
 import { DomainException } from '../../../../core/exceptions/domain-exceptions';
 import { Reflector } from '@nestjs/core';
 import { DomainExceptionCode } from '../../../../core/exceptions/domain-exception-codes';
 import { IS_PUBLIC_KEY } from '../decorators/public-decorator';
+import { HttpRequestWithUser } from 'src/core/types/http.types';
 
 @Injectable()
 export class BasicAuthGuard implements CanActivate {
@@ -13,7 +13,7 @@ export class BasicAuthGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<HttpRequestWithUser>();
     const authHeader = request.headers.authorization;
 
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [

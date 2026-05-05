@@ -23,15 +23,20 @@ import { GetMeOutputDto } from './dto/output/get-me-output.dto';
 import { JwtAuthGuard } from '../guards/jwt/jwt-auth.guard';
 import { LocalAuthValidationGuard } from '../guards/local/local-auth-validation.guard';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
-import { Response } from 'express';
 import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-token.guard';
-import { Request } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
 import { UsedRefreshTokenStore } from '../application/used-refresh-token.store';
 import { getClientIpFromRequest } from 'src/core/utils/client-ip';
+import { CookieResponse, HttpRequestWithUser } from 'src/core/types/http.types';
 
 const REFRESH_TOKEN_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+type RefreshTokenRequestUser = {
+  sub: string;
+  deviceId: string;
+  refreshToken?: string;
+};
 
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
@@ -46,11 +51,11 @@ export class AuthController {
   ) {}
 
   private getRefreshTokenCookieOptions(
-    req: Request,
+    req: HttpRequestWithUser,
     maxAgeMs?: number,
   ): { httpOnly: true; secure: boolean; sameSite: 'strict'; maxAge?: number } {
     const isSecure =
-      req.secure || req.get('x-forwarded-proto') === 'https';
+      req.secure || req.get?.('x-forwarded-proto') === 'https';
 
     // В учебной/локальной среде нам важно, чтобы кука отправлялась и по HTTP,
     // поэтому флаг secure включаем только в продакшене или при реально HTTPS-запросе.
@@ -91,8 +96,8 @@ export class AuthController {
   })
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
+    @Req() req: HttpRequestWithUser,
+    @Res({ passthrough: true }) res: CookieResponse,
   )
     : Promise<{ accessToken: string }> {
     const ip = getClientIpFromRequest(req);
@@ -156,12 +161,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(RefreshTokenGuard)
   async refreshToken(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
+    @Req() req: HttpRequestWithUser<RefreshTokenRequestUser>,
+    @Res({ passthrough: true }) res: CookieResponse,
   ) {
-    const userId = (req.user as any).sub;
-    const deviceId = (req.user as any).deviceId;
-    const refreshToken = (req.user as any).refreshToken;
+    const userId = req.user!.sub;
+    const deviceId = req.user!.deviceId;
+    const refreshToken = req.user!.refreshToken!;
 
     this.logger.log(
       `[/refresh-token] Request with valid refresh token — userId=${userId}, deviceId=${deviceId}`,
@@ -184,10 +189,10 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RefreshTokenGuard)
   async logout(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
+    @Req() req: HttpRequestWithUser<RefreshTokenRequestUser>,
+    @Res({ passthrough: true }) res: CookieResponse,
   ): Promise<void> {
-    const { sub: userId, deviceId, refreshToken } = req.user as any;
+    const { sub: userId, deviceId, refreshToken } = req.user!;
 
     this.logger.log(
       `[/logout] Request with valid refresh token — userId=${userId}, deviceId=${deviceId}`,
