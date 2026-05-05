@@ -194,6 +194,8 @@ describe('GET /security/devices', () => {
     const deviceIdsBefore = devicesBeforeLogout.body.map(
       (s: { deviceId: string }) => s.deviceId,
     );
+
+    console.log("deviceIdBefore: ", deviceIdsBefore)
     expect(deviceIdsBefore).toContain(loggedOutDeviceId);
 
     await request(app.getHttpServer())

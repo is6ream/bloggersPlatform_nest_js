@@ -29,6 +29,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         database: coreConfig.pgDatabase,
         synchronize: false,
         autoLoadEntities: true,
+        ssl:
+          coreConfig.env === 'production'
+            ? { rejectUnauthorized: false }
+            : false,
+
       }),
     }),
     MongooseModule.forRootAsync({
