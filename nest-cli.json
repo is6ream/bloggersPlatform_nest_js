@@ -14,6 +14,6 @@
         }
       }
     ],
-    "assets": [{ "include": "**/env/*", "watchAssests": true }]
+    "assets": [{ "include": "**/env/*", "watchAssets": true }]
   }
 }
