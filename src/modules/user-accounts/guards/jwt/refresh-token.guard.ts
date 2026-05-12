@@ -12,6 +12,7 @@ import {
   normalizeClientIp,
 } from 'src/core/utils/client-ip';
 
+//поставить лог здесь
 @Injectable()
 export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
   private readonly logger = new Logger(RefreshTokenGuard.name);
@@ -30,15 +31,7 @@ export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
     const rawCookies = request.headers?.cookie ?? '(no cookie header)';
     const cookieToken = request.cookies?.['refreshToken'];
     const authHeader = request.headers?.authorization ?? '(no authorization header)';
-    this.logger.log(
-      `[${request.url}] DIAG incoming cookies: ${rawCookies}`,
-    );
-    this.logger.log(
-      `[${request.url}] DIAG parsed refreshToken cookie: ${cookieToken ? cookieToken.slice(0, 40) + '...' : '(absent)'}`,
-    );
-    this.logger.log(
-      `[${request.url}] DIAG authorization header: ${authHeader}`,
-    );
+
 
     const parentResult = await super.canActivate(context);
     if (!parentResult) return false;

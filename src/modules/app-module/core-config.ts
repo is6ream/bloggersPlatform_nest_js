@@ -13,10 +13,10 @@ import { PoolConfig } from 'pg';
 
 @Injectable()
 export class CoreConfig {
-  
   constructor(private configService: ConfigService) {
     configValidationUtility.validateConfig(this);
   }
+
   
   @IsNumber(
     {},

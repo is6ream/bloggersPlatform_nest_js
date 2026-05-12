@@ -26,7 +26,6 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-token.guard';
 import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
-import { UsedRefreshTokenStore } from '../application/used-refresh-token.store';
 import { getClientIpFromRequest } from 'src/core/utils/client-ip';
 import { CookieResponse, HttpRequestWithUser } from 'src/core/types/http.types';
 
@@ -47,8 +46,7 @@ export class AuthController {
     private authService: AuthService,
     private authQueryRepository: AuthQueryRepository,
     private commandBus: CommandBus,
-    private usedRefreshTokenStore: UsedRefreshTokenStore,
-  ) {}
+  ) { }
 
   private getRefreshTokenCookieOptions(
     req: HttpRequestWithUser,
@@ -176,7 +174,6 @@ export class AuthController {
       new RefreshTokensCommand(userId, deviceId, refreshToken),
     );
 
-    this.usedRefreshTokenStore.add(refreshToken);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       ...this.getRefreshTokenCookieOptions(req, REFRESH_TOKEN_COOKIE_MAX_AGE_MS),
@@ -185,22 +182,17 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
+  //переписать на логику с мультидевайсностью 
+  //написать аналогичные тест кейсы
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(RefreshTokenGuard)
+  @UseGuards(RefreshTokenGuard) 
   async logout(
     @Req() req: HttpRequestWithUser<RefreshTokenRequestUser>,
     @Res({ passthrough: true }) res: CookieResponse,
   ): Promise<void> {
-    const { sub: userId, deviceId, refreshToken } = req.user!;
+    const { sub: userId, deviceId } = req.user!
 
-    this.logger.log(
-      `[/logout] Request with valid refresh token — userId=${userId}, deviceId=${deviceId}`,
-    );
-
-    if (refreshToken) {
-      this.usedRefreshTokenStore.add(refreshToken);
-    }
     if (userId && deviceId) {
       await this.authService.logout(userId, deviceId);
     }
