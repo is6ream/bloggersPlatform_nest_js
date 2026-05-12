@@ -12,10 +12,16 @@ import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
 import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
+import type { JwtSignOptions } from '@nestjs/jwt';
 
 
-const ACCESS_TOKEN_TTL = '10s';
-const REFRESH_TOKEN_TTL = '20s';
+function accessTokenExpiresIn(): JwtSignOptions['expiresIn'] {
+  return (process.env.JWT_ACCESS_EXPIRES_IN?.trim() || '10s') as JwtSignOptions['expiresIn'];
+}
+
+function refreshTokenExpiresIn(): JwtSignOptions['expiresIn'] {
+  return (process.env.JWT_REFRESH_EXPIRES_IN?.trim() || '20s') as JwtSignOptions['expiresIn'];
+}
 
 function getRequiredStringConfig(
   configService: ConfigService,
@@ -133,11 +139,11 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(accessPayload, {
         secret: jwtSecret,
-        expiresIn: ACCESS_TOKEN_TTL,
+        expiresIn: accessTokenExpiresIn(),
       }),
       this.jwtService.signAsync(refreshPayload, {
         secret: jwtRefreshSecret,
-        expiresIn: REFRESH_TOKEN_TTL,
+        expiresIn: refreshTokenExpiresIn(),
       }),
     ]);
 
@@ -256,11 +262,11 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(accessPayload, {
         secret: jwtSecret,
-        expiresIn: ACCESS_TOKEN_TTL,
+        expiresIn: accessTokenExpiresIn(),
       }),
       this.jwtService.signAsync(refreshPayload, {
         secret: jwtRefreshSecret,
-        expiresIn: REFRESH_TOKEN_TTL,
+        expiresIn: refreshTokenExpiresIn(),
       }),
     ]);
 
