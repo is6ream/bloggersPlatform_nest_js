@@ -186,12 +186,14 @@ export class AuthController {
   //написать аналогичные тест кейсы
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(RefreshTokenGuard) 
+  @UseGuards(RefreshTokenGuard)
   async logout(
     @Req() req: HttpRequestWithUser<RefreshTokenRequestUser>,
     @Res({ passthrough: true }) res: CookieResponse,
   ): Promise<void> {
     const { sub: userId, deviceId } = req.user!
+
+    console.log("userId: ", userId, "deviceId: ", deviceId)
 
     if (userId && deviceId) {
       await this.authService.logout(userId, deviceId);

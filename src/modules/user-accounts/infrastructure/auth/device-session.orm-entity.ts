@@ -14,15 +14,6 @@ export class DeviceSessionOrmEntity {
   @Column({ type: 'text', name: 'user_agent' })
   userAgent!: string;
 
-  @Column({ type: 'text', name: 'refresh_token_hash' })
-  refreshTokenHash!: string;
-
-  @Column({ type: 'timestamptz', nullable: true, name: 'expires_at', default: null })
-  expiresAt!: Date | null;
-
-  @Column({ type: 'timestamptz', name: 'last_active_date', default: () => 'NOW()' })
-  lastActiveDate!: Date;
-
-  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
-  createdAt!: Date;
+  @Column({ type: "text", name: "iat" })
+  iat!: Date
 }
