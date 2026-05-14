@@ -43,9 +43,18 @@ export class DeviceSessionsRepository {
       .execute();
   }
 
-  async findByIat(iat: number): Promise<DeviceSessionRow | null> {
+  async findByUserDeviceAndIat(
+    userId: string,
+    deviceId: string,
+    iat: number,
+  ): Promise<DeviceSessionRow | null> {
     return this.repo.findOne({
-      where: { iat: new Date(iat * 1000) },
+      where: {
+        userId,
+        deviceId,
+        iat: new Date(iat * 1000),
+      },
     });
   }
+
 }
