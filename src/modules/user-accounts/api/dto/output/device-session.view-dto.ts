@@ -10,7 +10,7 @@ export class DeviceSessionViewDto {
     const view = new DeviceSessionViewDto();
     view.ip = row.ip ?? '';
     view.title = row.userAgent;
-    view.lastActiveDate = row.lastActiveDate.toISOString();
+    view.lastActiveDate = row.iat.toISOString();
     view.deviceId = row.deviceId;
     return view;
   }

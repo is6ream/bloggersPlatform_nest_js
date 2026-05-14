@@ -14,7 +14,7 @@ export class DeviceSessionsQueryRepository {
   async findAllByUserId(userId: string): Promise<DeviceSessionRow[]> {
     return this.repo.find({
       where: { userId },
-      order: { lastActiveDate: 'DESC' },
+      order: { iat: 'DESC' },
     });
   }
 

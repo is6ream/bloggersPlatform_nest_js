@@ -42,7 +42,7 @@ export class AuthService {
     private emailAdapter: EmailAdapter,
     private configService: ConfigService,
     private deviceSessionsRepository: DeviceSessionsRepository,
-  ) {}
+  ) { }
 
   async validateUser(
     loginOrEmail: string,
@@ -147,16 +147,15 @@ export class AuthService {
       }),
     ]);
 
-    const refreshTokenHash = await this.bcryptService.generateHash(
-      refreshToken,
-    );
+    const decoded = this.jwtService.decode(refreshToken) as { iat: number };
+    const iat = new Date(decoded.iat * 1000);
 
     await this.deviceSessionsRepository.createSession({
       userId: user.id,
       deviceId,
       ip: deviceMeta.ip,
       userAgent: deviceMeta.userAgent,
-      refreshTokenHash,
+      iat, 
     });
 
     return { accessToken, refreshToken };
