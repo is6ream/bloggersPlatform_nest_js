@@ -36,12 +36,18 @@ export class RefreshTokenGuard extends AuthGuard('jwt-refresh') {
     const parentResult = await super.canActivate(context);
     if (!parentResult) return false;
 
-    const user = request.user as { sub?: string; deviceId?: string; refreshToken?: string } | undefined;
-    if (!user?.sub || !user?.deviceId) return true;
+    const user = request.user as {
+      sub?: string;
+      deviceId?: string;
+      refreshToken?: string;
+      iat?: number;
+    } | undefined;
+    if (!user?.sub || !user?.deviceId || user.iat == null) return true;
 
-    const session = await this.deviceSessionsRepository.findByUserAndDevice(
+    const session = await this.deviceSessionsRepository.findByUserDeviceAndIat(
       user.sub,
       user.deviceId,
+      user.iat,
     );
     if (!session) {
       this.logger.warn(

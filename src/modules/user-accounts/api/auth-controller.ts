@@ -35,6 +35,7 @@ type RefreshTokenRequestUser = {
   sub: string;
   deviceId: string;
   refreshToken?: string;
+  iat: number
 };
 
 @Controller('auth')
@@ -165,13 +166,14 @@ export class AuthController {
     const userId = req.user!.sub;
     const deviceId = req.user!.deviceId;
     const refreshToken = req.user!.refreshToken!;
+    const iat = req.user!.iat!;
 
     this.logger.log(
       `[/refresh-token] Request with valid refresh token — userId=${userId}, deviceId=${deviceId}`,
     );
 
     const tokens = await this.commandBus.execute(
-      new RefreshTokensCommand(userId, deviceId, refreshToken),
+      new RefreshTokensCommand(userId, deviceId, refreshToken, iat),
     );
 
 

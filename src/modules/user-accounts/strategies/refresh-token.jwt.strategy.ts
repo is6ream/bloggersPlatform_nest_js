@@ -41,8 +41,8 @@ export class RefreshJwtStrategy extends PassportStrategy(
     });
   }
 
-  async validate(req: Request, payload: { sub: string; deviceId: string }) {
+  async validate(req: Request, payload: { sub: string; deviceId: string; iat: number }) {
     const refreshToken = RefreshJwtStrategy.extractRefreshToken(req);
-    return { sub: payload.sub, deviceId: payload.deviceId, refreshToken };
+    return { sub: payload.sub, deviceId: payload.deviceId, iat: payload.iat, refreshToken };
   }
 }

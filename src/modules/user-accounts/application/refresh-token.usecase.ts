@@ -1,6 +1,6 @@
 import { AuthService } from 'src/modules/user-accounts/application/auth-service';
 import { Injectable, Logger } from '@nestjs/common';
-import bcrypt from 'bcryptjs';
+import { JwtService } from '@nestjs/jwt';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
@@ -12,6 +12,7 @@ export class RefreshTokensCommand {
     public userId: string,
     public deviceId: string,
     public refreshToken: string,
+    public iat: number,
   ) {}
 }
 
@@ -21,52 +22,41 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
 
   constructor(
     private readonly authService: AuthService,
+    private readonly jwtService: JwtService,
     private readonly deviceSessionsRepository: DeviceSessionsRepository,
   ) {}
 
-  async execute({ userId, deviceId, refreshToken }: RefreshTokensCommand) {
+  async execute({ userId, deviceId, iat }: RefreshTokensCommand) {
     this.logger.log(
       `[/refresh-token] Validating refresh token — userId=${userId}, deviceId=${deviceId}`,
     );
 
-
-    const session = await this.deviceSessionsRepository.findByUserAndDevice(
+    const session = await this.deviceSessionsRepository.findByUserDeviceAndIat(
       userId,
       deviceId,
+      iat,
     );
 
-    if (!session?.refreshTokenHash) {
+    if (!session) {
       this.logger.warn(
-        `[/refresh-token] Session not found or no refreshTokenHash — userId=${userId}, deviceId=${deviceId}`,
+        `[/refresh-token] Session not found or iat mismatch — userId=${userId}, deviceId=${deviceId}`,
       );
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
-        message: 'Refresh token hash does not match',
-      });
-    }
-
-    const isValid = await bcrypt.compare(
-      refreshToken,
-      session.refreshTokenHash,
-    );
-    if (!isValid) {
-      this.logger.warn(
-        `[/refresh-token] Refresh token hash mismatch — userId=${userId}, deviceId=${deviceId}`,
-      );
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'Refresh token hash does not match',
+        message: 'Refresh token already used or session invalid',
       });
     }
 
     const tokens = await this.authService.issueTokens(userId, deviceId);
-    const newRefreshHash = await bcrypt.hash(tokens.refreshToken, 10);
 
-    const updated = await this.deviceSessionsRepository.updateSessionTokenIfMatch({
+    const decoded = this.jwtService.decode(tokens.refreshToken) as { iat: number };
+    const newIat = new Date(decoded.iat * 1000);
+
+    const updated = await this.deviceSessionsRepository.updateSessionIatIfMatch({
       userId,
       deviceId,
-      currentRefreshTokenHash: session.refreshTokenHash,
-      newRefreshTokenHash: newRefreshHash,
+      currentIat: session.iat,
+      newIat,
     });
 
     if (!updated) {

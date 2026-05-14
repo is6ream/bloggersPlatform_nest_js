@@ -11,6 +11,14 @@ export class DeviceSessionsRepository {
     private readonly repo: Repository<DeviceSessionOrmEntity>,
   ) { }
 
+  private toIatIso(value: Date | string): string {
+    return value instanceof Date ? value.toISOString() : value;
+  }
+
+  private toIatIsoFromSeconds(iat: number): string {
+    return new Date(iat * 1000).toISOString();
+  }
+
   async createSession(params: {
     userId: string;
     deviceId: string;
@@ -23,6 +31,7 @@ export class DeviceSessionsRepository {
       userId: params.userId,
       ip: params.ip,
       userAgent: params.userAgent,
+      iat: this.toIatIso(params.iat) as unknown as Date,
     });
     await this.repo.save(entity);
   }
@@ -52,9 +61,27 @@ export class DeviceSessionsRepository {
       where: {
         userId,
         deviceId,
-        iat: new Date(iat * 1000),
+        iat: this.toIatIsoFromSeconds(iat) as unknown as Date,
       },
     });
+  }
+
+  async updateSessionIatIfMatch(params: {
+    userId: string;
+    deviceId: string;
+    currentIat: Date | string;
+    newIat: Date;
+  }): Promise<boolean> {
+    const result = await this.repo.update(
+      {
+        userId: params.userId,
+        deviceId: params.deviceId,
+        iat: this.toIatIso(params.currentIat) as unknown as Date,
+      },
+      { iat: this.toIatIso(params.newIat) as unknown as Date },
+    );
+
+    return (result.affected ?? 0) === 1;
   }
 
 }
