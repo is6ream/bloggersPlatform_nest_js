@@ -4,5 +4,5 @@ export interface DeviceSessionRow {
   userId: string;
   ip: string | null;
   userAgent: string;
-  iat: Date
+  iat: Date;
 }

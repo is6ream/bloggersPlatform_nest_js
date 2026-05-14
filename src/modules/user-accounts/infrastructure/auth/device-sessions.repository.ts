@@ -9,14 +9,10 @@ export class DeviceSessionsRepository {
   constructor(
     @InjectRepository(DeviceSessionOrmEntity)
     private readonly repo: Repository<DeviceSessionOrmEntity>,
-  ) { }
+  ) {}
 
-  private toIatIso(value: Date | string): string {
-    return value instanceof Date ? value.toISOString() : value;
-  }
-
-  private toIatIsoFromSeconds(iat: number): string {
-    return new Date(iat * 1000).toISOString();
+  private iatFromJwtSeconds(iat: number): Date {
+    return new Date(iat * 1000);
   }
 
   async createSession(params: {
@@ -24,18 +20,17 @@ export class DeviceSessionsRepository {
     deviceId: string;
     ip: string;
     userAgent: string;
-    iat: Date
+    iat: Date;
   }): Promise<void> {
     const entity = this.repo.create({
       deviceId: params.deviceId,
       userId: params.userId,
       ip: params.ip,
       userAgent: params.userAgent,
-      iat: this.toIatIso(params.iat) as unknown as Date,
+      iat: params.iat,
     });
     await this.repo.save(entity);
   }
-
 
   async deleteSession(userId: string, deviceId: string): Promise<void> {
     await this.repo.delete({ userId, deviceId });
@@ -61,7 +56,7 @@ export class DeviceSessionsRepository {
       where: {
         userId,
         deviceId,
-        iat: this.toIatIsoFromSeconds(iat) as unknown as Date,
+        iat: this.iatFromJwtSeconds(iat),
       },
     });
   }
@@ -69,19 +64,18 @@ export class DeviceSessionsRepository {
   async updateSessionIatIfMatch(params: {
     userId: string;
     deviceId: string;
-    currentIat: Date | string;
+    currentIat: Date;
     newIat: Date;
   }): Promise<boolean> {
     const result = await this.repo.update(
       {
         userId: params.userId,
         deviceId: params.deviceId,
-        iat: this.toIatIso(params.currentIat) as unknown as Date,
+        iat: params.currentIat,
       },
-      { iat: this.toIatIso(params.newIat) as unknown as Date },
+      { iat: params.newIat },
     );
 
     return (result.affected ?? 0) === 1;
   }
-
 }

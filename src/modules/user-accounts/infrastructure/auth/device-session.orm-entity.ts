@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('device_sessions')
 export class DeviceSessionOrmEntity {
@@ -14,6 +14,6 @@ export class DeviceSessionOrmEntity {
   @Column({ type: 'text', name: 'user_agent' })
   userAgent!: string;
 
-  @Column({ type: "text", name: "iat" })
-  iat!: Date
+  @Column({ type: 'timestamptz', name: 'iat' })
+  iat!: Date;
 }
