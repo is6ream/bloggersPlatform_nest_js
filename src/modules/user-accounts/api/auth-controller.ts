@@ -184,8 +184,7 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
-  //переписать на логику с мультидевайсностью 
-  //написать аналогичные тест кейсы
+
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RefreshTokenGuard)
