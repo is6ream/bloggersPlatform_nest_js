@@ -21,11 +21,12 @@ import { commentsCommandHadnler } from './comments/application/useCases/comments
 import { CommentsRepository } from './comments/infrastructure/comments-repository';
 import { LikesRepository } from './likes/infrastructure/likes-repository';
 import { JwtService } from '@nestjs/jwt';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BlogsOrmEntity } from './blogs/infrastructure/entity/blog-orm.entity';
+
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
-    CqrsModule,
-    UserAccountsModule,
+    TypeOrmModule.forFeature([BlogsOrmEntity])
   ],
   controllers: [SaBlogsController, BlogsController, PostsController, CommentsController],
   providers: [
@@ -45,4 +46,4 @@ import { JwtService } from '@nestjs/jwt';
   ],
   exports: [],
 })
-export class BloggersPlatformModule {}
+export class BloggersPlatformModule { }

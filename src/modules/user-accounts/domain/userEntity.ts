@@ -49,6 +49,7 @@ export class User {
 
     user.emailConfirmation = {
       confirmationCode: randomUUID(),
+      //доавбить енв переменную
       expirationDate: new Date(Date.now() + 3 * 60 * 1000),
       isConfirmed: false,
     };
@@ -57,6 +58,7 @@ export class User {
   }
 
   makeDeleted() {
+    //выкинуть domainError(прописать кастомную ошибку)
     if (this.deleteAt !== null) {
       throw new Error('Entity already deleted');
     }

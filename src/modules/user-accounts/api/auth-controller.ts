@@ -48,7 +48,7 @@ export class AuthController {
     private authQueryRepository: AuthQueryRepository,
     private commandBus: CommandBus,
   ) { }
-
+//вынести set clear token в сервис
   private getRefreshTokenCookieOptions(
     req: HttpRequestWithUser,
     maxAgeMs?: number,
@@ -75,6 +75,7 @@ export class AuthController {
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
+    //не хватает await
     return this.authService.passwordRecovery(body.email);
   }
 

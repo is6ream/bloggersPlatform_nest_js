@@ -29,6 +29,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserOrmEntity } from './infrastructure/users/entities/user.orm-entity';
 import { UsersRepository } from './infrastructure/users/repositories/users-repository';
 import { UsersOrmQueryRepository } from './infrastructure/users/repositories/user.query-repository';
+import { BlogsOrmEntity } from '../bloggers-platform/blogs/infrastructure/entity/blog-orm.entity';
 
 
 @Module({
