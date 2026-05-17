@@ -66,32 +66,6 @@ export class AuthService {
   }
 
   async registerUser(dto: CreateUserDto) {
-    const existingUser = await this.usersRepository.findUserByLoginOrEmail({
-      login: dto.login,
-      email: dto.email,
-    });
-
-    if (existingUser) {
-      if (existingUser.email === dto.email) {
-        throw new DomainException({
-          code: DomainExceptionCode.BadRequest,
-          message: 'Email already registered',
-          extensions: [
-            { message: 'Email already registered', field: 'email' },
-          ],
-        });
-      }
-      if (existingUser.login === dto.login) {
-        throw new DomainException({
-          code: DomainExceptionCode.BadRequest,
-          message: 'Login already registered',
-          extensions: [
-            { message: 'Login already registered', field: 'login' },
-          ],
-        });
-      }
-    }
-
     const userId: string = await this.usersService.createUser(dto);
     const user = await this.usersRepository.findOrNotFoundFail(userId);
 

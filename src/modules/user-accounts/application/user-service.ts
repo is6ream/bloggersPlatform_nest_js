@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto, UpdateUserDto } from '../dto/UserInputDto';
 import { BcryptService } from './bcrypt-service';
-import { DomainException } from 'src/core/exceptions/domain-exceptions';
-import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
 import { UserOrmEntity } from '../infrastructure/users/entities/user.orm-entity';
+import { throwRegistrationConflict } from './throw-registration-conflict';
 
 @Injectable()
 export class UsersService {
@@ -14,14 +13,7 @@ export class UsersService {
   ) { }
 
   async createUser(dto: CreateUserDto): Promise<string> {
-    const userWithSameLogin = await this.repository.findByLogin(dto.login);
-
-    if (userWithSameLogin) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'user with such login already exists',
-      });
-    }
+    await this.assertRegistrationAvailable(dto);
 
     const passwordHash = await this.bcryptService.generateHash(dto.password);
 
@@ -30,6 +22,20 @@ export class UsersService {
     await this.repository.save(user)
 
     return user.id;
+  }
+
+  private async assertRegistrationAvailable(dto: CreateUserDto): Promise<void> {
+    const [existingByEmail, existingByLogin] = await Promise.all([
+      this.repository.findByEmail(dto.email),
+      this.repository.findByLogin(dto.login),
+    ]);
+
+    if (existingByEmail) {
+      throwRegistrationConflict('email', 'Email already registered');
+    }
+    if (existingByLogin) {
+      throwRegistrationConflict('login', 'Login already registered');
+    }
   }
 
   async updateUser(id: string, dto: UpdateUserDto): Promise<string> {
