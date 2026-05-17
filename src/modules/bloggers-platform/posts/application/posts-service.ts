@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BlogSqlEntity } from '../../blogs/domain/blog-sql.entity';
+import { BlogsOrmEntity } from '../../blogs/infrastructure/entity/blog-orm.entity';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
 import { PostRepository } from '../infrastructure/postRepository';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
@@ -15,7 +15,7 @@ export class PostsService {
   ) {}
 
   async createPost(dto: CreatePostInputDto): Promise<string> {
-    const blog: BlogSqlEntity = await this.blogsRepository.findOrNotFoundFail(
+    const blog: BlogsOrmEntity = await this.blogsRepository.findOrNotFoundFail(
       dto.blogId,
     );
     const post = PostSqlEntity.createForInsert({
@@ -35,7 +35,7 @@ export class PostsService {
     blogId: string,
     dto: CreatePostForBlogInputDto,
   ): Promise<string> {
-    const blog: BlogSqlEntity =
+    const blog: BlogsOrmEntity =
       await this.blogsRepository.findOrNotFoundFail(blogId);
 
     const post = PostSqlEntity.createForInsert({
