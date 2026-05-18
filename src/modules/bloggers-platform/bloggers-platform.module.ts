@@ -19,11 +19,13 @@ import { LikesRepository } from './likes/infrastructure/likes-repository';
 import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlogsOrmEntity } from './blogs/infrastructure/entity/blog-orm.entity';
+import { PostOrmEntity } from './posts/infrastructure/typeOrm/entity/post-orm.entity';
+import { PostQueryRepository } from './posts/infrastructure/typeOrm/postsQueryRepository';
 import { UserAccountsModule } from '../user-accounts/userAccounts.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BlogsOrmEntity]),
+    TypeOrmModule.forFeature([BlogsOrmEntity, PostOrmEntity]),
     UserAccountsModule
   ],
   controllers: [SaBlogsController, BlogsController, PostsController, CommentsController],
@@ -33,6 +35,7 @@ import { UserAccountsModule } from '../user-accounts/userAccounts.module';
     BlogsRepository,
     BlogsService,
     PostsRawSqlQueryRepository,
+    PostQueryRepository,
     PostRepository,
     PostsService,
     JwtService,
