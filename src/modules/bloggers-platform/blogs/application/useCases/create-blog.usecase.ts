@@ -6,16 +6,15 @@ import { BlogsOrmEntity } from '../../infrastructure/entity/blog-orm.entity';
 
 @Injectable()
 export class CreateBlogCommand {
-  constructor(public dto: CreateBlogDto) {}
+  constructor(public dto: CreateBlogDto) { }
 }
 @CommandHandler(CreateBlogCommand)
 export class CreateBlogUseCase implements ICommandHandler<CreateBlogCommand> {
-  constructor(private blogsRepository: BlogsRepository) {}
-//команда не должна возврашать сущность
-//вернуть id
-  async execute(command: CreateBlogCommand): Promise<BlogsOrmEntity> {
+  constructor(private blogsRepository: BlogsRepository) { }
+
+  async execute(command: CreateBlogCommand): Promise<string> {
     const blog = BlogsOrmEntity.create(command.dto);
     await this.blogsRepository.save(blog);
-    return blog;
+    return blog.id
   }
 }

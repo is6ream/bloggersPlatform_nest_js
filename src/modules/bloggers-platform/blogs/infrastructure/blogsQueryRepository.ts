@@ -1,7 +1,8 @@
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
+import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { GetBlogsQueryParams } from "../api/query/get-blogs-query-params";
 import { BlogViewDto } from '../dto/output/blogViewDto';
 import { BlogPaginatedViewDto } from '../api/paginated/paginated.blog.view-dto';
@@ -56,4 +57,15 @@ export class BlogsQueryRepository {
 
     }
 
+    async getByIdOrNotFoundFail(id: string): Promise<BlogViewDto> {
+        const blog = await this.repo.findOne({
+            where: { id, deleteAt: IsNull() },
+        });
+
+        if (!blog) {
+            throw new DomainException({ code: 1, message: 'Blog not found' });
+        }
+
+        return BlogViewDto.mapToView(blog);
+    }
 }

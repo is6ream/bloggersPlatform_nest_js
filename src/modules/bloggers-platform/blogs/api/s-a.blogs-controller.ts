@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { CreateBlogInputDto } from '../dto/input/createBlogInputDto';
 import { BlogViewModel } from './model/blogViewModel';
-import { BlogsRawSqlQueryRepository } from '../infrastructure/blogs-raw-sql.query-repository';
 import { GetBlogsQueryParams } from './query/get-blogs-query-params';
 import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
@@ -22,7 +21,6 @@ import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-param
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
 import { PaginatedPostsDto } from '../../posts/infrastructure/dto/paginated-post.dto';
 import { CommandBus } from '@nestjs/cqrs';
-import { BlogSqlEntity } from '../domain/blog-sql.entity';
 import { PostSqlEntity } from '../../posts/domain/post-sql.entity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
 import { UpdateBlogCommand } from '../application/useCases/update-blog-usecase';
@@ -32,11 +30,12 @@ import { CreateBlogCommand } from '../application/useCases/create-blog.usecase';
 import { CreatePostForSpecificBlogCommand } from '../application/useCases/create-blog-by-blogId.usecase';
 import { UpdatePostForSpecificBlogCommand } from '../application/useCases/update-post-for-specific-blog.usecase';
 import { DeletePostForSpecificBlogCommand } from '../application/useCases/delete-post-for-specific-blog.usecase';
+import { BlogsQueryRepository } from '../infrastructure/blogsQueryRepository';
 
 @Controller('/sa/blogs')
 export class SaBlogsController {
   constructor(
-    private blogsQueryRepository: BlogsRawSqlQueryRepository,
+    private blogsQueryRepository: BlogsQueryRepository,
     private postsQueryRepository: PostsRawSqlQueryRepository,
     private commandBus: CommandBus,
   ) { }
@@ -51,10 +50,11 @@ export class SaBlogsController {
   @UseGuards(BasicAuthGuard)
   @Post()
   async createBlog(@Body() body: CreateBlogInputDto): Promise<BlogViewModel> {
-    const blog: BlogSqlEntity = await this.commandBus.execute(
+    const blogId: string = await this.commandBus.execute(
       new CreateBlogCommand(body),
     );
-    return blog.toViewModel(blog.id);
+
+    return this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
   }
 
   @UseGuards(BasicAuthGuard)
