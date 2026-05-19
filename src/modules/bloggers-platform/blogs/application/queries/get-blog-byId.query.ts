@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { BlogsRawSqlQueryRepository } from '../../infrastructure/blogs-raw-sql.query-repository';
+import { BlogsQueryRepository } from '../../infrastructure/blogsQueryRepository';
 
 export class GetBlogByIdQuery {
   constructor(public blogId: string) {}
@@ -7,7 +7,7 @@ export class GetBlogByIdQuery {
 
 @QueryHandler(GetBlogByIdQuery)
 export class GetBlogByIdQueryHandler implements IQueryHandler<GetBlogByIdQuery> {
-  constructor(private blogsQueryRepository: BlogsRawSqlQueryRepository) {}
+  constructor(private blogsQueryRepository: BlogsQueryRepository) {}
 
   async execute(query: GetBlogByIdQuery): Promise<any> {
     return this.blogsQueryRepository.getByIdOrNotFoundFail(query.blogId);

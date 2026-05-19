@@ -1,9 +1,9 @@
-import { PostRepository } from './../../infrastructure/postRepository';
+import { PostsRepository } from '../../infrastructure/postsRepository';
 import { Injectable } from '@nestjs/common';
 import { CreatePostInputDto } from '../../dto/input/createPostInputDto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
-import { PostSqlEntity } from '../../domain/post-sql.entity';
+import { PostOrmEntity } from '../../infrastructure/typeOrm/entity/post-orm.entity';
 
 @Injectable()
 export class CreatePostCommand {
@@ -14,14 +14,14 @@ export class CreatePostCommand {
 export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
   constructor(
     private blogsRepository: BlogsRepository,
-    private postRepository: PostRepository,
+    private postRepository: PostsRepository,
   ) {}
 
   async execute(command: CreatePostCommand): Promise<string> {
     const blog = await this.blogsRepository.findByIdOrThrowValidationError(
       command.dto.blogId,
     );
-    const post = PostSqlEntity.createForInsert({
+    const post = PostOrmEntity.create({
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,

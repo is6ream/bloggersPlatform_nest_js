@@ -13,8 +13,8 @@ import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import { e2eApiPath } from 'test/e2e/helpers/api-path';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
-import { BlogsRawSqlQueryRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogs-raw-sql.query-repository';
-import { BlogSqlEntity } from 'src/modules/bloggers-platform/blogs/domain/blog-sql.entity';
+import { BlogsQueryRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsQueryRepository';
+import { BlogsOrmEntity } from 'src/modules/bloggers-platform/blogs/infrastructure/entity/blog-orm.entity';
 import { GetBlogsQueryParams } from 'src/modules/bloggers-platform/blogs/api/query/get-blogs-query-params';
 import { SortDirection } from 'src/core/dto/base.query-params.input-dto';
 
@@ -32,7 +32,7 @@ describe('Blogs repositories (integration)', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let blogsRepository: BlogsRepository;
-  let blogsQueryRepository: BlogsRawSqlQueryRepository;
+  let blogsQueryRepository: BlogsQueryRepository;
 
   beforeAll(async () => {
     ensureIntegrationPgEnv();
@@ -46,7 +46,7 @@ describe('Blogs repositories (integration)', () => {
     await app.init();
 
     blogsRepository = moduleFixture.get(BlogsRepository);
-    blogsQueryRepository = moduleFixture.get(BlogsRawSqlQueryRepository);
+    blogsQueryRepository = moduleFixture.get(BlogsQueryRepository);
   });
 
   beforeEach(async () => {
@@ -60,7 +60,7 @@ describe('Blogs repositories (integration)', () => {
   });
 
   it('save + findById: persist and read blog entity', async () => {
-    const entity = BlogSqlEntity.createForInsert({
+    const entity = BlogsOrmEntity.create({
       name: 'repo-blog',
       description: 'repo-description',
       websiteUrl: 'https://repo-blog.com',
@@ -85,12 +85,12 @@ describe('Blogs repositories (integration)', () => {
   });
 
   it('getAll: exclude soft-deleted blogs and apply searchNameTerm', async () => {
-    const keep = BlogSqlEntity.createForInsert({
+    const keep = BlogsOrmEntity.create({
       name: 'keep-blog',
       description: 'keep description',
       websiteUrl: 'https://keep-blog.com',
     });
-    const deleteMe = BlogSqlEntity.createForInsert({
+    const deleteMe = BlogsOrmEntity.create({
       name: 'delete-blog',
       description: 'delete description',
       websiteUrl: 'https://delete-blog.com',

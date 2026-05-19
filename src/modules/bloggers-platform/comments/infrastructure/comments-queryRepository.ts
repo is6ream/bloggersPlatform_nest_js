@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm';
 import { CommentSqlEntity } from '../domain/commentEntity';
 import { GetCommentsQueryParams } from '../../posts/api/query/qet-comments-query-params';
 import { CommentViewDto } from '../dto/commentViewDto';
-import { PostRepository } from '../../posts/infrastructure/postRepository';
+import { PostsRepository } from '../../posts/infrastructure/postsRepository';
 import { CommentPaginatedViewDto } from '../../posts/api/paginated/paginated.comment.view-dto';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
@@ -25,7 +25,7 @@ type RawCommentRow = {
 export class CommentsQueryRepository {
   constructor(
     private readonly dataSource: DataSource,
-    private postsRepository: PostRepository,
+    private postsRepository: PostsRepository,
     private likesRepository: LikesRepository,
   ) {}
 

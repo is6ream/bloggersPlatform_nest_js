@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateCommentInputDto } from 'src/modules/bloggers-platform/posts/api/model/input/create-comment.input.dto';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { CommentSqlEntity } from '../../domain/commentEntity';
-import { PostRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postRepository';
+import { PostsRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postsRepository';
 import { CommentsRepository } from '../../infrastructure/comments-repository';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
 
@@ -18,7 +18,7 @@ export class CreateCommentCommand {
 @CommandHandler(CreateCommentCommand)
 export class CreateCommentUseCase implements ICommandHandler<CreateCommentCommand> {
   constructor(
-    private postRepository: PostRepository,
+    private postRepository: PostsRepository,
     private commentsRepository: CommentsRepository,
     private usersRepository: UsersRepository,
   ) {}

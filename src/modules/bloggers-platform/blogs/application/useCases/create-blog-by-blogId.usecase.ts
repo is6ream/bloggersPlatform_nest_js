@@ -1,9 +1,9 @@
-import { PostRepository } from './../../../posts/infrastructure/postRepository';
+import { PostsRepository } from '../../../posts/infrastructure/postsRepository';
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 import { CreatePostByBlogIdInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostByBlogIdInputDto';
-import { PostSqlEntity } from 'src/modules/bloggers-platform/posts/domain/post-sql.entity';
+import { PostOrmEntity } from 'src/modules/bloggers-platform/posts/infrastructure/typeOrm/entity/post-orm.entity';
 
 @Injectable()
 export class CreatePostForSpecificBlogCommand {
@@ -16,15 +16,15 @@ export class CreatePostForSpecificBlogCommand {
 @CommandHandler(CreatePostForSpecificBlogCommand)
 export class CreatePostByBlogIdUseCase implements ICommandHandler<CreatePostForSpecificBlogCommand> {
   constructor(
-    private postRepository: PostRepository,
+    private postRepository: PostsRepository,
     private blogRepository: BlogsRepository,
   ) {}
 
   async execute(
     command: CreatePostForSpecificBlogCommand,
-  ): Promise<PostSqlEntity> {
+  ): Promise<PostOrmEntity> {
     const blog = await this.blogRepository.findOrNotFoundFail(command.postId);
-    const post = PostSqlEntity.createForInsert({
+    const post = PostOrmEntity.create({
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,

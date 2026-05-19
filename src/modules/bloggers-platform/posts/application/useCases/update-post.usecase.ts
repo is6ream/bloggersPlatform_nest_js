@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UpdatePostInputDto } from '../../dto/input/updatePostInputDto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PostRepository } from '../../infrastructure/postRepository';
+import { PostsRepository } from '../../infrastructure/postsRepository';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class UpdatePostCommand {
 @CommandHandler(UpdatePostCommand)
 export class UpdatePostUseCase implements ICommandHandler<UpdatePostCommand> {
   constructor(
-    private postRepository: PostRepository,
+    private postRepository: PostsRepository,
     private blogsRepository: BlogsRepository,
   ) {}
 

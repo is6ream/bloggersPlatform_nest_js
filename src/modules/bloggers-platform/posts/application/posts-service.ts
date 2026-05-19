@@ -1,24 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { BlogsOrmEntity } from '../../blogs/infrastructure/entity/blog-orm.entity';
 import { BlogsRepository } from '../../blogs/infrastructure/blogsRepository';
-import { PostRepository } from '../infrastructure/postRepository';
+import { PostsRepository } from '../infrastructure/postsRepository';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 import { UpdatePostDto } from '../domain/dto/input/updatePostDto';
 import { CreatePostForBlogInputDto } from '../../blogs/dto/input/createPostForBlogInputDto';
-import { PostSqlEntity } from '../domain/post-sql.entity';
+import { PostOrmEntity } from '../infrastructure/typeOrm/entity/post-orm.entity';
 
 @Injectable()
 export class PostsService {
   constructor(
     private blogsRepository: BlogsRepository,
-    private postRepository: PostRepository,
+    private postRepository: PostsRepository,
   ) {}
 
   async createPost(dto: CreatePostInputDto): Promise<string> {
     const blog: BlogsOrmEntity = await this.blogsRepository.findOrNotFoundFail(
       dto.blogId,
     );
-    const post = PostSqlEntity.createForInsert({
+    const post = PostOrmEntity.create({
       title: dto.title,
       shortDescription: dto.shortDescription,
       content: dto.content,
@@ -38,7 +38,7 @@ export class PostsService {
     const blog: BlogsOrmEntity =
       await this.blogsRepository.findOrNotFoundFail(blogId);
 
-    const post = PostSqlEntity.createForInsert({
+    const post = PostOrmEntity.create({
       title: dto.title,
       shortDescription: dto.shortDescription,
       content: dto.content,

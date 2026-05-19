@@ -5,4 +5,5 @@ import {
 
 export class GetPostsQueryParams extends BaseQueryParams {
   sortBy: SortBy = SortBy.CreatedAt;
+  searchPostNameTerm?: string;
 }

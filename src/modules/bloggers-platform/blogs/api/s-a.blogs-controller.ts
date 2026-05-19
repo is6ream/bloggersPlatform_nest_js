@@ -16,12 +16,12 @@ import { BlogViewModel } from './model/blogViewModel';
 import { GetBlogsQueryParams } from './query/get-blogs-query-params';
 import { BlogPaginatedViewDto } from './paginated/paginated.blog.view-dto';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
-import { PostsRawSqlQueryRepository } from '../../posts/infrastructure/posts-raw-sql.query-repository';
+import { PostQueryRepository } from '../../posts/infrastructure/postsQueryRepository';
 import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-params';
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
 import { PaginatedPostsDto } from '../../posts/infrastructure/dto/paginated-post.dto';
 import { CommandBus } from '@nestjs/cqrs';
-import { PostSqlEntity } from '../../posts/domain/post-sql.entity';
+import { PostOrmEntity } from '../../posts/infrastructure/typeOrm/entity/post-orm.entity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
 import { UpdateBlogCommand } from '../application/useCases/update-blog-usecase';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
@@ -36,7 +36,7 @@ import { BlogsQueryRepository } from '../infrastructure/blogsQueryRepository';
 export class SaBlogsController {
   constructor(
     private blogsQueryRepository: BlogsQueryRepository,
-    private postsQueryRepository: PostsRawSqlQueryRepository,
+    private postsQueryRepository: PostQueryRepository,
     private commandBus: CommandBus,
   ) { }
   @UseGuards(BasicAuthGuard)
@@ -80,7 +80,7 @@ export class SaBlogsController {
     @Param('id') id: string,
     @Body() body: CreatePostByBlogIdInputDto,
   ): Promise<PostViewModel> {
-    const post: PostSqlEntity = await this.commandBus.execute(
+    const post: PostOrmEntity = await this.commandBus.execute(
       new CreatePostForSpecificBlogCommand(id, body),
     );
 

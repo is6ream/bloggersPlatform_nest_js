@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PostRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postRepository';
+import { PostsRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postsRepository';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 import { CreatePostByBlogIdInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostByBlogIdInputDto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
@@ -20,7 +20,7 @@ export class UpdatePostForSpecificBlogUseCase
   implements ICommandHandler<UpdatePostForSpecificBlogCommand>
 {
   constructor(
-    private readonly postRepository: PostRepository,
+    private readonly postRepository: PostsRepository,
     private readonly blogsRepository: BlogsRepository,
   ) {}
 

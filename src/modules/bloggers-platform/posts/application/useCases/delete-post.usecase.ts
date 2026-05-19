@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PostRepository } from '../../infrastructure/postRepository';
+import { PostsRepository } from '../../infrastructure/postsRepository';
 
 @Injectable()
 export class DeletePostCommand {
@@ -9,7 +9,7 @@ export class DeletePostCommand {
 
 @CommandHandler(DeletePostCommand)
 export class DeletePostUseCase implements ICommandHandler<DeletePostCommand> {
-  constructor(private postRepository: PostRepository) {}
+  constructor(private postRepository: PostsRepository) {}
 
   async execute(command: DeletePostCommand): Promise<void> {
     const post = await this.postRepository.findOrNotFoundFail(command.id);
