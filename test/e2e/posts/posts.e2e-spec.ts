@@ -15,9 +15,9 @@ import { e2eApiPath } from '../helpers/api-path';
 
 const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
 const TESTING_PATH = e2eApiPath('testing/all-data');
-const POSTS_BASE = e2eApiPath('posts');
+const SA_BLOGS_BASE = e2eApiPath('sa/blogs');
 const BLOGS_BASE = e2eApiPath('blogs');
-
+const POSTS_BASE = e2eApiPath('posts');
 const NON_EXISTENT_UUID = '00000000-0000-4000-8000-000000000099';
 
 function expectPostShape(
@@ -37,7 +37,7 @@ function expectPostShape(
     shortDescription: expected.shortDescription,
     content: expected.content,
     blogId: expected.blogId,
-    blogName: expected.blogName,  
+    blogName: expected.blogName,
   });
   expect(typeof body.createdAt).toBe('string');
   expect(body.extendedLikesInfo).toEqual(
@@ -89,7 +89,7 @@ describe('Posts query API (e2e, raw SQL)', () => {
 
     it('200 — после создания постов возвращает корректную структуру и счётчики', async () => {
       const blogRes = await request(app.getHttpServer())
-        .post(BLOGS_BASE)
+        .post(SA_BLOGS_BASE)
         .set('Authorization', BASIC_AUTH)
         .send({
           name: 'sql-blog',
@@ -119,6 +119,7 @@ describe('Posts query API (e2e, raw SQL)', () => {
             blogId,
           })
           .expect(201);
+
         created.push({
           id: r.body.id,
           title: r.body.title,
@@ -164,7 +165,7 @@ describe('Posts query API (e2e, raw SQL)', () => {
 
     it('200 — пагинация и сортировка по title asc', async () => {
       const blogRes = await request(app.getHttpServer())
-        .post(BLOGS_BASE)
+        .post(SA_BLOGS_BASE)
         .set('Authorization', BASIC_AUTH)
         .send({
           name: 'sort-blog',
@@ -229,7 +230,7 @@ describe('Posts query API (e2e, raw SQL)', () => {
 
     it('200 — пост совпадает с данными после создания', async () => {
       const blogRes = await request(app.getHttpServer())
-        .post(BLOGS_BASE)
+        .post(SA_BLOGS_BASE)
         .set('Authorization', BASIC_AUTH)
         .send({
           name: 'one-post',
@@ -274,7 +275,7 @@ describe('Posts query API (e2e, raw SQL)', () => {
 
     it('404 — удалённый пост не отдаётся', async () => {
       const blogRes = await request(app.getHttpServer())
-        .post(BLOGS_BASE)
+        .post(SA_BLOGS_BASE)
         .set('Authorization', BASIC_AUTH)
         .send({
           name: 'del-blog',
@@ -282,7 +283,6 @@ describe('Posts query API (e2e, raw SQL)', () => {
           websiteUrl: 'https://del.com',
         })
         .expect(201);
-
       const createRes = await request(app.getHttpServer())
         .post(POSTS_BASE)
         .set('Authorization', BASIC_AUTH)

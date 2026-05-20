@@ -5,3 +5,4 @@ export function e2eApiPath(route: string): string {
   const r = route.startsWith('/') ? route.slice(1) : route;
   return `/${GLOBAL_PREFIX}/${r}`;
 }
+

@@ -14,6 +14,7 @@ import { appSetup } from 'src/setup/app.setup';
 import { e2eApiPath } from '../helpers/api-path';
 
 const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
+const INVALID_BASIC_AUTH = `Basic ${Buffer.from('admin:wrongpassword').toString('base64')}`;
 const TESTING_PATH = e2eApiPath('testing/all-data');
 const SA_BLOGS_PATH = e2eApiPath('sa/blogs');
 const BLOGS_PATH = e2eApiPath('blogs');
@@ -57,6 +58,16 @@ describe('Blogs API (e2e)', () => {
       createdAt: string;
       isMembership: boolean;
     };
+  };
+
+  const createPostForBlog = async (blogId: string) => {
+    const res = await request(app.getHttpServer())
+      .post(`${SA_BLOGS_PATH}/${blogId}/posts`)
+      .set('Authorization', BASIC_AUTH)
+      .send(VALID_POST_BODY)
+      .expect(201);
+
+    return res.body as { id: string };
   };
 
   beforeAll(async () => {
@@ -296,6 +307,15 @@ describe('Blogs API (e2e)', () => {
         .expect(404);
     });
 
+    it('401 — POST blog post without Basic Auth', async () => {
+      const blog = await createBlog();
+
+      await request(app.getHttpServer())
+        .post(`${SA_BLOGS_PATH}/${blog.id}/posts`)
+        .send(VALID_POST_BODY)
+        .expect(401);
+    });
+
     it('401 — GET blog posts without Basic Auth', async () => {
       const blog = await createBlog();
       await request(app.getHttpServer())
@@ -471,6 +491,83 @@ describe('Blogs API (e2e)', () => {
           shortDescription: 'short-desc-here',
           content: 'content-here',
         })
+        .expect(404);
+    });
+  });
+
+  describe('SA /sa/blogs/:blogId/posts — 401 if auth credentials are incorrect', () => {
+    it('POST /sa/blogs/:blogId/posts → 401', async () => {
+      const blog = await createBlog();
+
+      await request(app.getHttpServer())
+        .post(`${SA_BLOGS_PATH}/${blog.id}/posts`)
+        .set('Authorization', INVALID_BASIC_AUTH)
+        .send(VALID_POST_BODY)
+        .expect(401);
+    });
+
+    it('PUT /sa/blogs/:blogId/posts/:postId → 401', async () => {
+      const blog = await createBlog();
+      const post = await createPostForBlog(blog.id);
+
+      await request(app.getHttpServer())
+        .put(`${SA_BLOGS_PATH}/${blog.id}/posts/${post.id}`)
+        .set('Authorization', INVALID_BASIC_AUTH)
+        .send(VALID_POST_BODY)
+        .expect(401);
+    });
+
+    it('DELETE /sa/blogs/:blogId/posts/:postId → 401', async () => {
+      const blog = await createBlog();
+      const post = await createPostForBlog(blog.id);
+
+      await request(app.getHttpServer())
+        .delete(`${SA_BLOGS_PATH}/${blog.id}/posts/${post.id}`)
+        .set('Authorization', INVALID_BASIC_AUTH)
+        .expect(401);
+    });
+  });
+
+  describe('DELETE /sa/blogs/:blogId/posts/:postId', () => {
+    it('401 — без Basic Auth', async () => {
+      const blog = await createBlog();
+      const post = await createPostForBlog(blog.id);
+
+      await request(app.getHttpServer())
+        .delete(`${SA_BLOGS_PATH}/${blog.id}/posts/${post.id}`)
+        .expect(401);
+    });
+
+    it('204 — удаляет пост', async () => {
+      const blog = await createBlog();
+      const post = await createPostForBlog(blog.id);
+
+      await request(app.getHttpServer())
+        .delete(`${SA_BLOGS_PATH}/${blog.id}/posts/${post.id}`)
+        .set('Authorization', BASIC_AUTH)
+        .expect(204);
+
+      const listRes = await request(app.getHttpServer())
+        .get(`${BLOGS_PATH}/${blog.id}/posts`)
+        .expect(200);
+
+      expect(listRes.body.totalCount).toBe(0);
+      expect(listRes.body.items).toHaveLength(0);
+    });
+
+    it('404 — блог не существует', async () => {
+      await request(app.getHttpServer())
+        .delete(`${SA_BLOGS_PATH}/${NON_EXISTENT_BLOG_ID}/posts/${NON_EXISTENT_POST_ID}`)
+        .set('Authorization', BASIC_AUTH)
+        .expect(404);
+    });
+
+    it('404 — пост не существует', async () => {
+      const blog = await createBlog();
+
+      await request(app.getHttpServer())
+        .delete(`${SA_BLOGS_PATH}/${blog.id}/posts/${NON_EXISTENT_POST_ID}`)
+        .set('Authorization', BASIC_AUTH)
         .expect(404);
     });
   });

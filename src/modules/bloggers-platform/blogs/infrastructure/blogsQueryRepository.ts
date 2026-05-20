@@ -48,7 +48,7 @@ export class BlogsQueryRepository {
         const [items, totalCount] = await qb.getManyAndCount();
 
         return BlogPaginatedViewDto.mapToView({
-            items: items.map(BlogViewDto.mapToView),
+            items: items.map((blog) => BlogViewDto.mapToView(blog)),
             page: query.pageNumber,
             size: query.pageSize,
             totalCount,
