@@ -1,5 +1,7 @@
 #!/bin/sh
-# Removes lines added by Cursor IDE from commit messages
+# Removes attribution lines added by Cursor IDE from commit messages
 sed -i '/^Made-with: Cursor/d' "$1"
+sed -i '/^Co-authored-by: Cursor /d' "$1"
+sed -i '/cursoragent@cursor\.com/d' "$1"
 # Remove trailing blank lines left after deletion
 sed -i -e :a -e '/^\n*$/{$d;N;ba}' "$1"

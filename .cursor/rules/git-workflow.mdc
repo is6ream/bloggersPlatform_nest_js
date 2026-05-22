@@ -39,3 +39,5 @@ Examples:
 - Never commit broken or intermediate code
 - Never use `git push --force` on `main`/`master`
 - One concern per commit — don't mix unrelated changes
+- Never add `Co-authored-by: Cursor`, `Made-with: Cursor`, or any Cursor/cursoragent attribution to commits
+- Use plain `git commit -m "message"` only (no `--trailer` flags)
