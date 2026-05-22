@@ -1,7 +1,7 @@
-import { CreateBlogDto } from './../../dto/input/createBlogDto';
-import { BaseDBEntity } from "src/core/database/base-db.entity";
-import { Column, Entity } from "typeorm";
-import { UpdateBlogDto } from "../../dto/input/updateBlogDto";
+import { CreateBlogDto } from '../dto/input/createBlogDto';
+import { BaseDBEntity } from 'src/core/database/base-db.entity';
+import { Column, Entity } from 'typeorm';
+import { UpdateBlogDto } from '../dto/input/updateBlogDto';
 import { randomUUID } from 'crypto';
 
 

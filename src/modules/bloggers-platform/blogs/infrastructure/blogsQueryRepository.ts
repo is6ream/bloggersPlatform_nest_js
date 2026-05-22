@@ -6,13 +6,13 @@ import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { GetBlogsQueryParams } from "../api/query/get-blogs-query-params";
 import { BlogViewDto } from '../dto/output/blogViewDto';
 import { BlogPaginatedViewDto } from '../api/paginated/paginated.blog.view-dto';
-import { BlogsOrmEntity } from './entity/blog-orm.entity';
+import { BlogsOrmEntity } from '../domain/blog.orm-entity';
 
 
 @Injectable()
 export class BlogsQueryRepository {
     constructor(
-        @InjectRepository(BlogsOrmEntity)
+    @InjectRepository(BlogsOrmEntity)
         private readonly repo: Repository<BlogsOrmEntity>,
     ) { }
 

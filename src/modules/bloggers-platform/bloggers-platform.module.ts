@@ -15,15 +15,16 @@ import { CommentsRepository } from './comments/infrastructure/comments-repositor
 import { LikesRepository } from './likes/infrastructure/likes-repository';
 import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BlogsOrmEntity } from './blogs/infrastructure/entity/blog-orm.entity';
-import { PostOrmEntity } from './posts/infrastructure/typeOrm/entity/post-orm.entity';
+import { BlogsOrmEntity } from './blogs/domain/blog.orm-entity';
+import { PostsOrmEntity } from './posts/infrastructure/typeOrm/entity/post.orm-entity';
 import { PostQueryRepository } from './posts/infrastructure/postsQueryRepository';
 import { UserAccountsModule } from '../user-accounts/userAccounts.module';
 import { BlogsQueryRepository } from './blogs/infrastructure/blogsQueryRepository';
+import { CommentsOrmEntity } from './comments/domain/comment.orm-entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BlogsOrmEntity, PostOrmEntity]),
+    TypeOrmModule.forFeature([BlogsOrmEntity, PostsOrmEntity, CommentsOrmEntity]),
     UserAccountsModule
   ],
   controllers: [SaBlogsController, BlogsController, PostsController, CommentsController],

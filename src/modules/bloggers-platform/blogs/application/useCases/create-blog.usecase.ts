@@ -2,7 +2,7 @@ import { BlogsRepository } from './../../infrastructure/blogsRepository';
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateBlogDto } from '../../dto/input/createBlogDto';
-import { BlogsOrmEntity } from '../../infrastructure/entity/blog-orm.entity';
+import { BlogsOrmEntity } from '../../domain/blog.orm-entity';
 
 @Injectable()
 export class CreateBlogCommand {

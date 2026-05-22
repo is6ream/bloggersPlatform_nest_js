@@ -1,6 +1,5 @@
-import { BlogDocument } from '../../domain/blogEntity';
 import { BlogSqlEntity } from '../../domain/blog-sql.entity';
-import { BlogsOrmEntity } from '../../infrastructure/entity/blog-orm.entity';
+import { BlogsOrmEntity } from '../../domain/blog.orm-entity';
 
 export class BlogViewDto {
   id: string;
@@ -11,11 +10,11 @@ export class BlogViewDto {
   isMembership: boolean;
 
   static mapToView(
-    blog: BlogDocument | BlogSqlEntity | BlogsOrmEntity,
+    blog: BlogSqlEntity | BlogsOrmEntity,
   ): BlogViewDto {
     const dto = new this();
 
-    dto.id = '_id' in blog ? blog._id.toString() : blog.id;
+    dto.id = blog.id;
     dto.name = blog.name;
     dto.description = blog.description;
     dto.websiteUrl = blog.websiteUrl;

@@ -2,13 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
-import { PostOrmEntity } from './typeOrm/entity/post-orm.entity';
+import { PostsOrmEntity } from './typeOrm/entity/post.orm-entity';
 
 @Injectable()
 export class PostsRepository {
   constructor(
-    @InjectRepository(PostOrmEntity)
-    private readonly repo: Repository<PostOrmEntity>,
+    @InjectRepository(PostsOrmEntity)
+    private readonly repo: Repository<PostsOrmEntity>,
   ) {}
 
   private isValidPostId(id: string): boolean {
@@ -23,19 +23,19 @@ export class PostsRepository {
     );
   }
 
-  async findById(id: string): Promise<PostOrmEntity | null> {
+  async findById(id: string): Promise<PostsOrmEntity | null> {
     return this.repo.findOne({ where: { id, deleteAt: IsNull() } });
   }
 
-  async findByIdIncludingDeleted(id: string): Promise<PostOrmEntity | null> {
+  async findByIdIncludingDeleted(id: string): Promise<PostsOrmEntity | null> {
     return this.repo.findOne({ where: { id } });
   }
 
-  async save(entity: PostOrmEntity): Promise<void> {
+  async save(entity: PostsOrmEntity): Promise<void> {
     await this.repo.save(entity);
   }
 
-  async findOrNotFoundFail(id: string): Promise<PostOrmEntity> {
+  async findOrNotFoundFail(id: string): Promise<PostsOrmEntity> {
     const post = await this.findById(id);
     if (!post) {
       throw new DomainException({ code: 1, message: 'Post not found' });
@@ -50,7 +50,7 @@ export class PostsRepository {
     }
   }
 
-  async findOrThrowValidationError(id: string): Promise<PostOrmEntity> {
+  async findOrThrowValidationError(id: string): Promise<PostsOrmEntity> {
     if (!this.isValidPostId(id)) {
       throw new DomainException({
         code: 3,

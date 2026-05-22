@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { CreatePostInputDto } from '../../dto/input/createPostInputDto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
-import { PostOrmEntity } from '../../infrastructure/typeOrm/entity/post-orm.entity';
+import { PostsOrmEntity } from '../../infrastructure/typeOrm/entity/post.orm-entity';
 
 @Injectable()
 export class CreatePostCommand {
@@ -21,7 +21,7 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     const blog = await this.blogsRepository.findByIdOrThrowValidationError(
       command.dto.blogId,
     );
-    const post = PostOrmEntity.create({
+    const post = PostsOrmEntity.create({
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,

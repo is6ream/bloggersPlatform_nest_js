@@ -14,8 +14,7 @@ import { CoreModule } from 'src/core/core.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 
-//забыть про as
-//почитать zodo, class-validator
+
 @Module({
   imports: [
     configModule,

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateBlogDto } from '../dto/input/createBlogDto';
 import { BlogsRepository } from '../infrastructure/blogsRepository';
 import { UpdateBlogDto } from '../dto/input/updateBlogDto';
-import { BlogsOrmEntity } from '../infrastructure/entity/blog-orm.entity';
+import { BlogsOrmEntity } from '../domain/blog.orm-entity';
 
 @Injectable()
 export class BlogsService {

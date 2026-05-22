@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 import { CreatePostByBlogIdInputDto } from 'src/modules/bloggers-platform/posts/dto/input/createPostByBlogIdInputDto';
-import { PostOrmEntity } from 'src/modules/bloggers-platform/posts/infrastructure/typeOrm/entity/post-orm.entity';
+import { PostsOrmEntity } from 'src/modules/bloggers-platform/posts/infrastructure/typeOrm/entity/post.orm-entity';
 
 @Injectable()
 export class CreatePostForSpecificBlogCommand {
@@ -22,9 +22,9 @@ export class CreatePostByBlogIdUseCase implements ICommandHandler<CreatePostForS
 
   async execute(
     command: CreatePostForSpecificBlogCommand,
-  ): Promise<PostOrmEntity> {
+  ): Promise<PostsOrmEntity> {
     const blog = await this.blogRepository.findOrNotFoundFail(command.postId);
-    const post = PostOrmEntity.create({
+    const post = PostsOrmEntity.create({
       title: command.dto.title,
       shortDescription: command.dto.shortDescription,
       content: command.dto.content,

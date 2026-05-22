@@ -7,7 +7,7 @@ import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
 @Entity('posts')
-export class PostOrmEntity extends BaseDBEntity {
+export class PostsOrmEntity extends BaseDBEntity {
   @Column({ type: 'varchar', length: 30 })
   title!: string;
 
@@ -32,8 +32,8 @@ export class PostOrmEntity extends BaseDBEntity {
   @Column({ type: 'int', default: 0, name: 'dislikesCount' })
   dislikesCount!: number;
 
-  static create(dto: CreatePostDomainDto): PostOrmEntity {
-    const post = new PostOrmEntity();
+  static create(dto: CreatePostDomainDto): PostsOrmEntity {
+    const post = new PostsOrmEntity();
 
     post.id = randomUUID();
     post.title = dto.title;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, IsNull, Repository } from 'typeorm';
-import { PostOrmEntity } from './typeOrm/entity/post-orm.entity';
+import { PostsOrmEntity } from './typeOrm/entity/post.orm-entity';
 import { GetPostsQueryParams } from '../api/query/get-posts-query-params';
 import { PostViewDto } from './dto/post-view.dto';
 import { ExtendedLikesInfoDto } from 'src/modules/bloggers-platform/likes/types/output/extended-likes.dto';
@@ -33,8 +33,8 @@ export class PostQueryRepository {
   private readonly usersTableName = 'users';
 
   constructor(
-    @InjectRepository(PostOrmEntity)
-    private readonly repo: Repository<PostOrmEntity>,
+    @InjectRepository(PostsOrmEntity)
+    private readonly repo: Repository<PostsOrmEntity>,
     private readonly blogsQueryRepository: BlogsQueryRepository,
     private readonly dataSource: DataSource,
   ) {}
@@ -125,7 +125,7 @@ export class PostQueryRepository {
   }
 
   private async mapToViewWithLikes(
-    post: PostOrmEntity,
+    post: PostsOrmEntity,
     userId?: string,
   ): Promise<PostViewDto> {
     const likesInfo = await this.getLikesInfoByPostId(post.id, userId);
@@ -162,7 +162,7 @@ export class PostQueryRepository {
     );
   }
 
-  private mapToView(post: PostOrmEntity): PostViewDto {
+  private mapToView(post: PostsOrmEntity): PostViewDto {
     return new PostViewDto(
       post.id,
       post.title,

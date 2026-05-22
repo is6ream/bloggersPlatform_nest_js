@@ -14,7 +14,7 @@ import { appSetup } from 'src/setup/app.setup';
 import { e2eApiPath } from 'test/e2e/helpers/api-path';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
 import { BlogsQueryRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsQueryRepository';
-import { BlogsOrmEntity } from 'src/modules/bloggers-platform/blogs/infrastructure/entity/blog-orm.entity';
+import { BlogsOrmEntity } from 'src/modules/bloggers-platform/blogs/domain/blog.orm-entity';
 import { GetBlogsQueryParams } from 'src/modules/bloggers-platform/blogs/api/query/get-blogs-query-params';
 import { SortDirection } from 'src/core/dto/base.query-params.input-dto';
 
