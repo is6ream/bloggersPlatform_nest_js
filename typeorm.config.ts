@@ -19,10 +19,14 @@ const envFilePaths = [
   process.env.ENV_FILE_PATH?.trim() || '',
   join(projectRoot, 'src', 'env', `.env.${env}.local`),
   join(projectRoot, 'src', 'env', `.env.${env}`),
-  join(projectRoot, 'src', 'env', '.env.production'),
+  ...(env === 'production'
+    ? [
+        join(projectRoot, 'src', 'env', '.env.production'),
+        join(projectRoot, 'dist', 'env', '.env.production'),
+      ]
+    : []),
   join(projectRoot, 'dist', 'env', `.env.${env}.local`),
   join(projectRoot, 'dist', 'env', `.env.${env}`),
-  join(projectRoot, 'dist', 'env', '.env.production'),
 ].filter(Boolean);
 
 for (const envFilePath of envFilePaths) {
@@ -33,9 +37,14 @@ for (const envFilePath of envFilePaths) {
 
 const pgHost = process.env.PGHOST?.trim() || 'localhost';
 const pgPort = Number(process.env.PGPORT || '5432');
-const pgDatabase = process.env.PGDATABASE?.trim() || 'blogger_platform';
-const pgUser = process.env.PGUSER?.trim() || 'nodejs';
-const pgPassword = process.env.PGPASSWORD?.trim() || 'nodejs';
+const defaultPgDatabase =
+  env === 'test' ? 'blogger_platform_test' : 'blogger_platform';
+const defaultPgUser = env === 'test' ? 'nestjs' : 'nodejs';
+const defaultPgPassword = env === 'test' ? 'nestjs' : 'nodejs';
+
+const pgDatabase = process.env.PGDATABASE?.trim() || defaultPgDatabase;
+const pgUser = process.env.PGUSER?.trim() || defaultPgUser;
+const pgPassword = process.env.PGPASSWORD?.trim() || defaultPgPassword;
 
 export default new DataSource({
   type: 'postgres',

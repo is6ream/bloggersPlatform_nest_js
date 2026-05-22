@@ -23,8 +23,11 @@
     "test:integration": "cross-env NODE_ENV=test jest --config ./test/jest-integration.json",
     "test:debug": "jest --inspect-brk --runInBand",
     "typeorm": "cross-env NODE_ENV=development typeorm-ts-node-commonjs -d typeorm.config.ts",
+    "typeorm:test": "cross-env NODE_ENV=test typeorm-ts-node-commonjs -d typeorm.config.ts",
     "migration:run": "pnpm typeorm migration:run",
+    "migration:run:test": "pnpm typeorm:test migration:run",
     "migration:revert": "pnpm typeorm migration:revert",
+    "migration:revert:test": "pnpm typeorm:test migration:revert",
     "migration:generate": "pnpm typeorm migration:generate"
   },
   "dependencies": {

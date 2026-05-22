@@ -1,10 +1,10 @@
 import { LikeSqlEntity } from '../../likes/domain/like-entity';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
-import { CommentSqlEntity } from '../domain/commentEntity';
+import { CommentsOrmEntity } from '../domain/comment.orm-entity';
 
 export class CommentViewDto extends CommentViewModel {
   static mapToView(
-    comment: CommentSqlEntity,
+    comment: CommentsOrmEntity,
     like?: LikeSqlEntity | null,
   ): CommentViewDto {
     return {
@@ -16,8 +16,8 @@ export class CommentViewDto extends CommentViewModel {
       },
       createdAt: comment.createdAt,
       likesInfo: {
-        likesCount: comment.likesInfo.likesCount,
-        dislikesCount: comment.likesInfo.dislikesCount,
+        likesCount: comment.likesCount,
+        dislikesCount: comment.dislikesCount,
         myStatus: like?.status ?? 'None',
       },
     };

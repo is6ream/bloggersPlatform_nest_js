@@ -2,9 +2,10 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { LikeSqlEntity } from 'src/modules/bloggers-platform/likes/domain/like-entity';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
-import { CommentSqlEntity } from '../../domain/commentEntity';
-import { CommentsRepository } from '../../infrastructure/comments-repository';
+import { CommentsOrmEntity } from '../../domain/comment.orm-entity';
 import { LikesRepository } from 'src/modules/bloggers-platform/likes/infrastructure/likes-repository';
+import { CommentsRepository } from '../../infrastructure/commentsRepository';
+
 @Injectable()
 export class UpdateCommentLikeStatusCommand {
   constructor(
@@ -21,7 +22,7 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
     private likesRepository: LikesRepository,
   ) {}
 
-  async execute(command: UpdateCommentLikeStatusCommand): Promise<any> {
+  async execute(command: UpdateCommentLikeStatusCommand): Promise<void> {
     await this.usersRepository.findByIdOrThrowValidationError(command.userId);
     const like = await this.likesRepository.findByUserAndParent(
       command.userId,
@@ -29,7 +30,7 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
       'Comment',
     );
 
-    const comment: CommentSqlEntity =
+    const comment: CommentsOrmEntity =
       await this.commentsRepository.findOrNotFoundFail(command.commentId);
 
     if (!like) {

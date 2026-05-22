@@ -1,4 +1,4 @@
-import { CommentsQueryRepository } from './../../comments/infrastructure/comments-queryRepository';
+import { CommentsQueryRepository } from '../../comments/infrastructure/commentsQueryRepository';
 import { ExtractUserFromRequest } from './../../../user-accounts/guards/decorators/param/extract-user-from-request.decorator';
 import { CommandBus } from '@nestjs/cqrs';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';

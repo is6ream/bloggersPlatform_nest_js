@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CommentsRepository } from 'src/modules/bloggers-platform/comments/infrastructure/comments-repository';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
+import { CommentsRepository } from '../../infrastructure/commentsRepository';
 
 @Injectable()
 export class DeleteCommentCommand {

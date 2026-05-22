@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCommentInputDto } from 'src/modules/bloggers-platform/posts/api/model/input/create-comment.input.dto';
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { CommentSqlEntity } from '../../domain/commentEntity';
 import { PostsRepository } from 'src/modules/bloggers-platform/posts/infrastructure/postsRepository';
-import { CommentsRepository } from '../../infrastructure/comments-repository';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
+import { CommentsRepository } from '../../infrastructure/commentsRepository';
+import { CommentsOrmEntity } from '../../domain/comment.orm-entity';
 
 @Injectable()
 export class CreateCommentCommand {
@@ -12,7 +12,7 @@ export class CreateCommentCommand {
     public postId: string,
     public userId: string,
     public content: CreateCommentInputDto,
-  ) {}
+  ) { }
 }
 
 @CommandHandler(CreateCommentCommand)
@@ -21,16 +21,15 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
     private postRepository: PostsRepository,
     private commentsRepository: CommentsRepository,
     private usersRepository: UsersRepository,
-  ) {}
+  ) { }
 
-  //разобраться почему здесь падает 400 ошибка!
 
   async execute(command: CreateCommentCommand): Promise<string> {
     await this.postRepository.findOrNotFoundFail(command.postId);
     const user = await this.usersRepository.findByIdOrThrowValidationError(
       command.userId,
-    ); //ищем пользователя, который оставляет комментарий
-    const comment = CommentSqlEntity.createForInsert({
+    ); 
+    const comment = CommentsOrmEntity.create({
       content: command.content.content,
       commentatorInfo: {
         userId: command.userId,
@@ -38,6 +37,7 @@ export class CreateCommentUseCase implements ICommandHandler<CreateCommentComman
       },
       postId: command.postId,
     });
+
     await this.commentsRepository.save(comment);
     return comment.id;
   }

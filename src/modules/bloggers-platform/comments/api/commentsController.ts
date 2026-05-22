@@ -11,7 +11,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
-import { CommentsQueryRepository } from '../infrastructure/comments-queryRepository';
+import { CommentsQueryRepository } from '../infrastructure/commentsQueryRepository';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
 import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorators/param/extract-user-from-request.decorator';
