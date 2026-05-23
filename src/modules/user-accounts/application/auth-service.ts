@@ -6,7 +6,6 @@ import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { UsersService } from './user-service';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
-import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 import { UserContextOutput } from '../guards/dto/user-context.output.dto';
 import { ConfigService } from '@nestjs/config';
 import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';

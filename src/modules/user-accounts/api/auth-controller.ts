@@ -75,6 +75,7 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
     //не хватает await
+    return await this.commandBus.execute()
     return this.authService.passwordRecovery(body.email);
   }
 
