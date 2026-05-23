@@ -15,7 +15,7 @@ import { LikesRepository } from './likes/infrastructure/likes-repository';
 import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlogsOrmEntity } from './blogs/domain/blog.orm-entity';
-import { PostsOrmEntity } from './posts/infrastructure/typeOrm/entity/post.orm-entity';
+import { PostsOrmEntity } from './posts/domain/post.orm-entity';
 import { PostQueryRepository } from './posts/infrastructure/postsQueryRepository';
 import { UserAccountsModule } from '../user-accounts/userAccounts.module';
 import { BlogsQueryRepository } from './blogs/infrastructure/blogsQueryRepository';

@@ -21,7 +21,7 @@ import { GetPostsQueryParams } from '../../posts/api/query/get-posts-query-param
 import { PostViewModel } from '../../posts/api/model/output/postViewModel';
 import { PaginatedPostsDto } from '../../posts/infrastructure/dto/paginated-post.dto';
 import { CommandBus } from '@nestjs/cqrs';
-import { PostsOrmEntity } from '../../posts/infrastructure/typeOrm/entity/post.orm-entity';
+import { PostsOrmEntity } from '../../posts/domain/post.orm-entity';
 import { CreatePostByBlogIdInputDto } from '../../posts/dto/input/createPostByBlogIdInputDto';
 import { UpdateBlogCommand } from '../application/useCases/update-blog-usecase';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';

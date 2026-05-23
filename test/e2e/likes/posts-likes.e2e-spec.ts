@@ -1,14 +1,8 @@
+import { expect } from '@jest/globals';
 import { HttpStatus, INestApplication } from '@nestjs/common';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import { connect, Connection } from 'mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
-import { getModelToken } from '@nestjs/mongoose';
-import { PostEntity } from 'src/modules/bloggers-platform/posts/domain/postEntity';
-import { Blog } from 'src/modules/bloggers-platform/blogs/domain/blogEntity';
-import { Like } from 'src/modules/bloggers-platform/likes/domain/like-entity';
-import { createTestBlog } from '../../helpers/factory/blog-factory';
 import request from 'supertest';
 import { createCustomTestUser } from '../../helpers/factory/custom-user.factory';
 import { deleteAllE2eUsers } from '../../helpers/factory/user-factory';
@@ -16,15 +10,13 @@ import { e2eApiPath } from '../helpers/api-path';
 
 describe('Post Likes E2E tests', () => {
   let app: INestApplication;
-  let mongoServer: MongoMemoryServer;
-  let mongoConnection: Connection;
   let moduleFixture: TestingModule;
 
-  let postModel: any;
-  let blogModel: any;
-  let likeModel: any;
-
-  const BASIC_AUTH = 'Basic YWRtaW46cXdlcnR5';
+  const TESTING_PATH = e2eApiPath('testing/all-data');
+  const SA_BLOGS_PATH = e2eApiPath('sa/blogs');
+  const POSTS_PATH = e2eApiPath('posts');
+  const AUTH_LOGIN_PATH = e2eApiPath('auth/login');
+  const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
 
   let user1: any;
   let user2: any;
@@ -36,7 +28,7 @@ describe('Post Likes E2E tests', () => {
     password: string,
   ) {
     const res = await request(app.getHttpServer())
-      .post(e2eApiPath('auth/login'))
+      .post(AUTH_LOGIN_PATH)
       .send({ loginOrEmail, password })
       .expect(HttpStatus.OK);
 
@@ -46,29 +38,26 @@ describe('Post Likes E2E tests', () => {
   }
 
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    mongoConnection = (await connect(mongoUri)).connection;
-
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider('MONGO_CONNECTION')
-      .useValue(mongoConnection)
       .compile();
 
     app = moduleFixture.createNestApplication();
     appSetup(app);
     await app.init();
 
-    postModel = moduleFixture.get(getModelToken(PostEntity.name));
-    blogModel = moduleFixture.get(getModelToken(Blog.name));
-    likeModel = moduleFixture.get(getModelToken(Like.name));
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(async () => {
+    await request(app.getHttpServer()).delete(TESTING_PATH).expect(204);
+
 
     await deleteAllE2eUsers();
-    await blogModel.deleteMany({});
-    await postModel.deleteMany({});
-    await likeModel.deleteMany({});
 
     const created1 = await createCustomTestUser({
       login: 'user1',
@@ -85,22 +74,10 @@ describe('Post Likes E2E tests', () => {
     user2Token = await loginAndGetAccessToken('user2', created2.password);
   });
 
-  afterAll(async () => {
-    await mongoConnection.close();
-    await mongoServer.stop();
-    await app.close();
-  });
-
-  beforeEach(async () => {
-    await blogModel.deleteMany({});
-    await postModel.deleteMany({});
-    await likeModel.deleteMany({});
-  });
-
   it('like/dislike flow + myStatus checks', async () => {
     // 1) create blog
     const createBlogResponse = await request(app.getHttpServer())
-      .post(e2eApiPath('blogs'))
+      .post(SA_BLOGS_PATH)
       .set('Authorization', BASIC_AUTH)
       .send({
         name: 'string',
@@ -113,7 +90,7 @@ describe('Post Likes E2E tests', () => {
 
     // 2) create post
     const createPostResponse = await request(app.getHttpServer())
-      .post(e2eApiPath('posts'))
+      .post(POSTS_PATH)
       .set('Authorization', BASIC_AUTH)
       .send({
         title: 'new post title',
@@ -127,14 +104,14 @@ describe('Post Likes E2E tests', () => {
 
     // 3) user1 likes (PUT must return 204)
     await request(app.getHttpServer())
-      .put(e2eApiPath(`posts/${postId}/like-status`))
+      .put(`${POSTS_PATH}/${postId}/like-status`)
       .set('Authorization', `Bearer ${user1Token}`)
       .send({ likeStatus: 'Like' })
       .expect(HttpStatus.NO_CONTENT);
 
     // 4) get by user2 => myStatus should be None, but likesCount should include user1 like
     const getByUser2 = await request(app.getHttpServer())
-      .get(e2eApiPath(`posts/${postId}`))
+      .get(`${POSTS_PATH}/${postId}`)
       .set('Authorization', `Bearer ${user2Token}`)
       .expect(HttpStatus.OK);
 
@@ -159,14 +136,14 @@ describe('Post Likes E2E tests', () => {
 
     // 5) user2 dislikes (PUT must return 204)
     await request(app.getHttpServer())
-      .put(e2eApiPath(`posts/${postId}/like-status`))
+      .put(`${POSTS_PATH}/${postId}/like-status`)
       .set('Authorization', `Bearer ${user2Token}`)
       .send({ likeStatus: 'Dislike' })
       .expect(HttpStatus.NO_CONTENT);
 
     // 6) get by user1 => myStatus should be Like; dislikesCount increments
     const getByUser1 = await request(app.getHttpServer())
-      .get(e2eApiPath(`posts/${postId}`))
+      .get(`${POSTS_PATH}/${postId}`)
       .set('Authorization', `Bearer ${user1Token}`)
       .expect(HttpStatus.OK);
 

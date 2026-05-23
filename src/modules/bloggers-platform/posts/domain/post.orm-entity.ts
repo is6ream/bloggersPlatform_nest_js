@@ -1,8 +1,8 @@
 import { BaseDBEntity } from 'src/core/database/base-db.entity';
 import { Column, Entity } from 'typeorm';
 import { randomUUID } from 'crypto';
-import { CreatePostDomainDto } from '../../../application/types/create-post-domain.dto';
-import { UpdatePostDto } from '../../../domain/dto/input/updatePostDto';
+import { CreatePostDomainDto } from '../application/types/create-post-domain.dto';
+import { UpdatePostDto } from './dto/input/updatePostDto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 

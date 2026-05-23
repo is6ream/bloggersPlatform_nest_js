@@ -16,11 +16,11 @@ import type { JwtSignOptions } from '@nestjs/jwt';
 
 
 function accessTokenExpiresIn(): JwtSignOptions['expiresIn'] {
-  return (process.env.JWT_ACCESS_EXPIRES_IN?.trim() || '10s') as JwtSignOptions['expiresIn'];
+  return (process.env.JWT_ACCESS_EXPIRES_IN?.trim() || '10m') as JwtSignOptions['expiresIn'];
 }
 
 function refreshTokenExpiresIn(): JwtSignOptions['expiresIn'] {
-  return (process.env.JWT_REFRESH_EXPIRES_IN?.trim() || '20s') as JwtSignOptions['expiresIn'];
+  return (process.env.JWT_REFRESH_EXPIRES_IN?.trim() || '20m') as JwtSignOptions['expiresIn'];
 }
 
 function getRequiredStringConfig(

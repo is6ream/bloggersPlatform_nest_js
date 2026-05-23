@@ -5,7 +5,7 @@ import { PostsRepository } from '../infrastructure/postsRepository';
 import { CreatePostInputDto } from '../dto/input/createPostInputDto';
 import { UpdatePostDto } from '../domain/dto/input/updatePostDto';
 import { CreatePostForBlogInputDto } from '../../blogs/dto/input/createPostForBlogInputDto';
-import { PostsOrmEntity } from '../infrastructure/typeOrm/entity/post.orm-entity';
+import { PostsOrmEntity } from '../domain/post.orm-entity';
 
 @Injectable()
 export class PostsService {

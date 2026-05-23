@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
-import { PostsOrmEntity } from './typeOrm/entity/post.orm-entity';
+import { PostsOrmEntity } from '../domain/post.orm-entity';
 
 @Injectable()
 export class PostsRepository {

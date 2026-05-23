@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, IsNull, Repository } from 'typeorm';
-import { PostsOrmEntity } from './typeOrm/entity/post.orm-entity';
+import { PostsOrmEntity } from '../domain/post.orm-entity';
 import { GetPostsQueryParams } from '../api/query/get-posts-query-params';
 import { PostViewDto } from './dto/post-view.dto';
 import { ExtendedLikesInfoDto } from 'src/modules/bloggers-platform/likes/types/output/extended-likes.dto';

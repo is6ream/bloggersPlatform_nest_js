@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { CreatePostInputDto } from '../../dto/input/createPostInputDto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BlogsRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/blogsRepository';
-import { PostsOrmEntity } from '../../infrastructure/typeOrm/entity/post.orm-entity';
+import { PostsOrmEntity } from '../../domain/post.orm-entity';
 
 @Injectable()
 export class CreatePostCommand {
