@@ -1,11 +1,11 @@
-import { LikeSqlEntity } from '../../likes/domain/like-entity';
+import { LikesOrmEntity } from '../../likes/domain/like.orm-entity';
 import { CommentViewModel } from '../../posts/api/model/output/commentViewModel';
 import { CommentsOrmEntity } from '../domain/comment.orm-entity';
 
 export class CommentViewDto extends CommentViewModel {
   static mapToView(
     comment: CommentsOrmEntity,
-    like?: LikeSqlEntity | null,
+    like?: LikesOrmEntity | null,
   ): CommentViewDto {
     return {
       id: comment.id,

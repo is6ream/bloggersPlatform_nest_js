@@ -10,7 +10,7 @@ import { CommentsQueryRepository } from './comments/infrastructure/commentsQuery
 import { CommentsController } from './comments/api/commentsController';
 import { blogCommandHandlers } from './blogs/application/blog-command-handlers';
 import { postCommandHandlers } from './posts/application/post-command-handlers';
-import { commentsCommandHadnler } from './comments/application/useCases/comments-command-handler';
+import { commentsCommandHandler } from './comments/application/useCases/comments-command-handler';
 import { LikesRepository } from './likes/infrastructure/likes-repository';
 import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -21,10 +21,16 @@ import { UserAccountsModule } from '../user-accounts/userAccounts.module';
 import { BlogsQueryRepository } from './blogs/infrastructure/blogsQueryRepository';
 import { CommentsOrmEntity } from './comments/domain/comment.orm-entity';
 import { CommentsRepository } from './comments/infrastructure/commentsRepository';
+import { LikesOrmEntity } from './likes/domain/like.orm-entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BlogsOrmEntity, PostsOrmEntity, CommentsOrmEntity]),
+    TypeOrmModule.forFeature([
+      BlogsOrmEntity,
+      PostsOrmEntity,
+      CommentsOrmEntity,
+      LikesOrmEntity,
+    ]),
     UserAccountsModule
   ],
   controllers: [SaBlogsController, BlogsController, PostsController, CommentsController],
@@ -42,7 +48,7 @@ import { CommentsRepository } from './comments/infrastructure/commentsRepository
 
     ...blogCommandHandlers,
     ...postCommandHandlers,
-    ...commentsCommandHadnler,
+    ...commentsCommandHandler,
   ],
   exports: [],
 })

@@ -7,7 +7,7 @@ import {
   DeleteCommentUseCase
 } from 'src/modules/bloggers-platform/comments/application/useCases/delete-comment.usecase';
 
-export const commentsCommandHadnler = [
+export const commentsCommandHandler = [
   CreateCommentUseCase,
   UpdateCommentLikeStatusUseCase,
   UpdateCommentUseCase,

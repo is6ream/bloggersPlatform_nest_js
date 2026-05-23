@@ -4,7 +4,7 @@ import { PostsRepository } from '../../infrastructure/postsRepository';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
 import { LikeStatus } from 'src/modules/bloggers-platform/likes/types/like-status';
 import { LikesRepository } from 'src/modules/bloggers-platform/likes/infrastructure/likes-repository';
-import { LikeSqlEntity } from 'src/modules/bloggers-platform/likes/domain/like-entity';
+import { LikesOrmEntity } from 'src/modules/bloggers-platform/likes/domain/like.orm-entity';
 
 @Injectable()
 export class UpdatePostLikeStatusCommand {
@@ -34,12 +34,11 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
     );
 
     if (!like) {
-      const newLike = LikeSqlEntity.createForInsert({
-        status: command.likeStatus,
-        userId: command.userId,
-        parentId: command.postId,
-        parentType: 'Post',
-      });
+      const newLike = LikesOrmEntity.createForPost(
+        command.userId,
+        command.postId,
+        command.likeStatus,
+      );
       post.updateLikeCounter('None', command.likeStatus);
 
       await this.likesRepository.save(newLike);
@@ -47,7 +46,7 @@ export class UpdateLikeStatusUseCase implements ICommandHandler<UpdatePostLikeSt
       return;
     }
 
-    if (like.status === command.likeStatus) {
+    if (like.hasStatus(command.likeStatus)) {
       return;
     }
 

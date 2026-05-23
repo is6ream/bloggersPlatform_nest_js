@@ -1,6 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
-import { LikeSqlEntity } from 'src/modules/bloggers-platform/likes/domain/like-entity';
+import { LikesOrmEntity } from 'src/modules/bloggers-platform/likes/domain/like.orm-entity';
+import { LikeStatus } from 'src/modules/bloggers-platform/likes/types/like-status';
 import { UsersRepository } from 'src/modules/user-accounts/infrastructure/users/repositories/users-repository';
 import { CommentsOrmEntity } from '../../domain/comment.orm-entity';
 import { LikesRepository } from 'src/modules/bloggers-platform/likes/infrastructure/likes-repository';
@@ -11,7 +12,7 @@ export class UpdateCommentLikeStatusCommand {
   constructor(
     public commentId: string,
     public userId: string,
-    public likeStatus: string,
+    public likeStatus: LikeStatus,
   ) {}
 }
 @CommandHandler(UpdateCommentLikeStatusCommand)
@@ -34,12 +35,11 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
       await this.commentsRepository.findOrNotFoundFail(command.commentId);
 
     if (!like) {
-      const newLike = LikeSqlEntity.createForInsert({
-        status: command.likeStatus,
-        userId: command.userId,
-        parentId: command.commentId,
-        parentType: 'Comment',
-      });
+      const newLike = LikesOrmEntity.createForComment(
+        command.userId,
+        command.commentId,
+        command.likeStatus,
+      );
 
       comment.updateLikeCounter('None', command.likeStatus);
 
@@ -48,7 +48,7 @@ export class UpdateCommentLikeStatusUseCase implements ICommandHandler<UpdateCom
       return;
     }
 
-    if (like.status === command.likeStatus) {
+    if (like.hasStatus(command.likeStatus)) {
       return;
     }
 
