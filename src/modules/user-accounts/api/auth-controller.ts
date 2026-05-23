@@ -22,8 +22,10 @@ import { EmailResendingInputDto } from './dto/input/email-resending.input.dto';
 import { GetMeOutputDto } from './dto/output/get-me-output.dto';
 import { JwtAuthGuard } from '../guards/jwt/jwt-auth.guard';
 import { LocalAuthValidationGuard } from '../guards/local/local-auth-validation.guard';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-token.guard';
+import { AuthIpRestrictionGuard } from '../guards/auth-ip-restriction.guard';
+import { authNewPasswordThrottle } from '../config/auth-ip-restriction.config';
 import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
 import { getClientIpFromRequest } from 'src/core/utils/client-ip';
@@ -39,7 +41,7 @@ type RefreshTokenRequestUser = {
 };
 
 @Controller('auth')
-@UseGuards(ThrottlerGuard)
+@UseGuards(AuthIpRestrictionGuard)
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -70,9 +72,6 @@ export class AuthController {
   }
 
   @Post('password-recovery')
-  @Throttle({
-    default: { limit: 5, ttl: 10000 },
-  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
     //не хватает await
@@ -81,9 +80,6 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({
-    default: { limit: 5, ttl: 10000 },
-  })
   @UseGuards(LocalAuthValidationGuard)
   @ApiBody({
     schema: {
@@ -121,26 +117,18 @@ export class AuthController {
 
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Throttle({
-    default: { limit: 5, ttl: 10000 },
-  })
   registration(@Body() body: CreateUserInputDto): Promise<void> {
     return this.authService.registerUser(body);
   }
 
   @Post('new-password')
-  @Throttle({
-    default: { limit: 5, ttl: 60000 },
-  })
+  @Throttle(authNewPasswordThrottle)
   @HttpCode(HttpStatus.NO_CONTENT)
   async newPassword(@Body() body: NewPasswordInputDto): Promise<void> {
     return this.authService.resetPassword(body.newPassword, body.recoveryCode);
   }
 
   @Post('registration-confirmation')
-  @Throttle({
-    default: { limit: 5, ttl: 10000 },
-  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async confirmRegistration(
     @Body() body: PasswordConfirmationInputDto,
@@ -149,15 +137,13 @@ export class AuthController {
   }
 
   @Post('registration-email-resending')
-  @Throttle({
-    default: { limit: 5, ttl: 10000 },
-  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async emailResending(@Body() body: EmailResendingInputDto): Promise<void> {
     return this.authService.emailResending(body.email);
   }
 
   @Post('refresh-token')
+  @SkipThrottle()
   @HttpCode(HttpStatus.OK)
   @UseGuards(RefreshTokenGuard)
   async refreshToken(
@@ -187,6 +173,7 @@ export class AuthController {
 
 
   @Post('logout')
+  @SkipThrottle()
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RefreshTokenGuard)
   async logout(
@@ -209,6 +196,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Get('me')
+  @SkipThrottle()
   @UseGuards(JwtAuthGuard)
   async getMe(
     @ExtractUserFromRequest() user: UserContextDto,

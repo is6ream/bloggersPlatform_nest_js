@@ -22,7 +22,7 @@ import {
 } from '../helpers/users-pg-e2e';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { AuthIpRestrictionGuard } from 'src/modules/user-accounts/guards/auth-ip-restriction.guard';
 import { assignE2eDeviceSessionsPgConfig } from '../helpers/device-sessions-postgres-e2e';
 
 jest.setTimeout(60000);
@@ -59,7 +59,7 @@ beforeAll(async () => {
   })
     .overrideProvider(EmailAdapter)
     .useValue({ sendConfirmationCodeEmail: emailSpy })
-    .overrideGuard(ThrottlerGuard)
+    .overrideGuard(AuthIpRestrictionGuard)
     .useValue({ canActivate: () => true })
     .compile();
 

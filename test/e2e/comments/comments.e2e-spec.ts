@@ -8,7 +8,7 @@ import {
 } from '@jest/globals';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { AuthIpRestrictionGuard } from 'src/modules/user-accounts/guards/auth-ip-restriction.guard';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from 'src/modules/app-module/app-module';
@@ -35,7 +35,7 @@ describe('Comments E2E Tests', () => {
     moduleFixture = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideGuard(ThrottlerGuard)
+      .overrideGuard(AuthIpRestrictionGuard)
       .useValue({ canActivate: () => true })
       .compile();
 
