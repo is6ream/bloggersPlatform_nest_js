@@ -1,17 +1,11 @@
-import { CreateUserDto } from 'src/modules/user-accounts/dto/UserInputDto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from './user-service';
-import { DomainException } from 'src/core/exceptions/domain-exceptions';
-import { EmailAdapter } from 'src/modules/notifications/email-adapter';
 import { UserContextOutput } from '../guards/dto/user-context.output.dto';
 import { ConfigService } from '@nestjs/config';
-import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
 import { randomUUID } from 'crypto';
 import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
 import type { JwtSignOptions } from '@nestjs/jwt';
-
 
 function accessTokenExpiresIn(): JwtSignOptions['expiresIn'] {
   return (process.env.JWT_ACCESS_EXPIRES_IN?.trim() || '10m') as JwtSignOptions['expiresIn'];
@@ -30,17 +24,12 @@ function getRequiredStringConfig(
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   constructor(
     private usersRepository: UsersRepository,
-    private usersService: UsersService,
     private jwtService: JwtService,
     private bcryptService: BcryptService,
-    private emailAdapter: EmailAdapter,
     private configService: ConfigService,
-    private deviceSessionsRepository: DeviceSessionsRepository,
-  ) { }
+  ) {}
 
   async validateUser(
     loginOrEmail: string,
@@ -61,122 +50,6 @@ export class AuthService {
       return null;
     }
     return { id: user.id, loginOrEmail };
-  }
-
-  async registerUser(dto: CreateUserDto) {
-    const userId: string = await this.usersService.createUser(dto);
-    const user = await this.usersRepository.findOrNotFoundFail(userId);
-
-    this.emailAdapter
-      .sendConfirmationCodeEmail(user.email, user.confirmationCode)
-      .catch((error) => {
-        console.error(`Error sending email: ${error}`);
-      });
-  }
-
-  async passwordRecovery(email: string) {
-    const user = await this.usersRepository.findByEmail(email);
-    if (!user) {
-      return null;
-    }
-
-    user.requestPasswordRecovery();
-    if (!user.recoveryCode) {
-      return null;
-    }
-
-    await this.usersRepository.save(user);
-
-    try {
-      await this.emailAdapter.sendConfirmationCodeEmail(email, user.recoveryCode);
-    } catch (e) {
-      this.logger.error('Error sending recovery email', e);
-    }
-  }
-
-  async resetPassword(
-    newPassword: string,
-    recoveryCode: string,
-  ): Promise<void> {
-    const user = await this.usersRepository.findByRecoveryCode(recoveryCode);
-
-    if (!user) {
-      throw new DomainException({ code: 1, message: 'User not found' });
-    }
-
-    if (user.recoveryExpiresAt! < new Date(Date.now())) {
-      throw new DomainException({
-        code: 2,
-        message: 'Recovery code expired',
-      });
-    }
-
-    user.passwordHash = await this.bcryptService.generateHash(newPassword);
-    await this.usersRepository.save(user);
-  }
-
-  async confirmRegistration(code: string): Promise<void> {
-    const user = await this.usersRepository.findByConfirmationCode(code);
-    if (!user) {
-      throw new DomainException({
-        code: 2,
-        message: 'User not found',
-        extensions: [{ message: 'User not found', field: 'code' }],
-      });
-    }
-    if (user.confirmationCode !== code) {
-      throw new DomainException({
-        code: 2,
-        message: 'Invalid confirmation code',
-      });
-    }
-    if (user.confirmationExpiration < new Date(Date.now())) {
-      throw new DomainException({ code: 2, message: 'Code is expired' });
-    }
-    if (user.isEmailConfirmed) {
-      throw new DomainException({
-        code: 2,
-        message: 'User already confirmed',
-        extensions: [
-          {
-            message: 'User already confirmed',
-            field: 'code',
-          },
-        ],
-      });
-    }
-    user.isEmailConfirmed = true;
-    await this.usersRepository.save(user);
-  }
-
-  async emailResending(email: string) {
-    const user = await this.usersRepository.findByEmail(email);
-    if (!user) {
-      throw new DomainException({
-        code: 2,
-        message: 'User not found',
-        extensions: [{ message: 'User not found', field: 'email' }],
-      });
-    }
-
-    if (user.isEmailConfirmed) {
-      throw new DomainException({
-        code: 2,
-        message: 'Email already confirmed',
-        extensions: [
-          {
-            message: 'Email already confirmed',
-            field: 'email',
-          },
-        ],
-      });
-    }
-    user.requestNewConfirmationCode();
-    await this.usersRepository.save(user);
-    this.emailAdapter.sendConfirmationCodeEmail(
-      email,
-      user.confirmationCode,
-    );
   }
 
   async issueTokens(
@@ -204,12 +77,4 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
-
-  async logout(userId: string, deviceId: string): Promise<void> {
-    this.logger.log(
-      `[/logout] Invalidating session — userId=${userId}, deviceId=${deviceId}`,
-    );
-    await this.deviceSessionsRepository.deleteSession(userId, deviceId);
-  }
-
 }

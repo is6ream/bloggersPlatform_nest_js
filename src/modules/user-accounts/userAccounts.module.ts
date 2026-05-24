@@ -23,6 +23,13 @@ import { DeviceSessionOrmEntity } from './infrastructure/auth/device-session.orm
 import { CqrsModule } from '@nestjs/cqrs';
 import { RefreshTokensUseCase } from './application/refresh-token.usecase';
 import { LoginUseCase } from './application/useCases/login.command';
+import { RegisterUserUseCase } from './application/useCases/registration-user.command';
+import { PasswordRecoveryUseCase } from './application/useCases/password-recovery.command';
+import { ResetPasswordUseCase } from './application/useCases/reset-password.command';
+import { ConfirmRegistrationUseCase } from './application/useCases/confirm-registration.command';
+import { EmailResendingUseCase } from './application/useCases/email-resending.command';
+import { LogoutUseCase } from './application/useCases/logout.command';
+import { GetMeUseCase } from './application/queries/get-me.query';
 import { UsedRefreshTokenStore } from './application/used-refresh-token.store';
 import { DeleteDeviceSessionUseCase } from './application/delete-device-session.usecase';
 import { DeleteAllOtherSessionsUseCase } from './application/delete-all-other-sessions.usecase';
@@ -69,6 +76,13 @@ import { BlogsOrmEntity } from '../bloggers-platform/blogs/domain/blog.orm-entit
     UsedRefreshTokenStore,
     RefreshTokensUseCase,
     LoginUseCase,
+    RegisterUserUseCase,
+    PasswordRecoveryUseCase,
+    ResetPasswordUseCase,
+    ConfirmRegistrationUseCase,
+    EmailResendingUseCase,
+    LogoutUseCase,
+    GetMeUseCase,
     DeleteDeviceSessionUseCase,
     DeleteAllOtherSessionsUseCase,
     UsersRepository,

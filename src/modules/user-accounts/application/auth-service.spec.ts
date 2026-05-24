@@ -1,44 +1,31 @@
 import { EmailAdapter } from './../../notifications/email-adapter';
-import { AuthService } from './auth-service';
 import { Test } from '@nestjs/testing';
-import { UsersService } from './user-service';
-import { JwtService } from '@nestjs/jwt';
 import { BcryptService } from './bcrypt-service';
-import { DeviceSessionsRepository } from '../infrastructure/auth/device-sessions.repository';
-import { ConfigService } from '@nestjs/config';
 import { UsersRepository } from '../infrastructure/users/repositories/users-repository';
+import { PasswordRecoveryUseCase } from './useCases/password-recovery.command';
+import { ResetPasswordUseCase } from './useCases/reset-password.command';
 
-describe('AuthService - Password Recovery', () => {
-  let authService: AuthService;
+describe('Auth use cases - Password Recovery', () => {
+  let passwordRecoveryUseCase: PasswordRecoveryUseCase;
+  let resetPasswordUseCase: ResetPasswordUseCase;
   let usersRepository: {
     findByEmail: jest.Mock;
     findByRecoveryCode: jest.Mock;
     save: jest.Mock;
-    findOrNotFoundFail: jest.Mock;
-    findUserByLoginOrEmail: jest.Mock;
-    findByConfirmationCode: jest.Mock;
-    findById: jest.Mock;
-    findByLogin: jest.Mock;
-    findByIdOrThrowValidationError: jest.Mock;
   };
   let emailAdapter: EmailAdapter;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
-        AuthService,
+        PasswordRecoveryUseCase,
+        ResetPasswordUseCase,
         {
           provide: UsersRepository,
           useValue: {
             findByEmail: jest.fn(),
             findByRecoveryCode: jest.fn(),
             save: jest.fn(),
-            findById: jest.fn(),
-            findOrNotFoundFail: jest.fn(),
-            findUserByLoginOrEmail: jest.fn(),
-            findByConfirmationCode: jest.fn(),
-            findByLogin: jest.fn(),
-            findByIdOrThrowValidationError: jest.fn(),
           },
         },
         {
@@ -48,36 +35,16 @@ describe('AuthService - Password Recovery', () => {
           },
         },
         {
-          provide: UsersService,
-          useValue: {
-            createUser: jest.fn(),
-          },
-        },
-        {
-          provide: JwtService,
-          useValue: {
-            signAsync: jest.fn(),
-          },
-        },
-        {
           provide: BcryptService,
           useValue: {
             generateHash: jest.fn().mockResolvedValue('new-hash'),
-            checkPassword: jest.fn(),
           },
-        },
-        {
-          provide: DeviceSessionsRepository,
-          useValue: {},
-        },
-        {
-          provide: ConfigService,
-          useValue: { getOrThrow: jest.fn() },
         },
       ],
     }).compile();
 
-    authService = moduleRef.get(AuthService);
+    passwordRecoveryUseCase = moduleRef.get(PasswordRecoveryUseCase);
+    resetPasswordUseCase = moduleRef.get(ResetPasswordUseCase);
     usersRepository = moduleRef.get(UsersRepository) as typeof usersRepository;
     emailAdapter = moduleRef.get(EmailAdapter);
   });
@@ -101,7 +68,7 @@ describe('AuthService - Password Recovery', () => {
     usersRepository.findByEmail.mockResolvedValue(mockUser);
     usersRepository.save.mockResolvedValue(undefined);
 
-    await authService.passwordRecovery('user@example.com');
+    await passwordRecoveryUseCase.execute({ email: 'user@example.com' } as any);
 
     expect(usersRepository.findByEmail).toHaveBeenCalledWith('user@example.com');
     expect(mockUser.requestPasswordRecovery).toHaveBeenCalled();
@@ -125,9 +92,8 @@ describe('AuthService - Password Recovery', () => {
 
     usersRepository.findByEmail.mockResolvedValue(mockUser);
 
-    const result = await authService.passwordRecovery('user@example.com');
+    await passwordRecoveryUseCase.execute({ email: 'user@example.com' } as any);
 
-    expect(result).toBeNull();
     expect(usersRepository.save).not.toHaveBeenCalled();
     expect(emailAdapter.sendConfirmationCodeEmail).not.toHaveBeenCalled();
   });
@@ -149,7 +115,10 @@ describe('AuthService - Password Recovery', () => {
     usersRepository.findByRecoveryCode.mockResolvedValue(mockUser as any);
     usersRepository.save.mockResolvedValue(undefined);
 
-    await authService.resetPassword(mockDto.newPassword, mockDto.recoveryCode);
+    await resetPasswordUseCase.execute({
+      newPassword: mockDto.newPassword,
+      recoveryCode: mockDto.recoveryCode,
+    } as any);
 
     expect(usersRepository.findByRecoveryCode).toHaveBeenCalledWith(mockDto.recoveryCode);
     expect(usersRepository.save).toHaveBeenCalledWith(mockUser);

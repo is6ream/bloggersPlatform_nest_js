@@ -1,5 +1,3 @@
-import { AuthService } from '../application/auth-service';
-import { AuthQueryRepository } from '../infrastructure/auth/authQueryRepository';
 import {
   Controller,
   Get,
@@ -27,12 +25,18 @@ import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { RefreshTokenGuard } from 'src/modules/user-accounts/guards/jwt/refresh-token.guard';
 import { AuthIpRestrictionGuard } from '../guards/auth-ip-restriction.guard';
 import { authNewPasswordThrottle } from '../config/auth-ip-restriction.config';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
 import { getClientIpFromRequest } from 'src/core/utils/client-ip';
 import { CookieResponse, HttpRequestWithUser } from 'src/core/types/http.types';
 import { PasswordRecoveryCommand } from '../application/useCases/password-recovery.command';
 import { LoginCommand } from '../application/useCases/login.command';
+import { RegistrationUserCommand } from '../application/useCases/registration-user.command';
+import { ResetPasswordCommand } from '../application/useCases/reset-password.command';
+import { ConfirmRegistrationCommand } from '../application/useCases/confirm-registration.command';
+import { EmailResendingCommand } from '../application/useCases/email-resending.command';
+import { LogoutCommand } from '../application/useCases/logout.command';
+import { GetMeQuery } from '../application/queries/get-me.query';
 
 const REFRESH_TOKEN_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -49,10 +53,9 @@ export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(
-    private authService: AuthService,
-    private authQueryRepository: AuthQueryRepository,
-    private commandBus: CommandBus,
-  ) { }
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
   private getRefreshTokenCookieOptions(
     req: HttpRequestWithUser,
     maxAgeMs?: number,
@@ -109,15 +112,17 @@ export class AuthController {
 
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
-  registration(@Body() body: CreateUserInputDto): Promise<void> {
-    return this.authService.registerUser(body);
+  async registration(@Body() body: CreateUserInputDto): Promise<void> {
+    return await this.commandBus.execute(new RegistrationUserCommand(body))
   }
 
   @Post('new-password')
   @Throttle(authNewPasswordThrottle)
   @HttpCode(HttpStatus.NO_CONTENT)
   async newPassword(@Body() body: NewPasswordInputDto): Promise<void> {
-    return this.authService.resetPassword(body.newPassword, body.recoveryCode);
+    return this.commandBus.execute(
+      new ResetPasswordCommand(body.newPassword, body.recoveryCode),
+    );
   }
 
   @Post('registration-confirmation')
@@ -125,13 +130,13 @@ export class AuthController {
   async confirmRegistration(
     @Body() body: PasswordConfirmationInputDto,
   ): Promise<void> {
-    return this.authService.confirmRegistration(body.code);
+    return this.commandBus.execute(new ConfirmRegistrationCommand(body.code));
   }
 
   @Post('registration-email-resending')
   @HttpCode(HttpStatus.NO_CONTENT)
   async emailResending(@Body() body: EmailResendingInputDto): Promise<void> {
-    return this.authService.emailResending(body.email);
+    return this.commandBus.execute(new EmailResendingCommand(body.email));
   }
 
   @Post('refresh-token')
@@ -172,12 +177,10 @@ export class AuthController {
     @Req() req: HttpRequestWithUser<RefreshTokenRequestUser>,
     @Res({ passthrough: true }) res: CookieResponse,
   ): Promise<void> {
-    const { sub: userId, deviceId } = req.user!
-
-    console.log("userId: ", userId, "deviceId: ", deviceId)
+    const { sub: userId, deviceId } = req.user!;
 
     if (userId && deviceId) {
-      await this.authService.logout(userId, deviceId);
+      await this.commandBus.execute(new LogoutCommand(userId, deviceId));
     }
 
     res.clearCookie(
@@ -193,7 +196,7 @@ export class AuthController {
   async getMe(
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<GetMeOutputDto> {
-    return this.authQueryRepository.getMe(user.id);
+    return this.queryBus.execute(new GetMeQuery(user.id));
   }
 
 
