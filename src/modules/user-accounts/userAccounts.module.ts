@@ -22,6 +22,7 @@ import { DeviceSessionsQueryRepository } from './infrastructure/auth/device-sess
 import { DeviceSessionOrmEntity } from './infrastructure/auth/device-session.orm-entity';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RefreshTokensUseCase } from './application/refresh-token.usecase';
+import { LoginUseCase } from './application/useCases/login.command';
 import { UsedRefreshTokenStore } from './application/used-refresh-token.store';
 import { DeleteDeviceSessionUseCase } from './application/delete-device-session.usecase';
 import { DeleteAllOtherSessionsUseCase } from './application/delete-all-other-sessions.usecase';
@@ -67,6 +68,7 @@ import { BlogsOrmEntity } from '../bloggers-platform/blogs/domain/blog.orm-entit
     BasicAuthStrategy,
     UsedRefreshTokenStore,
     RefreshTokensUseCase,
+    LoginUseCase,
     DeleteDeviceSessionUseCase,
     DeleteAllOtherSessionsUseCase,
     UsersRepository,

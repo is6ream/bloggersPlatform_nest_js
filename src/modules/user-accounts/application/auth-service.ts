@@ -2,7 +2,6 @@ import { CreateUserDto } from 'src/modules/user-accounts/dto/UserInputDto';
 import { Injectable, Logger } from '@nestjs/common';
 import { BcryptService } from './bcrypt-service';
 import { JwtService } from '@nestjs/jwt';
-import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { UsersService } from './user-service';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { EmailAdapter } from 'src/modules/notifications/email-adapter';
@@ -93,45 +92,6 @@ export class AuthService {
     } catch (e) {
       this.logger.error('Error sending recovery email', e);
     }
-  }
-
-  async loginUser(
-    user: UserContextDto,
-    deviceMeta: { ip: string; userAgent: string },
-  ) {
-    const deviceId = randomUUID();
-
-    const accessPayload = { sub: user.id, deviceId };
-    const refreshPayload = { sub: user.id, deviceId, tokenId: randomUUID() };
-    const jwtSecret = getRequiredStringConfig(this.configService, 'JWT_SECRET');
-    const jwtRefreshSecret = getRequiredStringConfig(
-      this.configService,
-      'JWT_REFRESH_SECRET',
-    );
-
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(accessPayload, {
-        secret: jwtSecret,
-        expiresIn: accessTokenExpiresIn(),
-      }),
-      this.jwtService.signAsync(refreshPayload, {
-        secret: jwtRefreshSecret,
-        expiresIn: refreshTokenExpiresIn(),
-      }),
-    ]);
-
-    const decoded = this.jwtService.decode(refreshToken) as { iat: number };
-    const iat = new Date(decoded.iat * 1000);
-
-    await this.deviceSessionsRepository.createSession({
-      userId: user.id,
-      deviceId,
-      ip: deviceMeta.ip,
-      userAgent: deviceMeta.userAgent,
-      iat, 
-    });
-
-    return { accessToken, refreshToken };
   }
 
   async resetPassword(

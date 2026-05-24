@@ -12,7 +12,8 @@ import {
 } from '@nestjs/common';
 import { CreateUserInputDto } from './dto/input/create-user.input.dto';
 import { Body, HttpCode } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAuthLoginDecorator } from './swagger/api-auth-login.decorator';
 import { UserContextDto } from '../guards/dto/user-context.input.dto';
 import { ExtractUserFromRequest } from '../guards/decorators/param/extract-user-from-request.decorator';
 import { PasswordRecoveryInputDto } from './dto/input/password-recovery-input.dto';
@@ -30,6 +31,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { RefreshTokensCommand } from 'src/modules/user-accounts/application/refresh-token.usecase';
 import { getClientIpFromRequest } from 'src/core/utils/client-ip';
 import { CookieResponse, HttpRequestWithUser } from 'src/core/types/http.types';
+import { PasswordRecoveryCommand } from '../application/useCases/password-recovery.command';
+import { LoginCommand } from '../application/useCases/login.command';
 
 const REFRESH_TOKEN_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -50,7 +53,6 @@ export class AuthController {
     private authQueryRepository: AuthQueryRepository,
     private commandBus: CommandBus,
   ) { }
-//вынести set clear token в сервис
   private getRefreshTokenCookieOptions(
     req: HttpRequestWithUser,
     maxAgeMs?: number,
@@ -74,23 +76,13 @@ export class AuthController {
   @Post('password-recovery')
   @HttpCode(HttpStatus.NO_CONTENT)
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
-    //не хватает await
-    return await this.commandBus.execute()
-    return this.authService.passwordRecovery(body.email);
+    return await this.commandBus.execute(new PasswordRecoveryCommand(body.email))
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthValidationGuard)
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        loginOrEmail: { type: 'string', example: 'test@email.com' },
-        password: { type: 'string', example: '123123123' },
-      },
-    },
-  })
+  @ApiAuthLoginDecorator()
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
     @Req() req: HttpRequestWithUser,
@@ -104,9 +96,8 @@ export class AuthController {
       ? userAgentHeader[0]
       : userAgentHeader || 'unknown';
 
-    const { accessToken, refreshToken } = await this.authService.loginUser(
-      user,
-      { ip, userAgent },
+    const { accessToken, refreshToken } = await this.commandBus.execute(
+      new LoginCommand(user, { ip, userAgent }),
     );
     res.cookie('refreshToken', refreshToken, {
       ...this.getRefreshTokenCookieOptions(req, REFRESH_TOKEN_COOKIE_MAX_AGE_MS),
