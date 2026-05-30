@@ -12,6 +12,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { CoreConfig } from 'src/modules/app-module/core-config';
 import { CoreModule } from 'src/core/core.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { QuizGameModule } from 'quizGame/module/quizGame.module';
 
 
 
@@ -50,6 +51,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     UserAccountsModule,
     BloggersPlatformModule,
     TestingModule,
+    QuizGameModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailAdapter],
