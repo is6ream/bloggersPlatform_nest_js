@@ -2,6 +2,7 @@ import { BaseDBEntity } from 'src/core/database/base-db.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { GameOrmEntity } from './game.orm-entity';
 import { UserOrmEntity } from './user.orm-entity';
+import { PlayerAnswer } from 'quizGame/types/player-answer';
 
 @Entity('quiz_players')
 export class PlayerOrmEntity extends BaseDBEntity {
@@ -17,7 +18,10 @@ export class PlayerOrmEntity extends BaseDBEntity {
 
     @Column({ type: 'uuid' })
     gameId!: string;
+
+    @Column({ type: "int" })
     score: number;
 
-    answers: any[]
+    @Column({ type: 'jsonb', default: [] })
+    answers: PlayerAnswer[]
 }
