@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import { GetQuestionsQueryParams, PublishedStatus } from '../api/query/get-questions-query.params';
 import { QuestionPaginatedViewDto } from '../api/paginated/question-paginated.view-dto';
@@ -20,7 +20,9 @@ export class QuizGameQueryRepository {
     const searchTerm = query.bodySearchTerm?.trim() ?? '';
     const sortDirection = query.sortDirection.toUpperCase() as 'ASC' | 'DESC';
 
-    const qb = this.repo.createQueryBuilder('q');
+    const qb = this.repo
+      .createQueryBuilder('q')
+      .where('q.deleteAt IS NULL');
 
     if (searchTerm) {
       qb.andWhere('q.body ILIKE :search', { search: `%${searchTerm}%` });
@@ -45,7 +47,9 @@ export class QuizGameQueryRepository {
   }
 
   async getByIdOrNotFoundFail(id: string): Promise<QuestionViewDto> {
-    const question = await this.repo.findOne({ where: { id } });
+    const question = await this.repo.findOne({
+      where: { id, deleteAt: IsNull() },
+    });
     if (!question) {
       throw new NotFoundException('Question not found');
     }
