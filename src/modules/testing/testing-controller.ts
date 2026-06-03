@@ -32,7 +32,15 @@ export class TestingController {
   }
 
   private async clearPostgres(): Promise<void> {
-    const pgTables = ['device_sessions', 'likes', 'comments', 'posts', 'blogs', 'users'];
+    const pgTables = [
+      'device_sessions',
+      'likes',
+      'comments',
+      'posts',
+      'blogs',
+      'users',
+      'quiz_questions',
+    ];
     for (const table of pgTables) {
       await this.dataSource
         .query(`DELETE FROM ${table};`)

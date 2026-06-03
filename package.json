@@ -20,6 +20,7 @@
     "test:unit": "jest --testPathPatterns='src'",
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
     "test:e2e:sa-users": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --runInBand test/e2e/users/sa-users.e2e-spec.ts",
+    "test:e2e:sa-quiz": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --runInBand test/e2e/quiz-game/sa-quiz.e2e-spec.ts",
     "test:integration": "cross-env NODE_ENV=test jest --config ./test/jest-integration.json",
     "test:debug": "jest --inspect-brk --runInBand",
     "typeorm": "cross-env NODE_ENV=development typeorm-ts-node-commonjs -d typeorm.config.ts",

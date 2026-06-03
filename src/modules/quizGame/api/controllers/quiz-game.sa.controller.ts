@@ -13,17 +13,17 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
-import { QuizGameQueryRepository } from '../infrastructure/quiz-game-query.repository';
-import { GetQuestionsQueryParams } from './query/get-questions-query.params';
-import { QuestionPaginatedViewDto } from './paginated/question-paginated.view-dto';
-import { CreateQuestionInputDto } from './dto/input/create-question.input.dto';
-import { UpdateQuestionInputDto } from './dto/input/update-question.input.dto';
-import { ChangeQuestionPublicationStatusInputDto } from './dto/input/change-question-publication-status.input.dto';
-import { QuestionViewDto } from './dto/output/question.view-dto';
-import { CreateQuestionCommand } from '../application/useCases/create-question.usecase';
-import { DeleteQuestionCommand } from '../application/useCases/delete-question.usecase';
-import { UpdateQuestionCommand } from '../application/useCases/update-question.usecase';
-import { ChangePublicationStatusCommand } from '../application/useCases/change-publication.status.usecase';
+import { QuizGameQueryRepository } from '../../infrastructure/quiz-game-query.repository';
+import { GetQuestionsQueryParams } from '../query/get-questions-query.params';
+import { QuestionPaginatedViewDto } from '../paginated/question-paginated.view-dto';
+import { CreateQuestionInputDto } from '../dto/input/create-question.input.dto';
+import { UpdateQuestionInputDto } from '../dto/input/update-question.input.dto';
+import { ChangeQuestionPublicationStatusInputDto } from '../dto/input/change-question-publication-status.input.dto';
+import { QuestionViewDto } from '../dto/output/question.view-dto';
+import { CreateQuestionCommand } from '../../application/useCases/create-question.usecase';
+import { DeleteQuestionCommand } from '../../application/useCases/delete-question.usecase';
+import { UpdateQuestionCommand } from '../../application/useCases/update-question.usecase';
+import { ChangePublicationStatusCommand } from '../../application/useCases/change-publication.status.usecase';
 
 @Controller('sa/quiz')
 export class QuizGameController {

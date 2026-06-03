@@ -4,7 +4,7 @@ import { GameOrmEntity } from '../entities/game.orm-entity';
 import { PlayerOrmEntity } from '../entities/player.orm-entity';
 import { QuestionOrmEntity } from '../entities/question.orm-entity';
 import { UserOrmEntity } from '../entities/user.orm-entity';
-import { QuizGameController } from '../api/quiz-game.controller';
+import { QuizGameController } from '../api/controllers/quiz-game.sa.controller';
 import { QuizGameRepository } from '../infrastructure/quiz-game.repository';
 import { QuizGameQueryRepository } from '../infrastructure/quiz-game-query.repository';
 import { quizGameCommandHandlers } from '../application/quiz-game-command-handlers';
