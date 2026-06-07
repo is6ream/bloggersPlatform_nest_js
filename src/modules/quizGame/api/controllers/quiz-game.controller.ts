@@ -5,6 +5,7 @@ import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorat
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 import { QuizGameQueryRepository } from '../../infrastructure/questions/question-query.repository';
 import { HttpStatus } from '@nestjs/common';
+import { ConnectToPairCommand } from '../../application/useCases/connect-to-pair.usecase';
 @Controller('pair-game-quiz')
 export class QuizGameController {
     constructor(
@@ -22,6 +23,6 @@ export class QuizGameController {
     async connectToPair(
         @ExtractUserFromRequest() user: UserContextDto,
     ): Promise<void> {
-        return await this.commandBus.execute(new ConnectToPairCommand())
+        return await this.commandBus.execute(new ConnectToPairCommand(user.id));
     }
 }

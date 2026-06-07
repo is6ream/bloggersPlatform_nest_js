@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { BaseDBEntity } from 'src/core/database/base-db.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { GameOrmEntity } from './game.orm-entity';
@@ -25,4 +26,16 @@ export class PlayerOrmEntity extends BaseDBEntity {
 
   @Column({ type: 'jsonb', default: [] })
   answers: PlayerAnswer[];
+
+  static create(dto: { userId: string; gameId: string }): PlayerOrmEntity {
+    const player = new PlayerOrmEntity();
+
+    player.id = randomUUID();
+    player.userId = dto.userId;
+    player.gameId = dto.gameId;
+    player.score = 0;
+    player.answers = [];
+
+    return player;
+  }
 }

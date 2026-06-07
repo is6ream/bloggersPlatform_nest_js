@@ -6,10 +6,11 @@ import { QuestionOrmEntity } from '../entities/question.orm-entity';
 import { UserOrmEntity } from 'src/modules/user-accounts/infrastructure/users/entities/user.orm-entity';
 import { QuizGameController } from '../api/controllers/quiz-game.sa.controller';
 import { QuizGameController as PairGameQuizController } from '../api/controllers/quiz-game.controller';
-import { QuizGameRepository } from '../infrastructure/questions/question.repository';
+import { GameRepository } from '../infrastructure/game/game.repository';
 import { QuizGameQueryRepository } from '../infrastructure/questions/question-query.repository';
 import { quizGameCommandHandlers } from '../application/quiz-game-command-handlers';
 import { UserAccountsModule } from 'src/modules/user-accounts/userAccounts.module';
+import { QuestionRepository } from '../infrastructure/questions/question.repository';
 
 @Module({
   imports: [
@@ -23,9 +24,10 @@ import { UserAccountsModule } from 'src/modules/user-accounts/userAccounts.modul
   ],
   controllers: [QuizGameController, PairGameQuizController],
   providers: [
-    QuizGameRepository,
+    GameRepository,
+    QuestionRepository,
     QuizGameQueryRepository,
     ...quizGameCommandHandlers,
   ],
 })
-export class QuizGameModule {}
+export class QuizGameModule { }

@@ -2,9 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { QuestionOrmEntity } from '../../entities/question.orm-entity';
+import { GAME_QUESTIONS_COUNT } from '../../constants/game-questions-count';
 
 @Injectable()
-export class QuizGameRepository {
+export class QuestionRepository {
   constructor(
     @InjectRepository(QuestionOrmEntity)
     private readonly repo: Repository<QuestionOrmEntity>,
@@ -25,5 +26,17 @@ export class QuizGameRepository {
 
   async save(question: QuestionOrmEntity): Promise<void> {
     await this.repo.save(question);
+  }
+
+  async findRandomPublishedQuestions(
+    limit: number = GAME_QUESTIONS_COUNT,
+  ): Promise<QuestionOrmEntity[]> {
+    return this.repo
+      .createQueryBuilder('q')
+      .where('q.published = :published', { published: true })
+      .andWhere('q.deleteAt IS NULL')
+      .orderBy('RANDOM()')
+      .take(limit)
+      .getMany();
   }
 }

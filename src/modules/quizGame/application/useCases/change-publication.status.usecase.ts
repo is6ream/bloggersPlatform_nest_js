@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { QuizGameRepository } from '../../infrastructure/questions/question.repository';
+import { QuestionRepository } from '../../infrastructure/questions/question.repository';
 
 export class ChangePublicationStatusCommand {
   constructor(
@@ -14,7 +14,7 @@ export class ChangePublicationStatusCommand {
 export class ChangePublicationStatusUseCase
   implements ICommandHandler<ChangePublicationStatusCommand>
 {
-  constructor(private quizGameRepository: QuizGameRepository) {}
+  constructor(private quizGameRepository: QuestionRepository) {}
 
   async execute(command: ChangePublicationStatusCommand): Promise<void> {
     const question = await this.quizGameRepository.findOrNotFoundFail(

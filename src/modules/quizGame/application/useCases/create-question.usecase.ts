@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { CreateQuestionInputDto } from '../../api/dto/input/create-question.input.dto';
-import { QuizGameRepository } from '../../infrastructure/questions/question.repository';
+import { QuestionRepository } from '../../infrastructure/questions/question.repository';
 import { QuestionOrmEntity } from '../../entities/question.orm-entity';
 
 export class CreateQuestionCommand {
@@ -11,7 +11,7 @@ export class CreateQuestionCommand {
 @Injectable()
 @CommandHandler(CreateQuestionCommand)
 export class CreateQuestionUseCase implements ICommandHandler<CreateQuestionCommand> {
-  constructor(private quizGameRepository: QuizGameRepository) {}
+  constructor(private quizGameRepository: QuestionRepository) {}
 
   async execute(command: CreateQuestionCommand): Promise<string> {
     const question = QuestionOrmEntity.create(command.dto);
