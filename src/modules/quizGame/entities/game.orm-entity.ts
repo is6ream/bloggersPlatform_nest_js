@@ -18,6 +18,9 @@ export class GameOrmEntity extends BaseDBEntity {
   @Column({ type: 'timestamptz', nullable: true, default: null })
   startGameDate!: Date | null;
 
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  deleteAt!: Date | null;
+
   static create(): GameOrmEntity {
     const game = new GameOrmEntity();
 
@@ -25,6 +28,7 @@ export class GameOrmEntity extends BaseDBEntity {
     game.status = GameStatus.PendingSecondPlayer;
     game.questionIds = [];
     game.startGameDate = null;
+    game.deleteAt = null;
 
     return game;
   }
