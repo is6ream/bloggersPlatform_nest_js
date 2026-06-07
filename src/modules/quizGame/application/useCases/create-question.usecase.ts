@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { CreateQuestionInputDto } from '../../api/dto/input/create-question.input.dto';
-import { QuizGameRepository } from '../../infrastructure/quiz-game.repository';
+import { QuizGameRepository } from '../../infrastructure/questions/question.repository';
 import { QuestionOrmEntity } from '../../entities/question.orm-entity';
 
 export class CreateQuestionCommand {

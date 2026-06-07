@@ -2,10 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
-import { GetQuestionsQueryParams, PublishedStatus } from '../api/query/get-questions-query.params';
-import { QuestionPaginatedViewDto } from '../api/paginated/question-paginated.view-dto';
-import { QuestionViewDto } from '../api/dto/output/question.view-dto';
-import { QuestionOrmEntity } from '../entities/question.orm-entity';
+import { GetQuestionsQueryParams, PublishedStatus } from '../../api/query/get-questions-query.params';
+import { QuestionPaginatedViewDto } from '../../api/paginated/question-paginated.view-dto';
+import { QuestionViewDto } from '../../api/dto/output/question.view-dto';
+import { QuestionOrmEntity } from '../../entities/question.orm-entity';
 
 @Injectable()
 export class QuizGameQueryRepository {

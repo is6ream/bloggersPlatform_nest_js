@@ -2,14 +2,14 @@ import { BaseDBEntity } from 'src/core/database/base-db.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { GameOrmEntity } from './game.orm-entity';
 import { PlayerAnswer } from '../types/player-answer';
-import { UserOrmEntity } from './user.orm-entity';
+import { UserOrmEntity } from 'src/modules/user-accounts/infrastructure/users/entities/user.orm-entity';
 
 @Entity('quiz_players')
 export class PlayerOrmEntity extends BaseDBEntity {
-  @Column({ type: 'uuid' })
+  @Column({ type: 'text' })
   userId!: string;
 
-  @ManyToOne(() => UserOrmEntity, (user) => user.players, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user!: UserOrmEntity;
 

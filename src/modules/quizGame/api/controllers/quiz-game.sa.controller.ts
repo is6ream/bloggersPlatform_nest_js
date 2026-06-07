@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
-import { QuizGameQueryRepository } from '../../infrastructure/quiz-game-query.repository';
+import { QuizGameQueryRepository } from '../../infrastructure/questions/question-query.repository';
 import { GetQuestionsQueryParams } from '../query/get-questions-query.params';
 import { QuestionPaginatedViewDto } from '../paginated/question-paginated.view-dto';
 import { CreateQuestionInputDto } from '../dto/input/create-question.input.dto';

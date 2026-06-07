@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { QuizGameRepository } from '../../infrastructure/quiz-game.repository';
+import { QuizGameRepository } from '../../infrastructure/questions/question.repository';
 
 export class ChangePublicationStatusCommand {
   constructor(
