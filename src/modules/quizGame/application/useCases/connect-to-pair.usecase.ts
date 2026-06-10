@@ -32,7 +32,8 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
                 message: 'Forbidden',
             });
         }
-
+        // Этот участок отфильтровывает игры, где пользователь уже есть в quiz_players,
+        //  и из оставшихся берёт самую раннюю игру в статусе «ждём второго игрока».
         const pendingGame = await this.gameRepository.findGamePendingSecondPlayer(command.userId);
 
         //если есть пользователь в ожидании - создаем игру, добавляем 5 
@@ -53,8 +54,7 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
 
             pendingGame.activate(questions.map((question) => question.id));
 
-            await this.gameRepository.savePlayer(player);
-            await this.gameRepository.saveGame(pendingGame);
+            await this.gameRepository.saveGameAndPlayer(pendingGame, player);
 
             return pendingGame.id;
         }
@@ -65,8 +65,10 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
             gameId: game.id,
         });
 
-        await this.gameRepository.saveGame(game);
-        await this.gameRepository.savePlayer(player);
+        // гарантирует целостность пары game + player
+        // в рамках одного запроса.
+
+        await this.gameRepository.saveGameAndPlayer(game, player);
 
         return game.id;
     }

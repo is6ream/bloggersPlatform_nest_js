@@ -39,6 +39,8 @@ export class TestingController {
       'posts',
       'blogs',
       'users',
+      'quiz_players',
+      'quiz_games',
       'quiz_questions',
     ];
     for (const table of pgTables) {

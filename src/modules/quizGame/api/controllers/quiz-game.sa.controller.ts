@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { BasicAuthGuard } from 'src/modules/user-accounts/guards/basic/basic-auth.guard';
-import { QuizGameQueryRepository } from '../../infrastructure/questions/question-query.repository';
 import { GetQuestionsQueryParams } from '../query/get-questions-query.params';
 import { QuestionPaginatedViewDto } from '../paginated/question-paginated.view-dto';
 import { CreateQuestionInputDto } from '../dto/input/create-question.input.dto';
@@ -24,11 +23,12 @@ import { CreateQuestionCommand } from '../../application/useCases/create-questio
 import { DeleteQuestionCommand } from '../../application/useCases/delete-question.usecase';
 import { UpdateQuestionCommand } from '../../application/useCases/update-question.usecase';
 import { ChangePublicationStatusCommand } from '../../application/useCases/change-publication.status.usecase';
+import { QuestionsQueryRepository } from '../../infrastructure/questions/question-query.repository';
 
 @Controller('sa/quiz')
 export class QuizGameController {
     constructor(
-        private quizGameQueryRepository: QuizGameQueryRepository,
+        private questionsQueryRepository: QuestionsQueryRepository,
         private commandBus: CommandBus,
     ) { }
 
@@ -37,7 +37,7 @@ export class QuizGameController {
     async getAll(
         @Query() query: GetQuestionsQueryParams,
     ): Promise<QuestionPaginatedViewDto> {
-        return this.quizGameQueryRepository.getAllQuestions(query);
+        return this.questionsQueryRepository.getAllQuestions(query);
     }
 
     @UseGuards(BasicAuthGuard)
@@ -49,7 +49,7 @@ export class QuizGameController {
             new CreateQuestionCommand(body),
         );
 
-        return this.quizGameQueryRepository.getByIdOrNotFoundFail(questionId);
+        return this.questionsQueryRepository.getByIdOrNotFoundFail(questionId);
     }
 
     @UseGuards(BasicAuthGuard)

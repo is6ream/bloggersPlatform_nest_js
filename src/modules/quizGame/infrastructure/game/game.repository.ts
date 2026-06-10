@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { GameOrmEntity } from '../../entities/game.orm-entity';
 import { PlayerOrmEntity } from '../../entities/player.orm-entity';
 import { GameStatus } from '../../types/game-status';
@@ -10,9 +10,8 @@ export class GameRepository {
   constructor(
     @InjectRepository(GameOrmEntity)
     private readonly gameRepo: Repository<GameOrmEntity>,
-    @InjectRepository(PlayerOrmEntity)
-    private readonly playerRepo: Repository<PlayerOrmEntity>,
-  ) {}
+    private readonly dataSource: DataSource,
+  ) { }
 
   async findActiveGameByUserId(userId: string): Promise<GameOrmEntity | null> {
     return this.gameRepo
@@ -24,7 +23,7 @@ export class GameRepository {
       })
       .getOne();
   }
-
+  
   async findGamePendingSecondPlayer(
     userId: string,
   ): Promise<GameOrmEntity | null> {
@@ -44,11 +43,13 @@ export class GameRepository {
       .getOne();
   }
 
-  async saveGame(game: GameOrmEntity): Promise<void> {
-    await this.gameRepo.save(game);
-  }
-
-  async savePlayer(player: PlayerOrmEntity): Promise<void> {
-    await this.playerRepo.save(player);
+  async saveGameAndPlayer(
+    game: GameOrmEntity,
+    player: PlayerOrmEntity,
+  ): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      await manager.save(GameOrmEntity, game);
+      await manager.save(PlayerOrmEntity, player);
+    });
   }
 }

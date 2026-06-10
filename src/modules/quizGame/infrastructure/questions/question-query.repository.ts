@@ -8,11 +8,11 @@ import { QuestionViewDto } from '../../api/dto/output/question.view-dto';
 import { QuestionOrmEntity } from '../../entities/question.orm-entity';
 
 @Injectable()
-export class QuizGameQueryRepository {
+export class QuestionsQueryRepository {
   constructor(
     @InjectRepository(QuestionOrmEntity)
     private readonly repo: Repository<QuestionOrmEntity>,
-  ) {}
+  ) { }
 
   async getAllQuestions(
     query: GetQuestionsQueryParams,
