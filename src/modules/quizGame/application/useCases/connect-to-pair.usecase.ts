@@ -36,14 +36,7 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
         //  и из оставшихся берёт самую раннюю игру в статусе «ждём второго игрока».
         const pendingGame = await this.gameRepository.findGamePendingSecondPlayer(command.userId);
 
-        //если есть пользователь в ожидании - создаем игру, добавляем 5 
-        //вопросов, записываем даты старта игры и дату создания пары
         if (pendingGame) {
-            const player = PlayerOrmEntity.create({
-                userId: command.userId,
-                gameId: pendingGame.id,
-            });
-
             const questions = await this.questionRepository.findRandomPublishedQuestions();
             if (questions.length < GAME_QUESTIONS_COUNT) {
                 throw new DomainException({
@@ -52,11 +45,14 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
                 });
             }
 
-            pendingGame.activate(questions.map((question) => question.id));
+            const joinedGameId = await this.gameRepository.tryJoinPendingGameAsSecondPlayer(
+                command.userId,
+                questions.map((question) => question.id),
+            );
 
-            await this.gameRepository.saveGameAndPlayer(pendingGame, player);
-
-            return pendingGame.id;
+            if (joinedGameId) {
+                return joinedGameId;
+            }
         }
 
         const game = GameOrmEntity.create();

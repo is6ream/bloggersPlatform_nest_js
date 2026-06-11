@@ -27,20 +27,38 @@ export class GameRepository {
   async findGamePendingSecondPlayer(
     userId: string,
   ): Promise<GameOrmEntity | null> {
-    return this.gameRepo
-      .createQueryBuilder('game')
-      .where('game.status = :status', {
-        status: GameStatus.PendingSecondPlayer,
-      })
-      .andWhere(
-        `NOT EXISTS (
-          SELECT 1 FROM quiz_players p
-          WHERE p."gameId" = game.id AND p."userId" = :userId
-        )`,
-        { userId },
-      )
-      .orderBy('game.createdAt', 'ASC')
+    return this.buildJoinablePendingGameQuery(this.gameRepo.createQueryBuilder('game'), userId)
       .getOne();
+  }
+
+  async tryJoinPendingGameAsSecondPlayer(
+    userId: string,
+    questionIds: string[],
+  ): Promise<string | null> {
+    return this.dataSource.transaction(async (manager) => {
+      const pendingGame = await this.buildJoinablePendingGameQuery(
+        manager.createQueryBuilder(GameOrmEntity, 'game'),
+        userId,
+      )
+        .setLock('pessimistic_partial_write')
+        .getOne();
+
+      if (!pendingGame) {
+        return null;
+      }
+
+      const player = PlayerOrmEntity.create({
+        userId,
+        gameId: pendingGame.id,
+      });
+
+      pendingGame.activate(questionIds);
+
+      await manager.save(GameOrmEntity, pendingGame);
+      await manager.save(PlayerOrmEntity, player);
+
+      return pendingGame.id;
+    });
   }
 
   async saveGameAndPlayer(
@@ -51,5 +69,27 @@ export class GameRepository {
       await manager.save(GameOrmEntity, game);
       await manager.save(PlayerOrmEntity, player);
     });
+  }
+
+  private buildJoinablePendingGameQuery(
+    qb: ReturnType<Repository<GameOrmEntity>['createQueryBuilder']>,
+    userId: string,
+  ) {
+    return qb
+      .where('game.status = :status', {
+        status: GameStatus.PendingSecondPlayer,
+      })
+      .andWhere('game.deleteAt IS NULL')
+      .andWhere(
+        `NOT EXISTS (
+          SELECT 1 FROM quiz_players p
+          WHERE p."gameId" = game.id AND p."userId" = :userId
+        )`,
+        { userId },
+      )
+      .andWhere(
+        `(SELECT COUNT(*)::int FROM quiz_players p WHERE p."gameId" = game.id) = 1`,
+      )
+      .orderBy('game.createdAt', 'ASC');
   }
 }
