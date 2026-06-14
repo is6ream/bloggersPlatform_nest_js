@@ -10,7 +10,7 @@ export class RemoveQuizUsersTable1780204000000 implements MigrationInterface {
 
     await queryRunner.query(`
       DELETE FROM "quiz_players"
-      WHERE "userId"::text NOT IN (SELECT "id" FROM "users")
+      WHERE "userId"::text NOT IN (SELECT "id"::text FROM "users")
     `);
 
     await queryRunner.query(`
