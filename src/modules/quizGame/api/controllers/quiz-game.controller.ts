@@ -1,4 +1,4 @@
-import { Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Controller, HttpCode, Post, UseGuards, Get } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/jwt/jwt-auth.guard';
 import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorators/param/extract-user-from-request.decorator';
@@ -15,9 +15,14 @@ export class QuizGameController {
         private gameQueryRepository: GameQueryRepository,
     ) { }
 
+    @UseGuards(JwtAuthGuard)
+    @Get('pairs/my-current')
+    @HttpCode(HttpStatus.OK)
     async getCurrentUnfinishedGame(
-
-    ) { }
+        @ExtractUserFromRequest() user: UserContextDto,
+    ): Promise<GameViewDto> {
+        return await this.gameQueryRepository.getCurrentUnfinishedOrNotFoundFail(user.id);
+    }
 
     @UseGuards(JwtAuthGuard)
     @Post('pairs/connection')
