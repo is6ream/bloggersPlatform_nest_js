@@ -15,16 +15,14 @@ export class GameQueryRepository {
     private readonly questionRepo: Repository<QuestionOrmEntity>,
   ) {}
 
-  async getByIdOrNotFoundFail(id: string): Promise<GameViewDto> {
-    const game = await this.gameRepo.findOne({
+  async findByIdWithPlayers(id: string): Promise<GameOrmEntity | null> {
+    return this.gameRepo.findOne({
       where: { id, deleteAt: IsNull() },
       relations: { players: { user: true } },
     });
+  }
 
-    if (!game) {
-      throw new NotFoundException('Game not found');
-    }
-
+  async mapGameToView(game: GameOrmEntity): Promise<GameViewDto> {
     const questions = game.questionIds.length
       ? await this.questionRepo.find({
           where: { id: In(game.questionIds), deleteAt: IsNull() },
@@ -32,6 +30,16 @@ export class GameQueryRepository {
       : [];
 
     return GameViewDto.mapToView(game, questions);
+  }
+
+  async getByIdOrNotFoundFail(id: string): Promise<GameViewDto> {
+    const game = await this.findByIdWithPlayers(id);
+
+    if (!game) {
+      throw new NotFoundException('Game not found');
+    }
+
+    return this.mapGameToView(game);
   }
 
   async getCurrentUnfinishedOrNotFoundFail(userId: string): Promise<GameViewDto> {
@@ -50,12 +58,6 @@ export class GameQueryRepository {
       throw new NotFoundException('Game not found');
     }
 
-    const questions = game.questionIds.length
-      ? await this.questionRepo.find({
-          where: { id: In(game.questionIds), deleteAt: IsNull() },
-        })
-      : [];
-
-    return GameViewDto.mapToView(game, questions);
+    return this.mapGameToView(game);
   }
 }
