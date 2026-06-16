@@ -23,7 +23,7 @@ export class GameRepository {
       })
       .getOne();
   }
-  
+
   async findGamePendingSecondPlayer(
     userId: string,
   ): Promise<GameOrmEntity | null> {
@@ -60,14 +60,19 @@ export class GameRepository {
       return pendingGame.id;
     });
   }
-
-  async saveGameAndPlayer(
+  //перепроектировать таблицы
+  async saveGameAndFirstPlayer(
     game: GameOrmEntity,
-    player: PlayerOrmEntity,
-  ): Promise<void> {
-    await this.dataSource.transaction(async (manager) => {
-      await manager.save(GameOrmEntity, game);
+    userId: string,
+  ): Promise<string> {
+    return this.dataSource.transaction(async (manager) => {
+      const savedGame = await manager.save(GameOrmEntity, game);
+      const player = PlayerOrmEntity.create({
+        userId,
+        gameId: savedGame.id,
+      });
       await manager.save(PlayerOrmEntity, player);
+      return savedGame.id;
     });
   }
 

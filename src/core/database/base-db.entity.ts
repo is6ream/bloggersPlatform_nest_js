@@ -1,7 +1,7 @@
-import { CreateDateColumn, PrimaryColumn } from 'typeorm';
+import { CreateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
 
 export abstract class BaseDBEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @CreateDateColumn({ type: 'timestamptz' })

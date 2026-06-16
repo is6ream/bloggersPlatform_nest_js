@@ -2,7 +2,6 @@ import { BaseDBEntity } from 'src/core/database/base-db.entity';
 import { Column, Entity, UpdateDateColumn } from 'typeorm';
 import { CreateQuestionInputDto } from '../api/dto/input/create-question.input.dto';
 import { UpdateQuestionInputDto } from '../api/dto/input/update-question.input.dto';
-import { randomUUID } from 'crypto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
 
@@ -38,7 +37,6 @@ export class QuestionOrmEntity extends BaseDBEntity {
   static create(dto: CreateQuestionInputDto): QuestionOrmEntity {
     const question = new QuestionOrmEntity();
 
-    question.id = randomUUID();
     question.body = dto.body;
     question.correctAnswers = dto.correctAnswers;
     question.published = false;

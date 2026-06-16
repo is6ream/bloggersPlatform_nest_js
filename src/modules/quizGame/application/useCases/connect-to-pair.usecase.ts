@@ -5,7 +5,6 @@ import { GameRepository } from "../../infrastructure/game/game.repository";
 import { QuestionRepository } from "../../infrastructure/questions/question.repository";
 import { DomainException } from "src/core/exceptions/domain-exceptions";
 import { DomainExceptionCode } from "src/core/exceptions/domain-exception-codes";
-import { PlayerOrmEntity } from "../../entities/player.orm-entity";
 import { GameOrmEntity } from "../../entities/game.orm-entity";
 import { GAME_QUESTIONS_COUNT } from "../../constants/game-questions-count";
 
@@ -37,6 +36,7 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
         const pendingGame = await this.gameRepository.findGamePendingSecondPlayer(command.userId);
 
         if (pendingGame) {
+            //должны быть вопросы
             const questions = await this.questionRepository.findRandomPublishedQuestions();
             if (questions.length < GAME_QUESTIONS_COUNT) {
                 throw new DomainException({
@@ -47,6 +47,7 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
 
             const joinedGameId = await this.gameRepository.tryJoinPendingGameAsSecondPlayer(
                 command.userId,
+                //вопросы уже должны быть
                 questions.map((question) => question.id),
             );
 
@@ -56,16 +57,7 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
         }
 
         const game = GameOrmEntity.create();
-        const player = PlayerOrmEntity.create({
-            userId: command.userId,
-            gameId: game.id,
-        });
 
-        // гарантирует целостность пары game + player
-        // в рамках одного запроса.
-
-        await this.gameRepository.saveGameAndPlayer(game, player);
-
-        return game.id;
+        return this.gameRepository.saveGameAndFirstPlayer(game, command.userId);
     }
 }

@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { BaseDBEntity } from 'src/core/database/base-db.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { PlayerOrmEntity } from './player.orm-entity';
@@ -24,7 +23,6 @@ export class GameOrmEntity extends BaseDBEntity {
   static create(): GameOrmEntity {
     const game = new GameOrmEntity();
 
-    game.id = randomUUID();
     game.status = GameStatus.PendingSecondPlayer;
     game.questionIds = [];
     game.startGameDate = null;
