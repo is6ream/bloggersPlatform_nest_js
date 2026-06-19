@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { GameOrmEntity } from '../../entities/game.orm-entity';
 import { PlayerOrmEntity } from '../../entities/player.orm-entity';
+import { GameQuestion } from '../../entities/game-question.orm-entity';
 import { GameStatus } from '../../types/game-status';
 
 @Injectable()
@@ -16,9 +17,9 @@ export class GameRepository {
   async findActiveGameByUserId(userId: string): Promise<GameOrmEntity | null> {
     return this.gameRepo
       .createQueryBuilder('game')
-      .innerJoin('game.players', 'player')
-      .where('player.userId = :userId', { userId })
-      .andWhere('game.status IN (:...statuses)', {
+      .innerJoin('quiz_players', 'player', 'player."gameId" = game.id')
+      .where('player."userId" = :userId', { userId })
+      .andWhere('game.gameStatus IN (:...statuses)', {
         statuses: [GameStatus.PendingSecondPlayer, GameStatus.Active],
       })
       .getOne();
@@ -51,16 +52,21 @@ export class GameRepository {
         userId,
         gameId: pendingGame.id,
       });
+      const savedPlayer = await manager.save(PlayerOrmEntity, player);
 
-      pendingGame.activate(questionIds);
+      pendingGame.addSecondPlayer(savedPlayer);
 
+      const gameQuestions = questionIds.map((questionId, index) =>
+        GameQuestion.create(questionId, pendingGame.id, index),
+      );
+
+      await manager.save(GameQuestion, gameQuestions);
       await manager.save(GameOrmEntity, pendingGame);
-      await manager.save(PlayerOrmEntity, player);
 
       return pendingGame.id;
     });
   }
-  //перепроектировать таблицы
+
   async saveGameAndFirstPlayer(
     game: GameOrmEntity,
     userId: string,
@@ -71,7 +77,11 @@ export class GameRepository {
         userId,
         gameId: savedGame.id,
       });
-      await manager.save(PlayerOrmEntity, player);
+      const savedPlayer = await manager.save(PlayerOrmEntity, player);
+
+      savedGame.setFirstPlayer(savedPlayer);
+      await manager.save(GameOrmEntity, savedGame);
+
       return savedGame.id;
     });
   }
@@ -81,19 +91,18 @@ export class GameRepository {
     userId: string,
   ) {
     return qb
-      .where('game.status = :status', {
+      .where('game.gameStatus = :status', {
         status: GameStatus.PendingSecondPlayer,
       })
       .andWhere('game.deleteAt IS NULL')
+      .andWhere('game."secondPlayerId" IS NULL')
+      .andWhere('game."firstPlayerId" IS NOT NULL')
       .andWhere(
         `NOT EXISTS (
           SELECT 1 FROM quiz_players p
           WHERE p."gameId" = game.id AND p."userId" = :userId
         )`,
         { userId },
-      )
-      .andWhere(
-        `(SELECT COUNT(*)::int FROM quiz_players p WHERE p."gameId" = game.id) = 1`,
       )
       .orderBy('game.createdAt', 'ASC');
   }

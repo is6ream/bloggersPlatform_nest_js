@@ -34,20 +34,19 @@ export class ConnectToPairUseCase implements ICommandHandler<ConnectToPairComman
         // Этот участок отфильтровывает игры, где пользователь уже есть в quiz_players,
         //  и из оставшихся берёт самую раннюю игру в статусе «ждём второго игрока».
         const pendingGame = await this.gameRepository.findGamePendingSecondPlayer(command.userId);
-
         if (pendingGame) {
             //должны быть вопросы
             const questions = await this.questionRepository.findRandomPublishedQuestions();
             if (questions.length < GAME_QUESTIONS_COUNT) {
+
                 throw new DomainException({
                     code: DomainExceptionCode.BadRequest,
                     message: 'No questions in DB',
                 });
             }
-
+//разобрать этот путь
             const joinedGameId = await this.gameRepository.tryJoinPendingGameAsSecondPlayer(
                 command.userId,
-                //вопросы уже должны быть
                 questions.map((question) => question.id),
             );
 

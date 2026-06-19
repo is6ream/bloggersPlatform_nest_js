@@ -1,8 +1,8 @@
 import { BaseDBEntity } from 'src/core/database/base-db.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { GameOrmEntity } from './game.orm-entity';
-import { PlayerAnswer } from '../types/player-answer';
 import { UserOrmEntity } from 'src/modules/user-accounts/infrastructure/users/entities/user.orm-entity';
+import { AnswerOrmEntity } from './answer.orm-entity';
 
 @Entity('quiz_players')
 export class PlayerOrmEntity extends BaseDBEntity {
@@ -13,7 +13,7 @@ export class PlayerOrmEntity extends BaseDBEntity {
   @JoinColumn({ name: 'userId' })
   user!: UserOrmEntity;
 
-  @ManyToOne(() => GameOrmEntity, (game) => game.players, { onDelete: 'CASCADE' })
+  @ManyToOne(() => GameOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'gameId' })
   game!: GameOrmEntity;
 
@@ -23,8 +23,9 @@ export class PlayerOrmEntity extends BaseDBEntity {
   @Column({ type: 'int' })
   score: number;
 
-  @Column({ type: 'jsonb', default: [] })
-  answers: PlayerAnswer[];
+  @OneToMany(() => AnswerOrmEntity, (answer) => answer.player)
+  answers!: AnswerOrmEntity[];
+
 
   static create(dto: { userId: string; gameId: string }): PlayerOrmEntity {
     const player = new PlayerOrmEntity();

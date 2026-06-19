@@ -1,39 +1,61 @@
 import { BaseDBEntity } from 'src/core/database/base-db.entity';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { PlayerOrmEntity } from './player.orm-entity';
 import { GameStatus } from '../types/game-status';
+import { GameQuestion } from './game-question.orm-entity';
 
 @Entity('quiz_games')
 export class GameOrmEntity extends BaseDBEntity {
+  @OneToOne(() => PlayerOrmEntity)
+  @JoinColumn({ name: 'firstPlayerId' })
+  firstPlayer!: PlayerOrmEntity | null;
+
+  @OneToOne(() => PlayerOrmEntity)
+  @JoinColumn({ name: 'secondPlayerId' })
+  secondPlayer!: PlayerOrmEntity | null;
+
   @Column({ type: 'varchar' })
-  status: GameStatus;
+  gameStatus!: GameStatus;
 
-  @Column({ type: 'jsonb', default: [] })
-  questionIds!: string[];
-
-  @OneToMany(() => PlayerOrmEntity, (player) => player.game)
-  players!: PlayerOrmEntity[];
+  @Column()
+  pairCreatedDate!: string;
 
   @Column({ type: 'timestamptz', nullable: true, default: null })
   startGameDate!: Date | null;
 
+  @Column({ type: 'varchar', nullable: true, default: null })
+  finishGameDate!: string | null;
+
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleteAt!: Date | null;
+
+  @OneToMany(() => GameQuestion, (gameQuestion) => gameQuestion.game)
+  gameQuestions!: GameQuestion[];
 
   static create(): GameOrmEntity {
     const game = new GameOrmEntity();
 
-    game.status = GameStatus.PendingSecondPlayer;
-    game.questionIds = [];
+    game.gameStatus = GameStatus.PendingSecondPlayer;
+    game.pairCreatedDate = new Date().toISOString();
     game.startGameDate = null;
+    game.finishGameDate = null;
     game.deleteAt = null;
 
     return game;
   }
 
-  activate(questionIds: string[]): void {
-    this.status = GameStatus.Active;
-    this.questionIds = questionIds;
+  setFirstPlayer(player: PlayerOrmEntity): void {
+    this.firstPlayer = player;
+  }
+
+  addSecondPlayer(player: PlayerOrmEntity): void {
+    this.secondPlayer = player;
+    this.gameStatus = GameStatus.Active;
     this.startGameDate = new Date();
+  }
+
+  finishGame(): void {
+    this.gameStatus = GameStatus.Finished;
+    this.finishGameDate = new Date().toISOString();
   }
 }

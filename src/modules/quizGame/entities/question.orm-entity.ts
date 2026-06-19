@@ -1,9 +1,10 @@
 import { BaseDBEntity } from 'src/core/database/base-db.entity';
-import { Column, Entity, UpdateDateColumn } from 'typeorm';
+import { Column, Entity, UpdateDateColumn, OneToMany } from 'typeorm';
 import { CreateQuestionInputDto } from '../api/dto/input/create-question.input.dto';
 import { UpdateQuestionInputDto } from '../api/dto/input/update-question.input.dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
 import { DomainExceptionCode } from 'src/core/exceptions/domain-exception-codes';
+import { GameQuestion } from './game-question.orm-entity';
 
 @Entity('quiz_questions')
 export class QuestionOrmEntity extends BaseDBEntity {
@@ -21,6 +22,9 @@ export class QuestionOrmEntity extends BaseDBEntity {
 
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleteAt!: Date | null;
+
+  @OneToMany(() => GameQuestion, gameQuestion => gameQuestion.question)
+  gameQuestions: GameQuestion[];
 
   makeDeleted(): void {
     if (this.deleteAt !== null) {

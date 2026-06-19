@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GameOrmEntity } from '../entities/game.orm-entity';
 import { PlayerOrmEntity } from '../entities/player.orm-entity';
 import { QuestionOrmEntity } from '../entities/question.orm-entity';
+import { GameQuestion } from '../entities/game-question.orm-entity';
 import { UserOrmEntity } from 'src/modules/user-accounts/infrastructure/users/entities/user.orm-entity';
 import { QuizGameController } from '../api/controllers/quiz-game.sa.controller';
 import { QuizGameController as PairGameQuizController } from '../api/controllers/quiz-game.controller';
@@ -13,6 +14,7 @@ import { UserAccountsModule } from 'src/modules/user-accounts/userAccounts.modul
 import { QuestionRepository } from '../infrastructure/questions/question.repository';
 import { GameQueryRepository } from '../infrastructure/game/game-query.repository';
 import { QuestionsQueryRepository } from '../infrastructure/questions/question-query.repository';
+import { AnswerOrmEntity } from '../entities/answer.orm-entity';
 
 @Module({
   imports: [
@@ -20,7 +22,9 @@ import { QuestionsQueryRepository } from '../infrastructure/questions/question-q
       GameOrmEntity,
       PlayerOrmEntity,
       QuestionOrmEntity,
+      GameQuestion,
       UserOrmEntity,
+      AnswerOrmEntity,
     ]),
     UserAccountsModule,
   ],

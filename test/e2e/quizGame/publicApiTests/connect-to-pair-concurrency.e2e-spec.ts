@@ -5,16 +5,16 @@ import { DataSource } from 'typeorm';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
 import request from 'supertest';
-import { createCustomTestUser } from '../../helpers/factory/custom-user.factory';
-import { deleteAllE2eUsers } from '../../helpers/factory/user-factory';
-import { e2eApiPath } from '../helpers/api-path';
-import { loginAndGetAccessToken } from './helpers/auth.helper';
-import { pairGameQuizApi } from './helpers/pair-game-quiz-api';
+import { createCustomTestUser } from '../../../helpers/factory/custom-user.factory';
+import { deleteAllE2eUsers } from '../../../helpers/factory/user-factory';
+import { e2eApiPath } from '../../helpers/api-path';
+import { createAccessTokenForUser } from '../helpers/auth.helper';
+import { pairGameQuizApi } from '../helpers/pair-game-quiz-api';
 import {
   countPlayersInGame,
   findGameIdsWithMoreThanTwoPlayers,
-} from './helpers/quiz-game-db.helper';
-import { seedPublishedQuestions } from './helpers/quiz-questions-setup.helper';
+} from '../helpers/quiz-game-db.helper';
+import { seedPublishedQuestions } from '../helpers/quiz-questions-setup.helper';
 
 const TESTING_PATH = e2eApiPath('testing/all-data');
 
@@ -56,21 +56,9 @@ describe('QuizGame connect-to-pair concurrency (e2e)', () => {
       password: 'pass_c',
     });
 
-    userAToken = await loginAndGetAccessToken(
-      app,
-      createdA.user.login,
-      createdA.password,
-    );
-    userBToken = await loginAndGetAccessToken(
-      app,
-      createdB.user.login,
-      createdB.password,
-    );
-    userCToken = await loginAndGetAccessToken(
-      app,
-      createdC.user.login,
-      createdC.password,
-    );
+    userAToken = await createAccessTokenForUser(app, createdA.user.id);
+    userBToken = await createAccessTokenForUser(app, createdB.user.id);
+    userCToken = await createAccessTokenForUser(app, createdC.user.id);
 
     await seedPublishedQuestions(app.getHttpServer());
   });
@@ -108,6 +96,7 @@ describe('QuizGame connect-to-pair concurrency (e2e)', () => {
       (gameId) => gameId === pendingGameId,
     ).length;
 
+    
     expect(joinedPendingGameCount).toBe(1);
 
     const playersInPendingGame = await countPlayersInGame(

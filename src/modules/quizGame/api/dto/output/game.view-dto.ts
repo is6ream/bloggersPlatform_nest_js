@@ -1,26 +1,24 @@
 import { GameOrmEntity } from '../../../entities/game.orm-entity';
 import { PlayerOrmEntity } from '../../../entities/player.orm-entity';
 import { QuestionOrmEntity } from '../../../entities/question.orm-entity';
+import { AnswerOrmEntity } from '../../../entities/answer.orm-entity';
 import { GameStatus } from '../../../types/game-status';
 import { AnswerStatus } from '../../../types/answer-status';
-import { PlayerAnswer } from '../../../types/player-answer';
 
 /**
  * Ответ игрока на один вопрос в формате API.
- * В БД хранится как элемент JSONB-массива `answers` у PlayerOrmEntity,
- * отдельной таблицы для ответов нет.
  */
 export class AnswerViewDto {
   questionId: string;
   answerStatus: AnswerStatus;
   addedAt: string;
 
-  static mapToView(answer: PlayerAnswer): AnswerViewDto {
+  static mapToView(answer: AnswerOrmEntity): AnswerViewDto {
     const dto = new AnswerViewDto();
 
     dto.questionId = answer.questionId;
-    dto.answerStatus = answer.answerStatus;
-    dto.addedAt = answer.addedAt;
+    dto.answerStatus = answer.status;
+    dto.addedAt = answer.answerDate.toISOString();
 
     return dto;
   }
@@ -61,7 +59,7 @@ export class PlayerProgressViewDto {
   static mapToView(player: PlayerOrmEntity): PlayerProgressViewDto {
     const dto = new PlayerProgressViewDto();
 
-    // Каждый ответ из JSONB-массива преобразуем в AnswerViewDto
+    // Каждый ответ из quiz_answers преобразуем в AnswerViewDto
     dto.answers = (player.answers ?? []).map((answer) =>
       AnswerViewDto.mapToView(answer),
     );
@@ -106,41 +104,24 @@ export class GameViewDto {
   startGameDate: string | null;
   finishGameDate: string | null;
 
-  static mapToView(
-    game: GameOrmEntity,
-    // В game хранятся только questionIds; сами вопросы подгружаются в query-repository
-    questions: QuestionOrmEntity[],
-  ): GameViewDto {
+  static mapToView(game: GameOrmEntity): GameViewDto {
     const dto = new GameViewDto();
 
-    // Копируем массив, чтобы не мутировать исходный game.players.
-    // Сортируем по дате подключения: кто пришёл раньше — firstPlayer, кто позже — secondPlayer.
-    const sortedPlayers = [...(game.players ?? [])].sort(
-      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-    );
-
     dto.id = game.id;
-    dto.status = game.status;
-    // Даты в API — ISO-строки, не объекты Date
-    dto.pairCreatedDate = game.createdAt.toISOString();
+    dto.status = game.gameStatus;
+    dto.pairCreatedDate = game.pairCreatedDate;
     dto.startGameDate = game.startGameDate?.toISOString() ?? null;
-    dto.finishGameDate = null; // TODO: заполнить, когда появится логика завершения игры
+    dto.finishGameDate = game.finishGameDate;
 
-    // Map для быстрого поиска вопроса по id при сборке списка в порядке game.questionIds
-    const questionsById = new Map(
-      questions.map((question) => [question.id, question]),
-    );
+    dto.questions = (game.gameQuestions ?? [])
+      .sort((a, b) => a.index - b.index)
+      .map((gameQuestion) =>
+        QuestionInGameViewDto.mapToView(gameQuestion.question),
+      );
 
-    // Сохраняем порядок вопросов из game.questionIds (а не порядок из запроса к БД)
-    dto.questions = game.questionIds
-      .map((id) => questionsById.get(id))
-      .filter((question): question is QuestionOrmEntity => question !== undefined)
-      .map((question) => QuestionInGameViewDto.mapToView(question));
-
-    dto.firstPlayerProgress = PlayerProgressViewDto.mapToView(sortedPlayers[0]);
-    // null, пока второй игрок ещё не подключился (статус PendingSecondPlayer)
-    dto.secondPlayerProgress = sortedPlayers[1]
-      ? PlayerProgressViewDto.mapToView(sortedPlayers[1])
+    dto.firstPlayerProgress = PlayerProgressViewDto.mapToView(game.firstPlayer!);
+    dto.secondPlayerProgress = game.secondPlayer
+      ? PlayerProgressViewDto.mapToView(game.secondPlayer)
       : null;
 
     return dto;

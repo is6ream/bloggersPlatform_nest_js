@@ -17,15 +17,18 @@ export class GetGameByIdQueryHandler implements IQueryHandler<GetGameByIdQuery> 
   constructor(private readonly gameQueryRepository: GameQueryRepository) { }
 
   async execute(query: GetGameByIdQuery): Promise<GameViewDto> {
+
     const game = await this.gameQueryRepository.findByIdWithPlayers(query.gameId);
 
+    console.log("GAME: ", game)
+    
     if (!game) {
       throw new NotFoundException('Game not found');
     }
 
-    const isParticipant = game.players.some(
-      (player) => player.userId === query.userId,
-    );
+    const isParticipant =
+      game.firstPlayer?.userId === query.userId ||
+      game.secondPlayer?.userId === query.userId;
 
     if (!isParticipant) {
       throw new DomainException({

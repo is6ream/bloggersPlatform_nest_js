@@ -1,6 +1,8 @@
 -- Local PostgreSQL setup for blogger-platform (device_sessions, E2E).
 -- Run once as superuser, e.g.:
 --   psql -U postgres -h localhost -f scripts/postgres-local-init.sql
+-- Then apply migrations to the test DB:
+--   pnpm migration:run:test
 -- Matches defaults in src/modules/app-module/core-config.ts and test/e2e/jest-e2e-setup.ts.
 
 DO $$

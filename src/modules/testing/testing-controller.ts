@@ -38,10 +38,12 @@ export class TestingController {
       'comments',
       'posts',
       'blogs',
-      'users',
+      'quiz_answers',
+      'game_question',
       'quiz_players',
       'quiz_games',
       'quiz_questions',
+      'users',
     ];
     for (const table of pgTables) {
       await this.dataSource
