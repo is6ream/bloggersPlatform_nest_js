@@ -9,10 +9,11 @@ import { ExtractUserFromRequest } from 'src/modules/user-accounts/guards/decorat
 import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-context.input.dto';
 
 import { ConnectToPairCommand } from '../../application/useCases/connect-to-pair.usecase';
+import { SendAnswerCommand } from '../../application/useCases/send-answer.usecase';
 
 import { GameQueryRepository } from '../../infrastructure/game/game-query.repository';
 
-import { GameViewDto } from '../dto/output/game.view-dto';
+import { AnswerViewDto, GameViewDto } from '../dto/output/game.view-dto';
 
 import { GetGameByIdQuery } from '../../application/queries/get-game-by-id.query';
 
@@ -64,5 +65,14 @@ export class QuizGameController {
         return await this.gameQueryRepository.getByIdOrNotFoundFail(gameId);
     }
 
-    
+    @UseGuards(JwtAuthGuard)
+    @Post('pairs/my-current/answers')
+    @HttpCode(HttpStatus.OK)
+    async sendAnswerForNextAnsweredQuestion(
+        @ExtractUserFromRequest() user: UserContextDto,
+    ): Promise<AnswerViewDto> {
+        return await this.commandBus.execute(new SendAnswerCommand(user.id, ''));
+    }
+
+
 }

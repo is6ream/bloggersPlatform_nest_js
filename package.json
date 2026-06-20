@@ -22,6 +22,7 @@
     "test:e2e:sa-users": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --runInBand test/e2e/users/sa-users.e2e-spec.ts",
     "test:e2e:quiz-game": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --runInBand test/e2e/quizGame",
     "test:integration": "cross-env NODE_ENV=test jest --config ./test/jest-integration.json",
+    "test:integration:quiz-game": "cross-env NODE_ENV=test jest --config ./test/jest-integration.json --runInBand test/integration/quizGame",
     "test:debug": "jest --inspect-brk --runInBand",
     "typeorm": "cross-env NODE_ENV=development typeorm-ts-node-commonjs -d typeorm.config.ts",
     "typeorm:test": "cross-env NODE_ENV=test typeorm-ts-node-commonjs -d typeorm.config.ts",

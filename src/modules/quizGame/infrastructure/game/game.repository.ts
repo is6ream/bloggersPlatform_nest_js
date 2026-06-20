@@ -25,6 +25,19 @@ export class GameRepository {
       .getOne();
   }
 
+  async findActiveGameWithQuestionsByUserId(userId: string): Promise<GameOrmEntity | null> {
+    return this.gameRepo
+      .createQueryBuilder('game')
+      .innerJoin('game.firstPlayer', 'firstPlayer')
+      .innerJoin('game.secondPlayer', 'secondPlayer')
+      .leftJoinAndSelect('game.gameQuestions', 'gameQuestion')
+      .leftJoinAndSelect('gameQuestion.question', 'question')
+      .where('(firstPlayer.userId = :userId OR secondPlayer.userId = :userId)', { userId })
+      .andWhere('game.gameStatus = :status', { status: GameStatus.Active })
+      .andWhere('game.deleteAt IS NULL')
+      .getOne();
+  }
+
   async findGamePendingSecondPlayer(
     userId: string,
   ): Promise<GameOrmEntity | null> {

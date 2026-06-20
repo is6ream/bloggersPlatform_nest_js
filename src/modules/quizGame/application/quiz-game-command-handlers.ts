@@ -3,6 +3,7 @@ import { DeleteQuestionUseCase } from './useCases/delete-question.usecase';
 import { UpdateQuestionUseCase } from './useCases/update-question.usecase';
 import { ChangePublicationStatusUseCase } from './useCases/change-publication.status.usecase';
 import { ConnectToPairUseCase } from './useCases/connect-to-pair.usecase';
+import { SendAnswerUsecase } from './useCases/send-answer.usecase';
 
 export const quizGameCommandHandlers = [
   CreateQuestionUseCase,
@@ -10,4 +11,5 @@ export const quizGameCommandHandlers = [
   UpdateQuestionUseCase,
   ChangePublicationStatusUseCase,
   ConnectToPairUseCase,
+  SendAnswerUsecase,
 ];
