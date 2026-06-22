@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
 
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
@@ -10,6 +10,8 @@ import { UserContextDto } from 'src/modules/user-accounts/guards/dto/user-contex
 
 import { ConnectToPairCommand } from '../../application/useCases/connect-to-pair.usecase';
 import { SendAnswerCommand } from '../../application/useCases/send-answer.usecase';
+
+import { SendAnswerInputDto } from '../dto/input/send-answer.input.dto';
 
 import { GameQueryRepository } from '../../infrastructure/game/game-query.repository';
 
@@ -70,8 +72,11 @@ export class QuizGameController {
     @HttpCode(HttpStatus.OK)
     async sendAnswerForNextAnsweredQuestion(
         @ExtractUserFromRequest() user: UserContextDto,
+        @Body() dto: SendAnswerInputDto,
     ): Promise<AnswerViewDto> {
-        return await this.commandBus.execute(new SendAnswerCommand(user.id, ''));
+        return await this.commandBus.execute(
+            new SendAnswerCommand(user.id, dto.answer),
+        );
     }
 
 

@@ -37,4 +37,8 @@ export class PlayerOrmEntity extends BaseDBEntity {
 
     return player;
   }
+
+  addScore(points: number = 1): void {
+    this.score += points;
+  }
 }

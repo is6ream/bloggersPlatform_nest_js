@@ -26,5 +26,20 @@ export class AnswerOrmEntity extends BaseDBEntity {
     answerDate!: Date;
 
     @Column({ type: 'varchar' })
-    status!: AnswerStatus; 
+    status!: AnswerStatus;
+
+    static create(dto: {
+        questionId: string;
+        playerId: string;
+        status: AnswerStatus;
+    }): AnswerOrmEntity {
+        const answer = new AnswerOrmEntity();
+
+        answer.questionId = dto.questionId;
+        answer.playerId = dto.playerId;
+        answer.status = dto.status;
+        answer.answerDate = new Date();
+
+        return answer;
+    }
 }

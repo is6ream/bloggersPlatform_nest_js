@@ -45,7 +45,6 @@ export class QuizGameController {
     async createQuestion(
         @Body() body: CreateQuestionInputDto,
     ): Promise<QuestionViewDto> {
-        console.log("body check", body)
         const questionId = await this.commandBus.execute(
             new CreateQuestionCommand(body),
         );

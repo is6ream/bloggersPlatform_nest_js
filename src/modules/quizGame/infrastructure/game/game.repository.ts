@@ -5,6 +5,7 @@ import { GameOrmEntity } from '../../entities/game.orm-entity';
 import { PlayerOrmEntity } from '../../entities/player.orm-entity';
 import { GameQuestion } from '../../entities/game-question.orm-entity';
 import { GameStatus } from '../../types/game-status';
+import { AnswerOrmEntity } from '../../entities/answer.orm-entity';
 
 @Injectable()
 export class GameRepository {
@@ -28,10 +29,12 @@ export class GameRepository {
   async findActiveGameWithQuestionsByUserId(userId: string): Promise<GameOrmEntity | null> {
     return this.gameRepo
       .createQueryBuilder('game')
-      .innerJoin('game.firstPlayer', 'firstPlayer')
-      .innerJoin('game.secondPlayer', 'secondPlayer')
+      .innerJoinAndSelect('game.firstPlayer', 'firstPlayer')
+      .innerJoinAndSelect('game.secondPlayer', 'secondPlayer')
       .leftJoinAndSelect('game.gameQuestions', 'gameQuestion')
       .leftJoinAndSelect('gameQuestion.question', 'question')
+      .leftJoinAndSelect('firstPlayer.answers', 'firstPlayerAnswers')
+      .leftJoinAndSelect('secondPlayer.answers', 'secondPlayerAnswers')
       .where('(firstPlayer.userId = :userId OR secondPlayer.userId = :userId)', { userId })
       .andWhere('game.gameStatus = :status', { status: GameStatus.Active })
       .andWhere('game.deleteAt IS NULL')
@@ -118,5 +121,32 @@ export class GameRepository {
         { userId },
       )
       .orderBy('game.createdAt', 'ASC');
+  }
+
+  async saveAnswerAndPlayer(
+    answer: AnswerOrmEntity,
+    player: PlayerOrmEntity,
+  ): Promise<AnswerOrmEntity> {
+    return this.dataSource.transaction(async (manager) => {
+      const savedAnswer = await manager.save(AnswerOrmEntity, answer);
+      await manager.save(PlayerOrmEntity, player);
+
+      return savedAnswer;
+    });
+  }
+
+  async saveAnswerAndFinishGame(
+    answer: AnswerOrmEntity,
+    currentPlayer: PlayerOrmEntity,
+    otherPlayer: PlayerOrmEntity,
+    game: GameOrmEntity,
+  ): Promise<AnswerOrmEntity> {
+    return this.dataSource.transaction(async (manager) => {
+      const savedAnswer = await manager.save(AnswerOrmEntity, answer);
+      await manager.save(PlayerOrmEntity, [currentPlayer, otherPlayer]);
+      await manager.save(GameOrmEntity, game);
+
+      return savedAnswer;
+    });
   }
 }

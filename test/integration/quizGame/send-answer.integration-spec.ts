@@ -71,6 +71,8 @@ describe('SendAnswerUsecase (integration)', () => {
         setup.firstPlayerUserId,
       );
 
+      console.log("game: ", game)
+
       expect(game).not.toBeNull();
       expect(game!.id).toBe(setup.gameId);
       expect(game!.gameStatus).toBe(GameStatus.Active);
@@ -79,14 +81,20 @@ describe('SendAnswerUsecase (integration)', () => {
   });
 
   describe('execute', () => {
-    // Пример вызова usecase — замените на свои сценарии:
-    //
-    // const setup = await createActiveQuizGame(moduleFixture, app.getHttpServer());
-    // const result = await sendAnswerUsecase.execute(
-    //   new SendAnswerCommand(setup.firstPlayerUserId, 'A progressive Node.js framework'),
-    // );
-    //
-    // или через CommandBus:
-    // await commandBus.execute(new SendAnswerCommand(setup.firstPlayerUserId, '...'));
+    it('sends answer for active game', async () => {
+      const setup = await createActiveQuizGame(
+        moduleFixture,
+        app.getHttpServer(),
+      );
+
+      const result = await sendAnswerUsecase.execute(
+        new SendAnswerCommand(
+          setup.firstPlayerUserId,
+          'A progressive Node.js framework',
+        ),
+      );
+
+      expect(result).toBeDefined();
+    });
   });
 });
