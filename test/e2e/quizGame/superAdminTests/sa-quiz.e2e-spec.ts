@@ -5,7 +5,7 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from 'src/modules/app-module/app-module';
 import { appSetup } from 'src/setup/app.setup';
-import { SA_QUIZ_PATH, superAdminApi } from '../helpers/super-admin-api';
+import { SA_QUIZ_PATH, superAdminApi } from '../../helpers/super-admin-api';
 
 const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
 
@@ -66,6 +66,93 @@ describe('SA Quiz (e2e)', () => {
     });
   });
 
+  describe('POST /sa/quiz/questions — updatedAt', () => {
+});
+
+  describe('PUT /sa/quiz/questions/:id — updatedAt', () => {
+    it('после обновления updatedAt становится не null', async () => {
+      const createRes = await saApi.quiz.create(VALID_QUESTION_INPUT).expect(201);
+      const id = createRes.body.id as string;
+
+      await saApi.quiz.update(id, UPDATED_QUESTION_INPUT).expect(204);
+
+      const listRes = await saApi.quiz.getAll().expect(200);
+      const updated = listRes.body.items.find(
+        (q: { id: string }) => q.id === id,
+      );
+
+      expect(updated.updatedAt).toEqual(expect.any(String));
+    });
+  });
+
+  describe('GET /sa/quiz/questions — пагинация и сортировка', () => {
+    const BODIES = [
+      'question body03',
+      'question body01',
+      'question body05',
+      'question body02',
+      'question body04',
+    ];
+
+    async function seedQuestions(bodies: string[]): Promise<void> {
+      for (const body of bodies) {
+        await saApi.quiz.create({ body, correctAnswers: ['correct1'] }).expect(201);
+      }
+    }
+
+    it('sortBy=body&sortDirection=asc — вопросы отсортированы по body по возрастанию', async () => {
+      await seedQuestions(BODIES);
+
+      const res = await saApi.quiz
+        .getAll({ sortBy: 'body', sortDirection: 'asc' })
+        .expect(200);
+
+      const receivedBodies = res.body.items.map(
+        (q: { body: string }) => q.body,
+      );
+      expect(receivedBodies).toEqual([...BODIES].sort());
+    });
+
+    it('sortBy=body&sortDirection=desc — вопросы отсортированы по body по убыванию', async () => {
+      await seedQuestions(BODIES);
+
+      const res = await saApi.quiz
+        .getAll({ sortBy: 'body', sortDirection: 'desc' })
+        .expect(200);
+
+      const receivedBodies = res.body.items.map(
+        (q: { body: string }) => q.body,
+      );
+      expect(receivedBodies).toEqual([...BODIES].sort().reverse());
+    });
+
+    it('пагинация — корректные метаданные и размер страницы', async () => {
+      await seedQuestions(BODIES);
+
+      const res = await saApi.quiz
+        .getAll({ pageSize: 2, pageNumber: 1, sortBy: 'body', sortDirection: 'asc' })
+        .expect(200);
+
+      expect(res.body).toMatchObject({
+        totalCount: BODIES.length,
+        page: 1,
+        pageSize: 2,
+        pagesCount: Math.ceil(BODIES.length / 2),
+      });
+      expect(res.body.items).toHaveLength(2);
+    });
+
+    it('в списке у всех вопросов updatedAt равен null до обновления', async () => {
+      await seedQuestions(BODIES);
+
+      const res = await saApi.quiz.getAll().expect(200);
+
+      for (const item of res.body.items) {
+        expect(item.updatedAt).toBeNull();
+      }
+    });
+  });
+
   describe('POST /sa/quiz', () => {
     it('401 — без Basic Auth', async () => {
       await request(app.getHttpServer())
@@ -99,7 +186,7 @@ describe('SA Quiz (e2e)', () => {
       });
       expect(typeof res.body.id).toBe('string');
       expect(res.body.createdAt).toBeDefined();
-      expect(res.body.updatedAt).toBeDefined();
+      expect(res.body.updatedAt).toBeNull();
     });
   });
 

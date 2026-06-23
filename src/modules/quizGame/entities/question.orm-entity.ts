@@ -1,5 +1,5 @@
 import { BaseDBEntity } from 'src/core/database/base-db.entity';
-import { Column, Entity, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { CreateQuestionInputDto } from '../api/dto/input/create-question.input.dto';
 import { UpdateQuestionInputDto } from '../api/dto/input/update-question.input.dto';
 import { DomainException } from 'src/core/exceptions/domain-exceptions';
@@ -17,8 +17,8 @@ export class QuestionOrmEntity extends BaseDBEntity {
   @Column({ type: 'boolean', default: false })
   published!: boolean;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt!: Date;
+  @Column({ type: 'timestamptz', nullable: true, default: null })
+  updatedAt!: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true, default: null })
   deleteAt!: Date | null;
@@ -36,6 +36,7 @@ export class QuestionOrmEntity extends BaseDBEntity {
   update(dto: UpdateQuestionInputDto): void {
     this.body = dto.body;
     this.correctAnswers = dto.correctAnswers;
+    this.updatedAt = new Date();
   }
 
   static create(dto: CreateQuestionInputDto): QuestionOrmEntity {
@@ -44,6 +45,7 @@ export class QuestionOrmEntity extends BaseDBEntity {
     question.body = dto.body;
     question.correctAnswers = dto.correctAnswers;
     question.published = false;
+    question.updatedAt = null;
     question.deleteAt = null;
 
     return question;

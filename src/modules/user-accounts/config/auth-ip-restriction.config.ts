@@ -5,7 +5,7 @@ import { getClientIpFromRequest } from 'src/core/utils/client-ip';
  * Единственное место управления IP restriction для всех эндпоинтов /auth.
  * false — rate limit по IP отключён; true — лимиты из AUTH_IP_RESTRICTION_LIMITS.
  */
-export const AUTH_IP_RESTRICTION_ENABLED = true;
+export const AUTH_IP_RESTRICTION_ENABLED = false;
 
 export const AUTH_IP_RESTRICTION_LIMITS = {
   default: { limit: 5, ttlMs: 10_000 },

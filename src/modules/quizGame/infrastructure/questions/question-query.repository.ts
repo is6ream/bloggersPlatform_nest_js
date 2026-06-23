@@ -32,7 +32,7 @@ export class QuestionsQueryRepository {
       qb.andWhere('q.published = :published', { published: true });
     }
 
-    qb.orderBy('q.createdAt', sortDirection)
+    qb.orderBy(`q.${query.sortBy}`, sortDirection)
       .skip(query.calculateSkip())
       .take(query.pageSize);
 

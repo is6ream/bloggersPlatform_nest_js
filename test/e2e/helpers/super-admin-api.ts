@@ -3,7 +3,7 @@ import { e2eApiPath } from './api-path';
 
 const BASIC_AUTH = `Basic ${Buffer.from('admin:qwerty').toString('base64')}`;
 
-export const SA_QUIZ_PATH = e2eApiPath('sa/quiz');
+export const SA_QUIZ_PATH = e2eApiPath('sa/quiz/questions');
 export const TESTING_ALL_DATA_PATH = e2eApiPath('testing/all-data');
 
 type HttpServer = Parameters<typeof request>[0];

@@ -6,6 +6,13 @@ export enum PublishedStatus {
   Published = 'Published',
 }
 
+export enum QuestionsSortBy {
+  CreatedAt = 'createdAt',
+  UpdatedAt = 'updatedAt',
+  Body = 'body',
+  Published = 'published',
+}
+
 export class GetQuestionsQueryParams extends BaseQueryParams {
   @IsOptional()
   @IsString()
@@ -13,4 +20,7 @@ export class GetQuestionsQueryParams extends BaseQueryParams {
 
   @IsEnum(PublishedStatus)
   publishedStatus: PublishedStatus = PublishedStatus.All;
+
+  @IsEnum(QuestionsSortBy)
+  sortBy: QuestionsSortBy = QuestionsSortBy.CreatedAt;
 }

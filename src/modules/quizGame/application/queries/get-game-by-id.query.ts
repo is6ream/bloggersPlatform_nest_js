@@ -19,8 +19,6 @@ export class GetGameByIdQueryHandler implements IQueryHandler<GetGameByIdQuery> 
   async execute(query: GetGameByIdQuery): Promise<GameViewDto> {
 
     const game = await this.gameQueryRepository.findByIdWithPlayers(query.gameId);
-
-    console.log("GAME: ", game)
     
     if (!game) {
       throw new NotFoundException('Game not found');

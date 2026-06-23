@@ -25,7 +25,7 @@ import { UpdateQuestionCommand } from '../../application/useCases/update-questio
 import { ChangePublicationStatusCommand } from '../../application/useCases/change-publication.status.usecase';
 import { QuestionsQueryRepository } from '../../infrastructure/questions/question-query.repository';
 
-@Controller('sa/quiz')
+@Controller('sa/quiz/questions')
 export class QuizGameController {
     constructor(
         private questionsQueryRepository: QuestionsQueryRepository,
@@ -33,7 +33,7 @@ export class QuizGameController {
     ) { }
 
     @UseGuards(BasicAuthGuard)
-    @Get('/questions')
+    @Get()
     async getAll(
         @Query() query: GetQuestionsQueryParams,
     ): Promise<QuestionPaginatedViewDto> {
