@@ -129,7 +129,7 @@ export class GameRepository {
   ): Promise<AnswerOrmEntity> {
     return this.dataSource.transaction(async (manager) => {
       const savedAnswer = await manager.save(AnswerOrmEntity, answer);
-      await manager.save(PlayerOrmEntity, player);
+      await manager.update(PlayerOrmEntity, player.id, { score: player.score });
 
       return savedAnswer;
     });
@@ -143,8 +143,16 @@ export class GameRepository {
   ): Promise<AnswerOrmEntity> {
     return this.dataSource.transaction(async (manager) => {
       const savedAnswer = await manager.save(AnswerOrmEntity, answer);
-      await manager.save(PlayerOrmEntity, [currentPlayer, otherPlayer]);
-      await manager.save(GameOrmEntity, game);
+      await manager.update(PlayerOrmEntity, currentPlayer.id, {
+        score: currentPlayer.score,
+      });
+      await manager.update(PlayerOrmEntity, otherPlayer.id, {
+        score: otherPlayer.score,
+      });
+      await manager.update(GameOrmEntity, game.id, {
+        gameStatus: game.gameStatus,
+        finishGameDate: game.finishGameDate,
+      });
 
       return savedAnswer;
     });
