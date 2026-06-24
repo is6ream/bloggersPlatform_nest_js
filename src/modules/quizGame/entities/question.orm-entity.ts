@@ -69,6 +69,7 @@ export class QuestionOrmEntity extends BaseDBEntity {
     }
 
     this.published = published;
+    this.updatedAt = new Date();
   }
 
 }
