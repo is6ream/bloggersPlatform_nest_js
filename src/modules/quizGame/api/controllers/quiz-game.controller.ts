@@ -78,6 +78,4 @@ export class QuizGameController {
             new SendAnswerCommand(user.id, dto.answer),
         );
     }
-
-
 }

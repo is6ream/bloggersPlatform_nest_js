@@ -60,9 +60,9 @@ export class PlayerProgressViewDto {
     const dto = new PlayerProgressViewDto();
 
     // Каждый ответ из quiz_answers преобразуем в AnswerViewDto
-    dto.answers = (player.answers ?? []).map((answer) =>
-      AnswerViewDto.mapToView(answer),
-    );
+    dto.answers = [...(player.answers ?? [])]
+      .sort((a, b) => a.answerDate.getTime() - b.answerDate.getTime())
+      .map((answer) => AnswerViewDto.mapToView(answer));
     dto.player = PlayerViewDto.mapToView(player);
     dto.score = player.score;
 
@@ -98,7 +98,7 @@ export class GameViewDto {
   id: string;
   firstPlayerProgress: PlayerProgressViewDto;
   secondPlayerProgress: PlayerProgressViewDto | null;
-  questions: QuestionInGameViewDto[];
+  questions: QuestionInGameViewDto[] | null;
   status: GameStatus;
   pairCreatedDate: string;
   startGameDate: string | null;
@@ -113,11 +113,11 @@ export class GameViewDto {
     dto.startGameDate = game.startGameDate?.toISOString() ?? null;
     dto.finishGameDate = game.finishGameDate;
 
-    dto.questions = (game.gameQuestions ?? [])
-      .sort((a, b) => a.index - b.index)
-      .map((gameQuestion) =>
-        QuestionInGameViewDto.mapToView(gameQuestion.question),
-      );
+    dto.questions = game.gameQuestions?.length
+      ? game.gameQuestions
+        .sort((a, b) => a.index - b.index)
+        .map((gq) => QuestionInGameViewDto.mapToView(gq.question))
+      : null;
 
     dto.firstPlayerProgress = PlayerProgressViewDto.mapToView(game.firstPlayer!);
     dto.secondPlayerProgress = game.secondPlayer
