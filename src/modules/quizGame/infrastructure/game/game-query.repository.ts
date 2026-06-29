@@ -2,7 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { GameOrmEntity } from '../../entities/game.orm-entity';
+import { PlayerOrmEntity } from '../../entities/player.orm-entity';
 import { GameViewDto } from '../../api/dto/output/game.view-dto';
+import { MyStatisticViewDto } from '../../api/dto/output/my-statistic.view-dto';
 import { GameStatus } from '../../types/game-status';
 import {
   GamesSortBy,
@@ -22,6 +24,8 @@ export class GameQueryRepository {
   constructor(
     @InjectRepository(GameOrmEntity)
     private readonly gameRepo: Repository<GameOrmEntity>,
+    @InjectRepository(PlayerOrmEntity)
+    private readonly playerRepo: Repository<PlayerOrmEntity>,
   ) { }
 
   async findByIdWithPlayers(id: string): Promise<GameOrmEntity | null> {
@@ -117,5 +121,47 @@ export class GameQueryRepository {
       size: query.pageSize,
       totalCount,
     });
+  }
+
+  async getMyStatistic(userId: string): Promise<MyStatisticViewDto> {
+    const raw = await this.playerRepo
+      .createQueryBuilder('p')
+      .innerJoin(
+        'quiz_games',
+        'g',
+        'g.id = p.gameId AND g.gameStatus = :finished',
+        { finished: GameStatus.Finished },
+      )
+      .innerJoin(
+        'quiz_players',
+        'opp',
+        'opp.gameId = p.gameId AND opp.id <> p.id',
+      )
+      .select('COALESCE(SUM(p.score), 0)', 'sumScore')
+      .addSelect('COUNT(*)', 'gamesCount')
+      .addSelect('COALESCE(AVG(p.score), 0)', 'avgScores')
+      .addSelect('COUNT(*) FILTER (WHERE p.score > opp.score)', 'winsCount')
+      .addSelect('COUNT(*) FILTER (WHERE p.score < opp.score)', 'lossesCount')
+      .addSelect('COUNT(*) FILTER (WHERE p.score = opp.score)', 'drawsCount')
+      .where('p.userId = :userId', { userId })
+      .getRawOne<{
+        sumScore: string;
+        gamesCount: string;
+        avgScores: string;
+        winsCount: string;
+        lossesCount: string;
+        drawsCount: string;
+      }>();
+
+    const dto = new MyStatisticViewDto();
+
+    dto.sumScore = Number(raw?.sumScore ?? 0);
+    dto.gamesCount = Number(raw?.gamesCount ?? 0);
+    dto.avgScores = Math.round(Number(raw?.avgScores ?? 0) * 100) / 100;
+    dto.winsCount = Number(raw?.winsCount ?? 0);
+    dto.lossesCount = Number(raw?.lossesCount ?? 0);
+    dto.drawsCount = Number(raw?.drawsCount ?? 0);
+
+    return dto;
   }
 }

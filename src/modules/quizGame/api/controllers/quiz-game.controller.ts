@@ -23,6 +23,8 @@ import { GetMyGamesQueryParams } from '../query/get-my-games-query.params';
 
 import { GamePaginatedViewDto } from '../paginated/game-paginated.view-dto';
 
+import { MyStatisticViewDto } from '../dto/output/my-statistic.view-dto';
+
 
 
 @Controller('pair-game-quiz')
@@ -92,4 +94,14 @@ export class QuizGameController {
             new SendAnswerCommand(user.id, dto.answer),
         );
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('users/my-statistic')
+    @HttpCode(HttpStatus.OK)
+    async getCurrentUserStatistics(
+        @ExtractUserFromRequest() user: UserContextDto,
+    ): Promise<MyStatisticViewDto> {
+        return await this.gameQueryRepository.getMyStatistic(user.id);
+    }
 }
+

@@ -15,6 +15,10 @@ export const PAIR_GAME_QUIZ_ANSWERS_PATH = e2eApiPath(
   'pair-game-quiz/pairs/my-current/answers',
 );
 
+export const PAIR_GAME_QUIZ_MY_STATISTIC_PATH = e2eApiPath(
+  'pair-game-quiz/users/my-statistic',
+);
+
 export const pairGameByIdPath = (gameId: string) =>
   e2eApiPath(`pair-game-quiz/pairs/${gameId}`);
 
@@ -48,5 +52,10 @@ export function pairGameQuizApi(httpServer: HttpServer) {
         .post(PAIR_GAME_QUIZ_ANSWERS_PATH)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ answer }),
+
+    getMyStatistic: (accessToken: string) =>
+      request(httpServer)
+        .get(PAIR_GAME_QUIZ_MY_STATISTIC_PATH)
+        .set('Authorization', `Bearer ${accessToken}`),
   };
 }
