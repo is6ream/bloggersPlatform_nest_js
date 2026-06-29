@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
@@ -18,6 +18,10 @@ import { GameQueryRepository } from '../../infrastructure/game/game-query.reposi
 import { AnswerViewDto, GameViewDto } from '../dto/output/game.view-dto';
 
 import { GetGameByIdQuery } from '../../application/queries/get-game-by-id.query';
+
+import { GetMyGamesQueryParams } from '../query/get-my-games-query.params';
+
+import { GamePaginatedViewDto } from '../paginated/game-paginated.view-dto';
 
 
 
@@ -43,6 +47,16 @@ export class QuizGameController {
         @ExtractUserFromRequest() user: UserContextDto,
     ): Promise<GameViewDto> {
         return await this.gameQueryRepository.getCurrentUnfinishedOrNotFoundFail(user.id);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('pairs/my')
+    @HttpCode(HttpStatus.OK)
+    async getMyGames(
+        @Query() query: GetMyGamesQueryParams,
+        @ExtractUserFromRequest() user: UserContextDto,
+    ): Promise<GamePaginatedViewDto> {
+        return await this.gameQueryRepository.getAllMyGames(user.id, query);
     }
 
     @UseGuards(JwtAuthGuard)
